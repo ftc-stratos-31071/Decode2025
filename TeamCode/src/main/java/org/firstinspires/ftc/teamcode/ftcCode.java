@@ -7,15 +7,18 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-
+@TeleOp
 public class ftcCode extends OpMode {
     private Limelight3A limelight;
+
+    private double distance;
     public IMU imu;
     @Override
     public void init(){
@@ -45,6 +48,8 @@ public class ftcCode extends OpMode {
             telemetry.addData("Ta",llResult.getTa());
             telemetry.addData("Yaw",botpose.getOrientation().getYaw());
         }
+
+
     }
 
 }
