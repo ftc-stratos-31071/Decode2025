@@ -14,7 +14,7 @@ import dev.nextftc.ftc.components.BulkReadComponent;
 import dev.nextftc.hardware.driving.MecanumDriverControlled;
 import dev.nextftc.hardware.impl.MotorEx;
 
-@TeleOp(name = "NextFTC TeleOp Program Java")
+@TeleOp(name = "TeleOp")
 public class Teleop extends NextFTCOpMode {
     public Teleop() {
         addComponents(
