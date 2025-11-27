@@ -326,8 +326,8 @@ public class TurnToLimelightAuto extends LinearOpMode {
      * @return normalized angle in range [-180, 180]
      */
     private double normalizeAngle(double angle) {
-        while (angle > 180) angle -= 360;
-        while (angle < -180) angle += 360;
+        while (angle > 90) angle -= 180;
+        while (angle < -90) angle += 180;
         return angle;
     }
 }
