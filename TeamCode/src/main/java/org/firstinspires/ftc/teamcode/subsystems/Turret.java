@@ -25,8 +25,8 @@ public class Turret implements Subsystem {
         double clicksPerDegree = 1360.0 / 360.0;
         double clicks = clicksPerDegree * degrees;
 
-        // This is correct for your library version.
-        return new RunToPosition(turretController, clicks);
+        // RunToPosition uses the control system to move to the target position
+        return new RunToPosition(turretController, clicks).requires(this);
     }
 
     @Override
