@@ -17,12 +17,10 @@ public class PedroPathingCommand extends Command {
         this.path = path;
     }
 
-    @Override
     public void init() {
         follower.followPath(path);
     }
 
-    @Override
     public void execute() {
         follower.update();
     }

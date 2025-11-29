@@ -35,9 +35,7 @@ The Gradle error indicates a Java version mismatch. You need:
 
 ### 2. Verify Pedro Pathing Dependency
 The dependency is already added to `TeamCode/build.gradle`:
-```groovy
-implementation 'com.pedropathing:pedro:1.0.0'
-```
+
 
 ### 3. Hardware Configuration
 In your Robot Controller app, configure these motor names:
@@ -92,30 +90,13 @@ If your motors have different names (like `frontLeftMotor`), you'll need to eith
 
 #### Creating Paths
 Simple forward path:
-```
-Path forward = new Path(new BezierCurve(
-    new Point(0, 0, Point.CARTESIAN),
-    new Point(24, 0, Point.CARTESIAN)
-));
-```
+
 
 Path with curve:
-```
-Path curved = new Path(new BezierCurve(
-    new Point(0, 0, Point.CARTESIAN),
-    new Point(12, 12, Point.CARTESIAN),
-    new Point(24, 0, Point.CARTESIAN)
-));
-```
+
 
 Path with heading control:
-```
-Path withHeading = new Path(new BezierLine(
-    new Point(0, 0, Point.CARTESIAN),
-    new Point(24, 0, Point.CARTESIAN)
-));
-withHeading.setConstantHeadingInterpolation(Math.toRadians(45));
-```
+
 
 #### Testing Paths
 1. Start with simple straight paths
@@ -126,18 +107,12 @@ withHeading.setConstantHeadingInterpolation(Math.toRadians(45));
 ### Phase 4: Advanced Tuning
 
 #### Max Power
-```
-follower.setMaxPower(0.8);  // Adjust in PedroConstants.createFollower()
-```
+
 - Lower for more precise movements
 - Higher for faster but less accurate paths
 
 #### Centripetal Force Correction
-```
-// Add to createFollower() method
-follower.setEnableCentripetalCorrection(true);
-follower.setCentripetalScaling(0.0001);
-```
+
 - Helps with curved paths
 - Tune scaling factor based on robot behavior
 
@@ -145,44 +120,15 @@ follower.setCentripetalScaling(0.0001);
 
 Your refactored `Auto2.java` shows the proper pattern:
 
-```
-private Command autonomousRoutine() {
-    // Create path
-    Path forwardPath = PedroConstants.createForwardPath(5.0);
-    
-    // Compose with other commands
-    return new SequentialGroup(
-        // Drive using Pedro
-        new PedroPathingCommand(follower(), forwardPath),
-        
-        // Other subsystem commands
-        Turret.INSTANCE.runTurret(-45.0),
-        Turret.INSTANCE.runTurret(45.0),
-        Turret.INSTANCE.runTurret(0.0)
-    );
-}
-```
+
 
 ### Command Composition Examples
 
 #### Parallel Movement
-```
-new ParallelGroup(
-    new PedroPathingCommand(follower(), path),
-    Intake.INSTANCE.turnOn  // Run intake while driving
-)
-```
+
 
 #### Sequential with Delays
-```
-new SequentialGroup(
-    new PedroPathingCommand(follower(), driveToBasket),
-    Lift.INSTANCE.toHigh,
-    new Delay(0.5),
-    Claw.INSTANCE.open,
-    new PedroPathingCommand(follower(), driveBack)
-)
-```
+
 
 ## Troubleshooting
 

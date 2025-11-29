@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.opmodes.teleops;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -23,6 +25,7 @@ import dev.nextftc.ftc.components.BulkReadComponent;
 import dev.nextftc.hardware.driving.MecanumDriverControlled;
 import dev.nextftc.hardware.impl.MotorEx;
 
+@Config
 @TeleOp(name = "TeleOp")
 public class Teleop extends NextFTCOpMode {
     public Teleop() {
@@ -47,13 +50,32 @@ public class Teleop extends NextFTCOpMode {
 
     @Override
     public void onInit() {
+        // Add dashboard telemetry and camera stream
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+
         Intake.INSTANCE.defaultPos.schedule();
         Shooter.INSTANCE.defaultPos.schedule();
         Turret.INSTANCE.turret.zeroed();
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.setPollRateHz(100);
-        limelight.start();
-        limelight.pipelineSwitch(0);
+
+        // Initialize Limelight with REAL connection
+        try {
+            limelight = hardwareMap.get(Limelight3A.class, "limelight");
+            limelight.setPollRateHz(100);
+            limelight.start();
+            limelight.pipelineSwitch(0);
+
+            // Stream Limelight camera to dashboard
+            dashboard.startCameraStream(limelight, 0);
+
+            telemetry.addData("Limelight", "✓ Connected");
+            telemetry.addData("Camera Stream", "✓ Active");
+        } catch (Exception e) {
+            telemetry.addData("Limelight", "✗ ERROR: " + e.getMessage());
+        }
+
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
     }
 
     @Override
@@ -86,8 +108,6 @@ public class Teleop extends NextFTCOpMode {
             ShooterOnCmd.create(shooterPower).schedule();
         });
 
-//        Gamepads.gamepad1().a().whenBecomesTrue(ShootBallCmd.create());
-
         Gamepads.gamepad1().a().whenBecomesTrue(Intake.INSTANCE.turnOn);
         Gamepads.gamepad1().a().whenBecomesFalse(Intake.INSTANCE.zeroPower);
 
@@ -103,9 +123,6 @@ public class Teleop extends NextFTCOpMode {
             servoPos = Math.max(0.0, servoPos + 0.1);
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
-
-//        Gamepads.gamepad1().dpadDown().whenBecomesTrue(Shooter.INSTANCE.defaultPos);
-//        Gamepads.gamepad1().dpadUp().whenBecomesTrue(Shooter.INSTANCE.moveServoPos);
     }
 
     boolean hasRumbled = false;
@@ -118,7 +135,16 @@ public class Teleop extends NextFTCOpMode {
     public void onUpdate() {
         double rpm = Shooter.INSTANCE.getRPM() * 5;
         double targetRPM = shooterPower * 6000;
-        LLResult result = limelight.getLatestResult();
+
+        // Get REAL Limelight result
+        LLResult result = null;
+        if (limelight != null) {
+            try {
+                result = limelight.getLatestResult();
+            } catch (Exception e) {
+                telemetry.addData("Limelight Error", e.getMessage());
+            }
+        }
 
         boolean shooterReady = Math.abs(rpm - targetRPM) < (targetRPM * 0.05);
 
@@ -142,9 +168,10 @@ public class Teleop extends NextFTCOpMode {
             hasRumbled = false;
         }
 
-        telemetry.addData("Shooter RPM", rpm);
-        telemetry.addData("Target RPM", targetRPM);
-        telemetry.addData("Ready?", shooterReady);
+        telemetry.addData("═══ SHOOTER ═══", "");
+        telemetry.addData("Shooter RPM", String.format("%.0f", rpm));
+        telemetry.addData("Target RPM", String.format("%.0f", targetRPM));
+        telemetry.addData("Ready?", shooterReady ? "✓ YES" : "✗ NO");
 
         if (shooterTiming) {
             telemetry.addData("Spin-up Time (ms)", spinUpTimeMs);
@@ -152,19 +179,32 @@ public class Teleop extends NextFTCOpMode {
             telemetry.addData("Final Spin-up Time (ms)", spinUpTimeMs);
         }
 
-        telemetry.addData("Shooter Power", shooterPower);
+        telemetry.addData("Shooter Power", String.format("%.1f", shooterPower));
 
+        telemetry.addData("", "");
+        telemetry.addData("═══ TRACKING ═══", "");
+
+        // Simple AprilTag tracking with REAL data
         if (result != null && result.isValid()) {
-            double tx = result.getTx();
-
+            double tx = result.getTx();  // REAL horizontal offset from Limelight
             motorTargetX = tx * 1.25;
             motorTargetX = Math.max(-TURRET_LIMIT_DEG, Math.min(TURRET_LIMIT_DEG, motorTargetX));
 
-            telemetry.addData("Target X", tx);
-            telemetry.addData("Clamped Turret Target", motorTargetX);
+            telemetry.addData("Target Detected", "✓ YES");
+            telemetry.addData("TX (offset)", String.format("%.2f°", tx));
+            telemetry.addData("Turret Target", String.format("%.2f°", motorTargetX));
+            telemetry.addData("Direction", tx > 0 ? "→ RIGHT" : "← LEFT");
         } else {
-            telemetry.addData("Limelight", "No Targets");
+            if (result != null) {
+                telemetry.addData("Target Detected", "✗ NO");
+                telemetry.addData("Limelight Status", "No AprilTag in view");
+            } else {
+                telemetry.addData("Target Detected", "✗ ERROR");
+                telemetry.addData("Limelight Status", "No data received");
+            }
+            telemetry.addData("Turret Target", String.format("%.2f°", motorTargetX));
         }
+
         Turret.INSTANCE.runTurret(motorTargetX).schedule();
 
         telemetry.update();

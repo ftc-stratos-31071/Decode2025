@@ -29,7 +29,7 @@ import java.util.List;
  * @version 1.0, 6/26/2025
  */
 @Configurable
-@TeleOp(name = "Tuning", group = "Pedro Pathing")
+// @TeleOp(name = "Tuning", group = "Pedro Pathing") // DISABLED: Duplicate of testing/tuning/PedroTuning
 public class PedroTuning extends SelectableOpMode {
     public static Follower follower;
 
