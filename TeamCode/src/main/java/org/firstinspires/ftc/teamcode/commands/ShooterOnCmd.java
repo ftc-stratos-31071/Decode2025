@@ -16,11 +16,11 @@ public class ShooterOnCmd {
                 Intake.INSTANCE.defaultPos,
                 new ParallelGroup(
                         Intake.INSTANCE.turnOnReverse,
-                        Shooter.INSTANCE.moveShooter(-ShooterConstants.motorPower)
+                        Shooter.INSTANCE.moveShooter(ShooterConstants.motorPower)
                 ),
                 new Delay(ShooterConstants.reverseDelaySeconds),
                 Intake.INSTANCE.zeroPower,
-                Shooter.INSTANCE.moveShooter(shooterPower)
+                Shooter.INSTANCE.moveShooter(-shooterPower)
         );
     }
 }
