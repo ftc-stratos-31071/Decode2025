@@ -10,12 +10,10 @@ import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 public class ShootBallCmd {
 
     public static Command create() {
-
         return new SequentialGroup(
                 Intake.INSTANCE.shoot,
                 new Delay(ShooterConstants.shootDelaySeconds),
                 Intake.INSTANCE.zeroPower
-        )
-                .requires(Intake.INSTANCE);
+        );
     }
 }

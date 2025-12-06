@@ -13,7 +13,6 @@ import dev.nextftc.core.commands.Command;
 public class FollowPath extends Command {
     private final Follower follower;
     private final Object path; // Can be Path or PathChain
-    private boolean initialized = false;
 
     // Constructor with just PathChain
     public FollowPath(Follower follower, PathChain path) {
@@ -28,20 +27,23 @@ public class FollowPath extends Command {
     }
 
     @Override
-    public boolean isDone() {
-        // Initialize the path following on first call
-        if (!initialized) {
-            if (path instanceof PathChain) {
-                follower.followPath((PathChain) path);
-            } else if (path instanceof Path) {
-                follower.followPath((Path) path);
-            }
-            initialized = true;
+    public void start() {
+        // Initialize the path following when command starts
+        if (path instanceof PathChain) {
+            follower.followPath((PathChain) path);
+        } else if (path instanceof Path) {
+            follower.followPath((Path) path);
         }
+    }
 
+    @Override
+    public void update() {
         // Update follower every loop - critical for Pedro to work!
         follower.update();
+    }
 
+    @Override
+    public boolean isDone() {
         // Command is done when follower is no longer busy
         return !follower.isBusy();
     }

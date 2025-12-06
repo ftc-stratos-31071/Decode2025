@@ -25,7 +25,6 @@ public class PedroPathingCommand extends Command {
     private final PathChain pathChain;
     private final Path path;
     private final boolean isPathChain;
-    private boolean hasStarted = false;
 
     /**
      * Constructor for PathChain (recommended for most use cases)
@@ -48,20 +47,23 @@ public class PedroPathingCommand extends Command {
     }
 
     @Override
-    public boolean isDone() {
-        // Initialize on first call
-        if (!hasStarted) {
-            if (isPathChain) {
-                follower.followPath(pathChain);
-            } else {
-                follower.followPath(path);
-            }
-            hasStarted = true;
+    public void start() {
+        // Initialize path following when command starts
+        if (isPathChain) {
+            follower.followPath(pathChain);
+        } else {
+            follower.followPath(path);
         }
+    }
 
+    @Override
+    public void update() {
         // Update follower every loop - critical for Pedro to work!
         follower.update();
+    }
 
+    @Override
+    public boolean isDone() {
         // Command is done when follower is no longer busy
         return !follower.isBusy();
     }

@@ -2,98 +2,80 @@
 > Task :TeamCode:clean
 > Task :FtcRobotController:preBuild UP-TO-DATE
 > Task :FtcRobotController:preDebugBuild UP-TO-DATE
-> Task :FtcRobotController:mergeDebugJniLibFolders
-> Task :FtcRobotController:mergeDebugNativeLibs NO-SOURCE
-> Task :FtcRobotController:stripDebugDebugSymbols NO-SOURCE
-> Task :FtcRobotController:copyDebugJniLibsProjectAndLocalJars
 > Task :FtcRobotController:generateDebugBuildConfig
 > Task :FtcRobotController:generateDebugResValues
 > Task :FtcRobotController:generateDebugResources
 > Task :FtcRobotController:packageDebugResources
-> Task :FtcRobotController:extractDeepLinksForAarDebug UP-TO-DATE
-> Task :FtcRobotController:javaPreCompileDebug
-> Task :FtcRobotController:mergeDebugShaders
-> Task :FtcRobotController:compileDebugShaders NO-SOURCE
-> Task :FtcRobotController:generateDebugAssets UP-TO-DATE
-> Task :FtcRobotController:parseDebugLocalResources
-> Task :FtcRobotController:packageDebugAssets
-> Task :FtcRobotController:prepareDebugArtProfile UP-TO-DATE
-> Task :FtcRobotController:prepareLintJarForPublish UP-TO-DATE
-> Task :FtcRobotController:processDebugJavaRes NO-SOURCE
 > Task :TeamCode:preBuild UP-TO-DATE
 > Task :TeamCode:preDebugBuild UP-TO-DATE
-> Task :TeamCode:mergeDebugNativeDebugMetadata NO-SOURCE
-> Task :FtcRobotController:writeDebugAarMetadata
+> Task :FtcRobotController:javaPreCompileDebug
 > Task :TeamCode:javaPreCompileDebug
-> Task :FtcRobotController:mergeDebugJavaResource
-> Task :FtcRobotController:processDebugManifest
+> Task :FtcRobotController:parseDebugLocalResources
 > Task :FtcRobotController:compileDebugLibraryResources
+> Task :FtcRobotController:writeDebugAarMetadata
 > Task :TeamCode:generateDebugResValues
 > Task :TeamCode:mapDebugSourceSetPaths
 > Task :TeamCode:generateDebugResources
 > Task :TeamCode:checkDebugAarMetadata
 > Task :FtcRobotController:generateDebugRFile
-> Task :FtcRobotController:extractDebugAnnotations
 > Task :TeamCode:mergeDebugResources
 
 > Task :FtcRobotController:compileDebugJavaWithJavac
 Note: /Users/sriyan/Documents/FTC/TestRepo/FtcRobotController/src/main/java/org/firstinspires/ftc/robotcontroller/internal/FtcRobotControllerActivity.java uses or overrides a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 
-> Task :FtcRobotController:mergeDebugGeneratedProguardFiles UP-TO-DATE
-> Task :FtcRobotController:mergeDebugConsumerProguardFiles UP-TO-DATE
-> Task :FtcRobotController:syncDebugLibJars
-> Task :FtcRobotController:bundleDebugAar
-> Task :FtcRobotController:assembleDebug
 > Task :TeamCode:createDebugCompatibleScreenManifests
 > Task :FtcRobotController:extractDeepLinksDebug
 > Task :TeamCode:extractDeepLinksDebug
+> Task :FtcRobotController:processDebugManifest
 > Task :FtcRobotController:bundleLibCompileToJarDebug
-
 > Task :TeamCode:processDebugMainManifest
-[dev.nextftc.extensions:pedro:1.0.0] /Users/sriyan/.gradle/caches/8.9/transforms/4a4eb9640c50d00f2fc9e60e1a842434/transformed/pedro-1.0.0/AndroidManifest.xml Warning:
-	Namespace 'dev.nextftc.hardware' is used in multiple modules and/or libraries: dev.nextftc.extensions:pedro:1.0.0, dev.nextftc:hardware:1.0.1. Please ensure that all modules and libraries have a unique namespace. For more information, See https://developer.android.com/studio/build/configure-app-module#set-namespace
-
 > Task :TeamCode:processDebugManifest
-> Task :TeamCode:mergeDebugShaders
-> Task :TeamCode:compileDebugShaders NO-SOURCE
-> Task :TeamCode:generateDebugAssets UP-TO-DATE
-> Task :TeamCode:mergeDebugAssets
-> Task :TeamCode:processDebugJavaRes NO-SOURCE
 > Task :TeamCode:processDebugManifestForPackage
-> Task :TeamCode:desugarDebugFileDependencies
-> Task :FtcRobotController:copyDebugJniLibsProjectOnly
-> Task :TeamCode:mergeDebugJniLibFolders
-> Task :TeamCode:validateSigningDebug
-> Task :TeamCode:writeDebugAppMetadata
-> Task :TeamCode:writeDebugSigningConfigVersions
-> Task :TeamCode:checkDebugDuplicateClasses
-> Task :FtcRobotController:bundleLibRuntimeToDirDebug
-> Task :TeamCode:mergeDebugNativeLibs
-
-> Task :TeamCode:stripDebugDebugSymbols
-Unable to strip the following libraries, packaging them as they are: libEasyOpenCV.so, libRobotCore.so, libapriltag.so, libc++_shared.so, libopencv_java4.so, libturbojpeg.so.
-
-> Task :TeamCode:compressDebugAssets
 > Task :TeamCode:processDebugResources
 
 > Task :TeamCode:compileDebugJavaWithJavac FAILED
-/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/constants/PedroConstants.java:8: error: package com.qualcomm.hardware.gobildasensors does not exist
-import com.qualcomm.hardware.gobildasensors.GoBildaPinpointDriver;
+/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/teleops/PIDTest.java:91: error: cannot find symbol
+                Shooter.INSTANCE.runAtRPM(TEST_RPM).schedule();
+                                ^
+  symbol:   method runAtRPM(double)
+  location: variable INSTANCE of type Shooter
+/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/teleops/PIDTest.java:143: error: cannot find symbol
+        boolean atTarget = Shooter.INSTANCE.isAtRPM(TEST_RPM);
                                            ^
-/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/constants/PedroConstants.java:25: error: package GoBildaPinpointDriver does not exist
-            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
-                                                         ^
-/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/constants/PedroConstants.java:24: error: package GoBildaPinpointDriver does not exist
-            .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
-                                                          ^
-/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/constants/PedroConstants.java:23: error: package GoBildaPinpointDriver does not exist
-            .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
-                                                    ^
-4 errors
-
-> Task :TeamCode:mergeDebugJavaResource
-> Task :TeamCode:mergeExtDexDebug
+  symbol:   method isAtRPM(double)
+  location: variable INSTANCE of type Shooter
+/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/teleops/PIDTest.java:177: error: cannot find symbol
+        telemetry.addData("Kp", ShooterConstants.velocityKp);
+                                                ^
+  symbol:   variable velocityKp
+  location: class ShooterConstants
+/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/teleops/PIDTest.java:178: error: cannot find symbol
+        telemetry.addData("Ki", ShooterConstants.velocityKi);
+                                                ^
+  symbol:   variable velocityKi
+  location: class ShooterConstants
+/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/teleops/PIDTest.java:179: error: cannot find symbol
+        telemetry.addData("Kd", ShooterConstants.velocityKd);
+                                                ^
+  symbol:   variable velocityKd
+  location: class ShooterConstants
+/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/teleops/PIDTest.java:180: error: cannot find symbol
+        telemetry.addData("Kf (Feedforward)", ShooterConstants.velocityKf);
+                                                              ^
+  symbol:   variable velocityKf
+  location: class ShooterConstants
+/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/teleops/PIDTest.java:194: error: cannot find symbol
+            telemetry.addData("Velocity Control Active", Shooter.INSTANCE.velocityControlActive);
+                                                                         ^
+  symbol:   variable velocityControlActive
+  location: variable INSTANCE of type Shooter
+/Users/sriyan/Documents/FTC/TestRepo/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/teleops/PIDTest.java:198: error: cannot find symbol
+            double calcFeedforward = targetTicksPerSec * ShooterConstants.velocityKf;
+                                                                         ^
+  symbol:   variable velocityKf
+  location: class ShooterConstants
+8 errors
 
 FAILURE: Build failed with an exception.
 
@@ -105,5 +87,5 @@ Execution failed for task ':TeamCode:compileDebugJavaWithJavac'.
 > Run with --info option to get more log output.
 > Run with --scan to get full insights.
 
-BUILD FAILED in 9s
-56 actionable tasks: 51 executed, 5 up-to-date
+BUILD FAILED in 3s
+28 actionable tasks: 28 executed

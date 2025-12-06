@@ -22,7 +22,8 @@ public class Intake implements Subsystem {
 
     // Dynamic servo commands - read values from IntakeConstants each time
     public final Command moveServoPos = new Command() {
-        public void init() {
+        @Override
+        public void start() {
             servo.setPosition(IntakeConstants.servoPos);
         }
 
@@ -33,7 +34,8 @@ public class Intake implements Subsystem {
     }.requires(this);
 
     public final Command defaultPos = new Command() {
-        public void init() {
+        @Override
+        public void start() {
             servo.setPosition(IntakeConstants.defaultPos);
         }
 
@@ -45,7 +47,8 @@ public class Intake implements Subsystem {
 
     // Dynamic motor commands - read values from IntakeConstants each time
     public final Command turnOn = new Command() {
-        public void execute() {
+        @Override
+        public void update() {
             intake.setPower(IntakeConstants.intakePower);
         }
 
@@ -54,13 +57,15 @@ public class Intake implements Subsystem {
             return false;  // Runs continuously until interrupted
         }
 
-        public void end(boolean interrupted) {
+        @Override
+        public void stop(boolean interrupted) {
             // Don't stop motor here - let other commands control it
         }
     }.requires(this);
 
     public final Command turnOnReverse = new Command() {
-        public void execute() {
+        @Override
+        public void update() {
             intake.setPower(-IntakeConstants.intakePowerSlow);
         }
 
@@ -69,13 +74,15 @@ public class Intake implements Subsystem {
             return false;  // Runs continuously until interrupted
         }
 
-        public void end(boolean interrupted) {
+        @Override
+        public void stop(boolean interrupted) {
             // Don't stop motor here - let other commands control it
         }
     }.requires(this);
 
     public final Command zeroPower = new Command() {
-        public void init() {
+        @Override
+        public void start() {
             intake.setPower(IntakeConstants.zeroPower);
         }
 
@@ -86,7 +93,8 @@ public class Intake implements Subsystem {
     }.requires(this);
 
     public final Command shoot = new Command() {
-        public void execute() {
+        @Override
+        public void update() {
             intake.setPower(IntakeConstants.shootPower);
         }
 
@@ -95,7 +103,8 @@ public class Intake implements Subsystem {
             return false;  // Runs continuously until interrupted
         }
 
-        public void end(boolean interrupted) {
+        @Override
+        public void stop(boolean interrupted) {
             // Don't stop motor here - let other commands control it
         }
     }.requires(this);

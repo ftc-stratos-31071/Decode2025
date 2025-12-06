@@ -10,11 +10,8 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 public class IntakeSeqCmd {
 
     public static Command create() {
-
         return new SequentialGroup(
-                // First move the servo to position
                 Intake.INSTANCE.moveServoPos,
-                // Then run intake motor and shooter in parallel
                 new ParallelGroup(
                         Intake.INSTANCE.turnOn,
                         Shooter.INSTANCE.moveShooterReversed

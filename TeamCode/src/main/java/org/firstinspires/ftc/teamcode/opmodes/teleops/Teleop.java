@@ -127,14 +127,38 @@ public class Teleop extends NextFTCOpMode {
                 backLeftMotor,
                 backRightMotor,
                 Gamepads.gamepad1().leftStickY(),
-                Gamepads.gamepad1().leftStickX(),  // Removed negate - was causing reversed strafe
+                Gamepads.gamepad1().leftStickX(),
                 Gamepads.gamepad1().rightStickX().negate()
         );
         driverControlled.schedule();
 
-        // Intake controls
-        Gamepads.gamepad1().leftBumper().whenBecomesTrue(IntakeSeqCmd.create());
-        Gamepads.gamepad1().leftBumper().whenBecomesFalse(ShooterOffCmd.create());
+        // Left Bumper - Intake sequence (press to start, release to stop)
+        Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> {
+            IntakeSeqCmd.create().schedule();
+        });
+        Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> {
+            ShooterOffCmd.create().schedule();
+        });
+
+        // Right Bumper - Shooter on
+        Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
+            shooterStartTime = System.currentTimeMillis();
+            shooterTiming = true;
+            ShooterOnCmd.create(shooterPower).schedule();
+        });
+
+        // A Button - Manual intake (hold to run, release to stop)
+        Gamepads.gamepad1().a().whenBecomesTrue(() -> {
+            Intake.INSTANCE.turnOn.schedule();
+        });
+        Gamepads.gamepad1().a().whenBecomesFalse(() -> {
+            Intake.INSTANCE.zeroPower.schedule();
+        });
+
+        // B Button - Shooter off
+        Gamepads.gamepad1().b().whenBecomesTrue(() -> {
+            Shooter.INSTANCE.zeroPower.schedule();
+        });
 
         // Shooter power adjustment
         Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
@@ -145,19 +169,6 @@ public class Teleop extends NextFTCOpMode {
             shooterPower = Math.max(0.0, shooterPower - 0.1);
         });
 
-        // Shooter on with timing
-        Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
-            shooterStartTime = System.currentTimeMillis();
-            shooterTiming = true;
-            ShooterOnCmd.create(shooterPower).schedule();
-        });
-
-        // Manual intake
-        Gamepads.gamepad1().a().whenBecomesTrue(Intake.INSTANCE.turnOn);
-        Gamepads.gamepad1().a().whenBecomesFalse(Intake.INSTANCE.zeroPower);
-
-        // Shooter off
-        Gamepads.gamepad1().b().whenBecomesTrue(Shooter.INSTANCE.zeroPower);
 
         // Servo position adjustment
         Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
@@ -182,28 +193,8 @@ public class Teleop extends NextFTCOpMode {
 
     @Override
     public void onUpdate() {
-        // Shooter RPM monitoring
+        // Simple shooter monitoring - just track power and basic RPM for display
         double rpm = Shooter.INSTANCE.getRPM() * 5;
-        double targetRPM = shooterPower * 6000;
-        boolean shooterReady = Math.abs(rpm - targetRPM) < (targetRPM * 0.05);
-
-        // Shooter timing logic
-        long spinUpTimeMs = 0;
-        if (shooterTiming) {
-            spinUpTimeMs = System.currentTimeMillis() - shooterStartTime;
-            if (shooterReady) {
-                shooterTiming = false;
-            }
-        }
-
-        // Rumble when shooter ready
-        if (shooterReady && !hasRumbled) {
-            Gamepads.gamepad1().getGamepad().invoke().rumble(500);
-            hasRumbled = true;
-        }
-        if (!shooterReady) {
-            hasRumbled = false;
-        }
 
         // ========================================================================
         // AUTOMATIC TURRET TRACKING - Tracks CLOSEST AprilTag
@@ -314,14 +305,10 @@ public class Teleop extends NextFTCOpMode {
         // ========================================================================
         telemetry.addData("", "");
         telemetry.addData("═══ SHOOTER ═══", "");
-        telemetry.addData("RPM", String.format("%.0f / %.0f", rpm, targetRPM));
-        telemetry.addData("Ready", shooterReady ? "✓ YES" : "✗ NO");
+        telemetry.addData("RPM", String.format("%.0f", rpm));
         telemetry.addData("Power", String.format("%.1f", shooterPower));
         telemetry.addData("Servo Position", String.format("%.2f", servoPos));
 
-        if (shooterTiming) {
-            telemetry.addData("Spin-up Time", String.format("%d ms", spinUpTimeMs));
-        }
 
         // ========================================================================
         // CONTROLS REMINDER

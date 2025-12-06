@@ -9,7 +9,6 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 public class ShooterOffCmd {
 
     public static Command create() {
-
         return new ParallelGroup(
                 Intake.INSTANCE.zeroPower,
                 Shooter.INSTANCE.zeroPower
