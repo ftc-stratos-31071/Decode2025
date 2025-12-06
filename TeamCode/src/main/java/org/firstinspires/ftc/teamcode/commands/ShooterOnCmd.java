@@ -19,11 +19,11 @@ public class ShooterOnCmd {
                 // Then run intake reverse and shooter reverse in parallel
                 new ParallelGroup(
                         Intake.INSTANCE.turnOnReverse,
-                        Shooter.INSTANCE.moveShooterReversed
+                        Shooter.INSTANCE.moveShooter(-ShooterConstants.motorPower)  // Reverse
                 ),
                 new Delay(ShooterConstants.reverseDelaySeconds),
                 Intake.INSTANCE.zeroPower,
-                Shooter.INSTANCE.moveShooter(shooterPower)
+                Shooter.INSTANCE.moveShooter(shooterPower)  // Use the passed parameter!
         );
     }
 }

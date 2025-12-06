@@ -127,7 +127,7 @@ public class Teleop extends NextFTCOpMode {
                 backLeftMotor,
                 backRightMotor,
                 Gamepads.gamepad1().leftStickY(),
-                Gamepads.gamepad1().leftStickX().negate(),
+                Gamepads.gamepad1().leftStickX(),  // Removed negate - was causing reversed strafe
                 Gamepads.gamepad1().rightStickX().negate()
         );
         driverControlled.schedule();
@@ -213,7 +213,7 @@ public class Teleop extends NextFTCOpMode {
             try {
                 result = limelight.getLatestResult();
             } catch (Exception e) {
-                // Silently handle limelight errors
+                telemetry.addData("Limelight Error", e.getMessage());
             }
         }
 
@@ -227,10 +227,12 @@ public class Teleop extends NextFTCOpMode {
                 double largestArea = 0.0;
 
                 for (LLResultTypes.FiducialResult fiducial : fiducials) {
-                    // Use the main result's TA (target area) as a proxy for distance
-                    if (closestTag == null) {
+                    // Calculate area from target XY coordinates (larger = closer)
+                    double targetArea = fiducial.getTargetXPixels() * fiducial.getTargetYPixels();
+
+                    if (closestTag == null || targetArea > largestArea) {
                         closestTag = fiducial;
-                        largestArea = result.getTa();
+                        largestArea = targetArea;
                     }
                 }
 
@@ -241,12 +243,13 @@ public class Teleop extends NextFTCOpMode {
                     // Use TX from the result for turret control
                     double tx = result.getTx();
 
-                    // Apply exponential smoothing to prevent jitter
+                    // FIXED: Apply exponential smoothing to prevent jitter
                     smoothedTx = SMOOTHING * smoothedTx + (1.0 - SMOOTHING) * tx;
 
                     // Apply deadband to prevent jitter when close to aligned
                     if (Math.abs(smoothedTx) > DEADBAND) {
-                        // Use proportional scaling - smaller adjustments when close to target
+                        // FIXED: Use proportional scaling - smaller adjustments when close to target
+                        // This prevents overshooting and oscillation
                         double adjustment = smoothedTx * TRACKING_GAIN;
 
                         // Scale down adjustment even more when we're getting close
@@ -259,16 +262,37 @@ public class Teleop extends NextFTCOpMode {
                         // Clamp to limits
                         motorTargetX = Math.max(-TURRET_LIMIT_DEG, Math.min(TURRET_LIMIT_DEG, motorTargetX));
                     }
+                    // If within deadband, keep current target (don't update)
+
+                    telemetry.addData("═══ TURRET TRACKING ═══", "");
+                    telemetry.addData("Status", "✓ TRACKING");
+                    telemetry.addData("Tag ID", closestTag.getFiducialId());
+                    telemetry.addData("TX Offset (raw)", String.format("%.2f°", tx));
+                    telemetry.addData("TX Offset (smooth)", String.format("%.2f°", smoothedTx));
+                    telemetry.addData("Turret Angle", String.format("%.2f°", motorTargetX));
+                    telemetry.addData("Target Area", String.format("%.2f%%", result.getTa()));
+                    telemetry.addData("Tags Visible", fiducials.size());
+                    telemetry.addData("Aligned", Math.abs(smoothedTx) <= DEADBAND ? "✓ YES" : "✗ NO");
                 }
             } else {
+                telemetry.addData("═══ TURRET TRACKING ═══", "");
+                telemetry.addData("Status", "✗ No AprilTags detected");
+                // Keep last known position if we've seen a target before
                 if (!hasSeenTarget) {
                     motorTargetX = 0.0;  // Return to center if never seen target
                     smoothedTx = 0.0;
                 }
             }
         } else if (!AUTO_TRACK_ENABLED) {
+            telemetry.addData("═══ TURRET TRACKING ═══", "");
+            telemetry.addData("Status", "⚠ DISABLED (Press X to enable)");
+            telemetry.addData("Turret Angle", String.format("%.2f°", motorTargetX));
             smoothedTx = 0.0;  // Reset smoothing when disabled
         } else {
+            telemetry.addData("═══ TURRET TRACKING ═══", "");
+            telemetry.addData("Status", "✗ No valid target");
+            telemetry.addData("Turret Angle", String.format("%.2f°", motorTargetX));
+            // Keep last position or return to center if never tracked
             if (!hasSeenTarget) {
                 motorTargetX = 0.0;
                 smoothedTx = 0.0;
@@ -286,14 +310,33 @@ public class Teleop extends NextFTCOpMode {
         Turret.INSTANCE.setTargetDegrees(motorTargetX);
 
         // ========================================================================
+        // SHOOTER TELEMETRY
+        // ========================================================================
+        telemetry.addData("", "");
+        telemetry.addData("═══ SHOOTER ═══", "");
+        telemetry.addData("RPM", String.format("%.0f / %.0f", rpm, targetRPM));
+        telemetry.addData("Ready", shooterReady ? "✓ YES" : "✗ NO");
+        telemetry.addData("Power", String.format("%.1f", shooterPower));
+        telemetry.addData("Servo Position", String.format("%.2f", servoPos));
+
+        if (shooterTiming) {
+            telemetry.addData("Spin-up Time", String.format("%d ms", spinUpTimeMs));
+        }
+
+        // ========================================================================
         // CONTROLS REMINDER
         // ========================================================================
+        telemetry.addData("", "");
         telemetry.addData("═══ CONTROLS ═══", "");
         telemetry.addData("Left Stick", "Drive");
         telemetry.addData("Right Stick", "Rotate");
         telemetry.addData("X Button", "Toggle Turret Tracking");
         telemetry.addData("Left Bumper", "Intake Sequence");
         telemetry.addData("Right Bumper", "Shooter On");
+        telemetry.addData("A Button", "Manual Intake");
+        telemetry.addData("B Button", "Shooter Off");
+        telemetry.addData("DPad Up/Down", "Adjust Servo Position");
+        telemetry.addData("DPad Left/Right", "Adjust Shooter Power");
 
         telemetry.update();
     }

@@ -15,6 +15,7 @@ public class Turret implements Subsystem {
     public static final Turret INSTANCE = new Turret();
     private Turret() {}
 
+    // Control Hub Motor Port 1
     public final MotorEx turret = new MotorEx("TurretMotor").reversed();
 
     private final ControlSystem turretController = ControlSystem.builder()

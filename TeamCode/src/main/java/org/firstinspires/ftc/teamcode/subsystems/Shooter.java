@@ -17,36 +17,56 @@ import dev.nextftc.hardware.powerable.SetPower;
 public class Shooter implements Subsystem {
     public static final Shooter INSTANCE = new Shooter();
 
-    private Shooter() {}
-
+    // Expansion Hub Servo Port 1
     private final ServoEx servo = new ServoEx("HoodServo");
+    // Expansion Hub Motor Port 0
     private final MotorEx motor1 = new MotorEx("ShooterRight").brakeMode();
+    // Expansion Hub Motor Port 1
     private final MotorEx motor2 = new MotorEx("ShooterLeft").brakeMode().reversed();
 
-    // PID control system for velocity control
-    private final ControlSystem velocityController = ControlSystem.builder()
-            .velPid(ShooterConstants.velocityKp,
-                    ShooterConstants.velocityKi,
-                    ShooterConstants.velocityKd)
-            .build();
+    // Velocity control system - rebuilt dynamically with current PID values
+    private ControlSystem velocityController;
 
     private double targetVelocity = 0;
-    private boolean velocityControlActive = false;
+    public boolean velocityControlActive = false;  // Changed to public for debug access
+
+    private Shooter() {
+        // Initialize velocity controller with current values
+        rebuildVelocityController();
+    }
+
+    /**
+     * Rebuild the velocity controller with current PID values from ShooterConstants.
+     * Call this when PID values change on the dashboard.
+     */
+    private void rebuildVelocityController() {
+        velocityController = ControlSystem.builder()
+                .velPid(ShooterConstants.velocityKp,
+                        ShooterConstants.velocityKi,
+                        ShooterConstants.velocityKd)
+                .build();
+    }
 
     // Dynamic servo commands - read values from ShooterConstants each time
     public final Command moveServoPos = new Command() {
+        public void init() {
+            servo.setPosition(ShooterConstants.servoPos);
+        }
+
         @Override
         public boolean isDone() {
-            servo.setPosition(ShooterConstants.servoPos);
-            return true;
+            return true;  // Completes immediately after setting position
         }
     }.requires(this);
 
     public final Command defaultPos = new Command() {
+        public void init() {
+            servo.setPosition(ShooterConstants.defaultPos);
+        }
+
         @Override
         public boolean isDone() {
-            servo.setPosition(ShooterConstants.defaultPos);
-            return true;
+            return true;  // Completes immediately after setting position
         }
     }.requires(this);
 
@@ -88,16 +108,23 @@ public class Shooter implements Subsystem {
 
         @Override
         public boolean isDone() {
-            return false;
+            return false;  // Runs continuously until interrupted
+        }
+
+        public void end(boolean interrupted) {
+            // Don't stop motor here - let other commands control it
         }
     }.requires(this);
 
     public final Command zeroPower = new Command() {
-        @Override
-        public boolean isDone() {
+        public void init() {
             motor1.setPower(ShooterConstants.zeroPower);
             motor2.setPower(ShooterConstants.zeroPower);
-            return true;
+        }
+
+        @Override
+        public boolean isDone() {
+            return true;  // Completes immediately after setting power
         }
     }.requires(this);
 
@@ -129,15 +156,25 @@ public class Shooter implements Subsystem {
     public void periodic() {
         // Apply velocity control if active
         if (velocityControlActive) {
-            // Get current motor state (includes position, velocity, etc.)
-            // Calculate PID output using motor state
-            double pidOutput = velocityController.calculate(motor1.getState());
+            // Get current motor velocity in ticks/second
+            double currentVelocity = motor1.getVelocity();
 
-            // Add feedforward term
+            // Calculate error
+            double velocityError = targetVelocity - currentVelocity;
+
+            // Calculate PID output (this is just the P, I, D correction terms)
+            // The ControlSystem expects a KineticState with position and velocity
+            double pidCorrection = velocityController.calculate(motor1.getState());
+
+            // Calculate feedforward: power = Kf × targetVelocity
+            // Kf is motor power per tick/sec, so this estimates the power needed
             double feedforward = targetVelocity * ShooterConstants.velocityKf;
 
-            // Combine PID + feedforward and clamp to [-1, 1]
-            double power = Math.max(-1, Math.min(1, pidOutput + feedforward));
+            // Combine feedforward + PID correction
+            double power = feedforward + pidCorrection;
+
+            // Clamp to motor limits [-1, 1]
+            power = Math.max(-1.0, Math.min(1.0, power));
 
             // Apply power to both motors
             motor1.setPower(power);
@@ -157,6 +194,9 @@ public class Shooter implements Subsystem {
         }
 
         public void init() {
+            // Rebuild velocity controller to pick up latest PID values from dashboard
+            rebuildVelocityController();
+
             // Set target velocity and enable velocity control
             targetVelocity = targetTicksPerSecond;
             velocityControlActive = true;
@@ -165,6 +205,7 @@ public class Shooter implements Subsystem {
 
         public void execute() {
             // Velocity control happens in periodic()
+            // Make sure velocityControlActive stays true
         }
 
         public void end(boolean interrupted) {

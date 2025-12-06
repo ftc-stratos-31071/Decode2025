@@ -15,23 +15,31 @@ public class Intake implements Subsystem {
 
     private Intake() {}
 
+    // Control Hub Motor Port 0
     private final MotorEx intake = new MotorEx("IntakeMotor").brakeMode().reversed();
+    // Expansion Hub Servo Port 0
     private final ServoEx servo = new ServoEx("IntakeServo");
 
     // Dynamic servo commands - read values from IntakeConstants each time
     public final Command moveServoPos = new Command() {
+        public void init() {
+            servo.setPosition(IntakeConstants.servoPos);
+        }
+
         @Override
         public boolean isDone() {
-            servo.setPosition(IntakeConstants.servoPos);
-            return true;
+            return true;  // Completes immediately after setting position
         }
     }.requires(this);
 
     public final Command defaultPos = new Command() {
+        public void init() {
+            servo.setPosition(IntakeConstants.defaultPos);
+        }
+
         @Override
         public boolean isDone() {
-            servo.setPosition(IntakeConstants.defaultPos);
-            return true;
+            return true;  // Completes immediately after setting position
         }
     }.requires(this);
 
@@ -43,7 +51,11 @@ public class Intake implements Subsystem {
 
         @Override
         public boolean isDone() {
-            return false;
+            return false;  // Runs continuously until interrupted
+        }
+
+        public void end(boolean interrupted) {
+            // Don't stop motor here - let other commands control it
         }
     }.requires(this);
 
@@ -54,15 +66,22 @@ public class Intake implements Subsystem {
 
         @Override
         public boolean isDone() {
-            return false;
+            return false;  // Runs continuously until interrupted
+        }
+
+        public void end(boolean interrupted) {
+            // Don't stop motor here - let other commands control it
         }
     }.requires(this);
 
     public final Command zeroPower = new Command() {
+        public void init() {
+            intake.setPower(IntakeConstants.zeroPower);
+        }
+
         @Override
         public boolean isDone() {
-            intake.setPower(IntakeConstants.zeroPower);
-            return true;
+            return true;  // Completes immediately after setting power
         }
     }.requires(this);
 
@@ -73,7 +92,11 @@ public class Intake implements Subsystem {
 
         @Override
         public boolean isDone() {
-            return false;
+            return false;  // Runs continuously until interrupted
+        }
+
+        public void end(boolean interrupted) {
+            // Don't stop motor here - let other commands control it
         }
     }.requires(this);
 }
