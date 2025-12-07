@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.constants;
 
+import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
@@ -19,7 +20,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class PedroConstants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(6.9);
+            .mass(6.9)
+            .forwardZeroPowerAcceleration(-504.6038201439834)
+            .lateralZeroPowerAcceleration(-206.39577567656724)
+            .useSecondaryTranslationalPIDF(true)
+            .useSecondaryHeadingPIDF(true)
+            .useSecondaryDrivePIDF(true)
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.04, 0.0, 0.0005,0.001));
 
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
@@ -27,10 +34,12 @@ public class PedroConstants {
             .rightRearMotorName("backRightMotor")
             .leftRearMotorName("backLeftMotor")
             .leftFrontMotorName("frontLeftMotor")
-            .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD);
+            .leftFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .leftRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
+            .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE)
+            .xVelocity(73.3775610736036)
+            .yVelocity(54.52275794322095);
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
             .forwardPodY(-3.4252)
