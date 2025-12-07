@@ -126,9 +126,9 @@ public class Teleop extends NextFTCOpMode {
                 frontRightMotor,
                 backLeftMotor,
                 backRightMotor,
-                Gamepads.gamepad1().leftStickY(),
-                Gamepads.gamepad1().leftStickX(),
-                Gamepads.gamepad1().rightStickX().negate()
+                Gamepads.gamepad1().leftStickY(),              // forward/back (correct)
+                Gamepads.gamepad1().leftStickX().negate(),     // <-- FIX: flip strafe
+                Gamepads.gamepad1().rightStickX().negate()     // rotate (already flipped)
         );
         driverControlled.schedule();
 
