@@ -157,7 +157,7 @@ public class Teleop extends NextFTCOpMode {
 
         // B Button - Shooter off
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
-            Shooter.INSTANCE.zeroPower.schedule();
+            ShooterOffCmd.create().schedule();
         });
 
         // Shooter power adjustment

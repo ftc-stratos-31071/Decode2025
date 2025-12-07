@@ -21,7 +21,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class PedroConstants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(6.9)
-//            .forwardZeroPowerAcceleration(-504.6038201439834)
+            .forwardZeroPowerAcceleration(-113.5133400526054)
 //            .lateralZeroPowerAcceleration(-206.39577567656724)
             .useSecondaryTranslationalPIDF(false)
             .useSecondaryHeadingPIDF(false)
