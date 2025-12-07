@@ -21,12 +21,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class PedroConstants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(6.9)
-            .forwardZeroPowerAcceleration(-504.6038201439834)
-            .lateralZeroPowerAcceleration(-206.39577567656724)
-            .useSecondaryTranslationalPIDF(true)
-            .useSecondaryHeadingPIDF(true)
-            .useSecondaryDrivePIDF(true)
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.04, 0.0, 0.0005,0.001));
+//            .forwardZeroPowerAcceleration(-504.6038201439834)
+//            .lateralZeroPowerAcceleration(-206.39577567656724)
+            .useSecondaryTranslationalPIDF(false)
+            .useSecondaryHeadingPIDF(false)
+            .useSecondaryDrivePIDF(false);
+//            .translationalPIDFCoefficients(new PIDFCoefficients(0.04, 0.0, 0.0005,0.001))
+//            .headingPIDFCoefficients(new PIDFCoefficients(0.3, 0.0, 0.01, 0.01));
 
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
@@ -38,8 +39,8 @@ public class PedroConstants {
             .leftRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .xVelocity(73.3775610736036)
-            .yVelocity(54.52275794322095);
+            .xVelocity(83.46694105253445)
+            .yVelocity(59.0405898206816);
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
             .forwardPodY(-3.4252)
