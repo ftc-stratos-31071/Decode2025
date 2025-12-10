@@ -10,7 +10,7 @@ public class ShooterOffCmd {
 
     public static Command create() {
         return new ParallelGroup(
-                Intake.INSTANCE.zeroPower,
+//                Intake.INSTANCE.zeroPower,
                 Shooter.INSTANCE.zeroPower
         );
     }

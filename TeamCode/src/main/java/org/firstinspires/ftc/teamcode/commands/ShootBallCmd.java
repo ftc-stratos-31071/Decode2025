@@ -12,9 +12,10 @@ public class ShootBallCmd {
     public static Command create() {
         return new SequentialGroup(
                 Intake.INSTANCE.defaultPos,
-                Intake.INSTANCE.shoot,
-                new Delay(ShooterConstants.shootDelaySeconds),
-                Intake.INSTANCE.zeroPower
+//                new Delay(ShooterConstants.shootDelaySeconds),
+                Intake.INSTANCE.shoot
+//                new Delay(ShooterConstants.shootDelaySeconds),
+//                Intake.INSTANCE.zeroPower
         );
     }
 }

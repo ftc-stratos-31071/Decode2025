@@ -54,6 +54,7 @@ public class Teleop extends NextFTCOpMode {
     public static double DEADBAND = 3.0;  // Increased from 2.0 - larger tolerance to prevent jitter
     public static boolean AUTO_TRACK_ENABLED = true;  // Enable/disable tracking
     public static double NO_TARGET_TIMEOUT_SEC = 2.5;  // Time before returning to center when no target detected
+    public static double MAX_HOOD_HEIGHT = 0.6;  // Maximum hood servo position
 
     // Estimated RPM per unit power at full power (adjust if your shooter differs)
     private static final double TARGET_RPM_PER_POWER = 6000.0;
@@ -157,15 +158,17 @@ public class Teleop extends NextFTCOpMode {
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
             ShootBallCmd.create().schedule();
         });
-//        Gamepads.gamepad1().a().whenBecomesFalse(() -> {
-//            Intake.INSTANCE.zeroPower.schedule();
-//        });
+        Gamepads.gamepad1().a().whenBecomesFalse(() -> {
+            Intake.INSTANCE.zeroPower.schedule();
+        });
 
-        // B Button - Shooter off
+        // B Button - Intake OUTTAKE (reverse direction)
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
+            Intake.INSTANCE.turnOnReverse.schedule();  // Spins intake in reverse
             ShooterOffCmd.create().schedule();
-            shooterTiming = false;
-            hasRumbled = false; // reset rumble state
+        });
+        Gamepads.gamepad1().b().whenBecomesFalse(() -> {
+            Intake.INSTANCE.zeroPower.schedule();
         });
 
         // Shooter power adjustment
@@ -180,9 +183,9 @@ public class Teleop extends NextFTCOpMode {
         });
 
 
-        // Servo position adjustment
+        // Servo position adjustment with MAX_HOOD_HEIGHT limit
         Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
-            servoPos = Math.min(1.0, servoPos - 0.1);
+            servoPos = Math.min(MAX_HOOD_HEIGHT, servoPos - 0.1);  // Limited to MAX_HOOD_HEIGHT instead of 1.0
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
 
@@ -191,13 +194,26 @@ public class Teleop extends NextFTCOpMode {
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
 
-        // Toggle auto-tracking with X button
+        // X Button - Toggle auto-tracking (enable/disable)
         Gamepads.gamepad1().x().whenBecomesTrue(() -> {
-            AUTO_TRACK_ENABLED = !AUTO_TRACK_ENABLED;
-            if (!AUTO_TRACK_ENABLED) {
-                motorTargetX = 0.0;  // Return to center when disabled
-                hasSeenTarget = false;
-            }
+            ShooterOffCmd.create().schedule();
+//            AUTO_TRACK_ENABLED = !AUTO_TRACK_ENABLED;  // Toggle: if enabled -> disabled, if disabled -> enabled
+//            if (!AUTO_TRACK_ENABLED) {
+//                motorTargetX = 0.0;  // Return to center when disabled
+//                hasSeenTarget = false;
+//            }
+//            telemetry.addData("Auto-Tracking", AUTO_TRACK_ENABLED ? "ENABLED" : "DISABLED");
+//            telemetry.update();
+        });
+
+        // Y Button - Manual turret reset to center (straight/front)
+        Gamepads.gamepad1().y().whenBecomesTrue(() -> {
+            motorTargetX = 0.0;  // Reset turret to center (0 degrees = straight ahead)
+            smoothedTx = 0.0;
+            hasSeenTarget = false;
+            Turret.INSTANCE.setTargetDegrees(0.0);  // Immediately command turret to center
+            telemetry.addData("Turret", "Reset to Center");
+            telemetry.update();
         });
     }
 
@@ -328,7 +344,7 @@ public class Teleop extends NextFTCOpMode {
         telemetry.addData("═══ SHOOTER ═══", "");
         telemetry.addData("RPM", String.format("%.0f", rpm));
         telemetry.addData("Power", String.format("%.1f", shooterPower));
-        telemetry.addData("Servo Position", String.format("%.2f", servoPos));
+        telemetry.addData("Hood Position", String.format("%.2f / %.2f (Max)", servoPos, MAX_HOOD_HEIGHT));
 
 
         // ========================================================================
@@ -338,12 +354,13 @@ public class Teleop extends NextFTCOpMode {
         telemetry.addData("═══ CONTROLS ═══", "");
         telemetry.addData("Left Stick", "Drive");
         telemetry.addData("Right Stick", "Rotate");
-        telemetry.addData("X Button", "Toggle Turret Tracking");
+        telemetry.addData("X Button", "Shooter Off");
+        telemetry.addData("Y Button", "Reset Turret to Center");
         telemetry.addData("Left Bumper", "Intake Sequence");
         telemetry.addData("Right Bumper", "Shooter On");
-        telemetry.addData("A Button", "Manual Intake");
-        telemetry.addData("B Button", "Shooter Off");
-        telemetry.addData("DPad Up/Down", "Adjust Servo Position");
+        telemetry.addData("A Button", "Shoot Ball");
+        telemetry.addData("B Button", "Outtake (Reverse Intake)");
+        telemetry.addData("DPad Up/Down", "Adjust Hood Position");
         telemetry.addData("DPad Left/Right", "Adjust Shooter Power");
 
         telemetry.update();
