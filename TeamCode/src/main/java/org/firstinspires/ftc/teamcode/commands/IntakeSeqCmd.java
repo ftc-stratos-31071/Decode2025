@@ -13,8 +13,7 @@ public class IntakeSeqCmd {
         return new SequentialGroup(
                 Intake.INSTANCE.moveServoPos,
                 new ParallelGroup(
-                        Intake.INSTANCE.turnOn,
-                        Shooter.INSTANCE.moveShooterReversed
+                        Intake.INSTANCE.turnOn
                 )
         );
     }

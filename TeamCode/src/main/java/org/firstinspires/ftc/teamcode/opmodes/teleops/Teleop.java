@@ -1,3 +1,4 @@
+// java
 package org.firstinspires.ftc.teamcode.opmodes.teleops;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -9,6 +10,7 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
+import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
 import org.firstinspires.ftc.teamcode.commands.ShooterOffCmd;
 import org.firstinspires.ftc.teamcode.commands.ShooterOnCmd;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
@@ -51,7 +53,10 @@ public class Teleop extends NextFTCOpMode {
     public static double TURRET_LIMIT_DEG = 90.0;  // Max turret rotation
     public static double DEADBAND = 3.0;  // Increased from 2.0 - larger tolerance to prevent jitter
     public static boolean AUTO_TRACK_ENABLED = true;  // Enable/disable tracking
-    public static double NO_TARGET_TIMEOUT_SEC = 5.0;  // Time before returning to center when no target detected
+    public static double NO_TARGET_TIMEOUT_SEC = 2.5;  // Time before returning to center when no target detected
+
+    // Estimated RPM per unit power at full power (adjust if your shooter differs)
+    private static final double TARGET_RPM_PER_POWER = 6000.0;
 
     public Teleop() {
         addComponents(
@@ -137,36 +142,41 @@ public class Teleop extends NextFTCOpMode {
             IntakeSeqCmd.create().schedule();
         });
         Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> {
-            ShooterOffCmd.create().schedule();
+            Intake.INSTANCE.zeroPower.schedule();
         });
 
         // Right Bumper - Shooter on
         Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
             shooterStartTime = System.currentTimeMillis();
             shooterTiming = true;
-            ShooterOnCmd.create(shooterPower).schedule();
+            hasRumbled = false; // allow a new rumble for this run
+            Shooter.INSTANCE.moveShooter(shooterPower).schedule();
         });
 
         // A Button - Manual intake (hold to run, release to stop)
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
-            Intake.INSTANCE.turnOn.schedule();
+            ShootBallCmd.create().schedule();
         });
-        Gamepads.gamepad1().a().whenBecomesFalse(() -> {
-            Intake.INSTANCE.zeroPower.schedule();
-        });
+//        Gamepads.gamepad1().a().whenBecomesFalse(() -> {
+//            Intake.INSTANCE.zeroPower.schedule();
+//        });
 
         // B Button - Shooter off
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
             ShooterOffCmd.create().schedule();
+            shooterTiming = false;
+            hasRumbled = false; // reset rumble state
         });
 
         // Shooter power adjustment
         Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
             shooterPower = Math.min(1.0, shooterPower + 0.1);
+            hasRumbled = false; // new power => allow rumble again
         });
 
         Gamepads.gamepad1().dpadLeft().whenBecomesTrue(() -> {
             shooterPower = Math.max(0.0, shooterPower - 0.1);
+            hasRumbled = false; // new power => allow rumble again
         });
 
 
@@ -195,6 +205,17 @@ public class Teleop extends NextFTCOpMode {
     public void onUpdate() {
         // Simple shooter monitoring - just track power and basic RPM for display
         double rpm = Shooter.INSTANCE.getRPM() * 5;
+
+        // RUMBLE WHEN TARGET RPM REACHED
+        if (shooterTiming && !hasRumbled) {
+            double targetRpm = shooterPower * TARGET_RPM_PER_POWER;
+            if (rpm >= targetRpm) {
+                try {
+                    Gamepads.gamepad1().getGamepad().invoke().rumble(500);
+                } catch (Exception ignored) { }
+                hasRumbled = true;
+            }
+        }
 
         // ========================================================================
         // AUTOMATIC TURRET TRACKING - Tracks CLOSEST AprilTag

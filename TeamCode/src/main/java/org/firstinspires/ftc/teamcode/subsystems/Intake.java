@@ -18,7 +18,7 @@ public class Intake implements Subsystem {
     // Control Hub Motor Port 0
     private final MotorEx intake = new MotorEx("IntakeMotor").brakeMode().reversed();
     // Expansion Hub Servo Port 0
-    private final ServoEx servo = new ServoEx("IntakeServo");
+    private final ServoEx servo = new ServoEx("DoorServo");
 
     // Dynamic servo commands - read values from IntakeConstants each time
     public final Command moveServoPos = new Command() {
