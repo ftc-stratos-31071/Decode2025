@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes.teleops;
+package org.firstinspires.ftc.teamcode.constants.tuning;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
