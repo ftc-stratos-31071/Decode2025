@@ -185,12 +185,12 @@ public class Teleop extends NextFTCOpMode {
 
         // Servo position adjustment with MAX_HOOD_HEIGHT limit
         Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
-            servoPos = Math.min(MAX_HOOD_HEIGHT, servoPos - 0.1);  // Limited to MAX_HOOD_HEIGHT instead of 1.0
+            servoPos = Math.min(MAX_HOOD_HEIGHT, servoPos + 0.1);  // DPad Up increases servo position (capped at MAX_HOOD_HEIGHT)
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
 
         Gamepads.gamepad1().dpadDown().whenBecomesTrue(() -> {
-            servoPos = Math.max(0.0, servoPos + 0.1);
+            servoPos = Math.max(0.0, servoPos - 0.1);  // DPad Down decreases servo position (capped at 0.0)
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
 
