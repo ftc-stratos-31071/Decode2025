@@ -128,6 +128,16 @@ public class TestColor extends NextFTCOpMode {
             }
         });
 
+        // Right Bumper - Outtake (reverse intake) - hold to run, release to stop
+        Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
+            Intake.INSTANCE.turnOnReverse.schedule();  // Spins intake in reverse
+            intakeRunning = false;  // Mark intake as not running for ball detection
+        });
+
+        Gamepads.gamepad1().rightBumper().whenBecomesFalse(() -> {
+            Intake.INSTANCE.zeroPower.schedule();  // Stop when trigger released
+        });
+
         // Y Button - Toggle diagnostic mode
         Gamepads.gamepad1().y().whenBecomesTrue(() -> {
             diagnosticMode = !diagnosticMode;
