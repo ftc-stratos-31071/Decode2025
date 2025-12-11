@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
 import org.firstinspires.ftc.teamcode.commands.ShooterOffCmd;
 import org.firstinspires.ftc.teamcode.commands.ShooterOnCmd;
+import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
@@ -22,6 +23,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 import dev.nextftc.core.commands.Command;
@@ -169,11 +171,21 @@ public class Teleop extends NextFTCOpMode {
 
 
         // Right Bumper - Shooter on
+        AtomicBoolean shooterOn = new AtomicBoolean(false);
+
         Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
-            shooterStartTime = System.currentTimeMillis();
-            shooterTiming = true;
-            hasRumbled = false; // allow a new rumble for this run
-            Shooter.INSTANCE.moveShooter(shooterPower).schedule();
+            if (!shooterOn.get()) {
+                shooterStartTime = System.currentTimeMillis();
+                shooterTiming = true;
+                hasRumbled = false;
+                ShooterOnCmd.create(shooterPower).schedule();
+            } else {
+                Shooter.INSTANCE.moveShooter(0).schedule();
+                shooterTiming = false;
+                hasRumbled = false;
+                shooterStartTime = 0;
+            }
+            shooterOn.set(!shooterOn.get());
         });
 
 
@@ -188,8 +200,7 @@ public class Teleop extends NextFTCOpMode {
 
         // B Button - Intake OUTTAKE (reverse direction)
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
-            Intake.INSTANCE.turnOnReverse.schedule();  // Spins intake in reverse
-            ShooterOffCmd.create().schedule();
+            Intake.INSTANCE.moveIntake(-IntakeConstants.intakePowerSlow).schedule();  // Spins intake in reverse
         });
         Gamepads.gamepad1().b().whenBecomesFalse(() -> {
             Intake.INSTANCE.zeroPower.schedule();

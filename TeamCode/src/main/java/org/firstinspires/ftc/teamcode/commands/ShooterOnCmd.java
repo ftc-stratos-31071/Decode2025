@@ -12,15 +12,9 @@ import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 public class ShooterOnCmd {
 
     public static Command create(double shooterPower) {
-        return new SequentialGroup(
-                Intake.INSTANCE.defaultPos,
-                new ParallelGroup(
+        return new ParallelGroup(
                         Intake.INSTANCE.turnOnReverse,
-                        Shooter.INSTANCE.moveShooter(ShooterConstants.motorPower)
-                ),
-                new Delay(ShooterConstants.reverseDelaySeconds),
-                Intake.INSTANCE.zeroPower,
-                Shooter.INSTANCE.moveShooter(-shooterPower)
+                        Shooter.INSTANCE.moveShooter(shooterPower)
         );
     }
 }

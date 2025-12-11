@@ -5,9 +5,11 @@ import com.acmerobotics.dashboard.config.Config;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 
 import dev.nextftc.core.commands.Command;
+import dev.nextftc.core.commands.groups.ParallelGroup;
 import dev.nextftc.core.subsystems.Subsystem;
 import dev.nextftc.hardware.impl.MotorEx;
 import dev.nextftc.hardware.impl.ServoEx;
+import dev.nextftc.hardware.powerable.SetPower;
 
 @Config
 public class Intake implements Subsystem {
@@ -19,6 +21,10 @@ public class Intake implements Subsystem {
     private final MotorEx intake = new MotorEx("IntakeMotor").brakeMode().reversed();
     // Expansion Hub Servo Port 0
     private final ServoEx servo = new ServoEx("DoorServo");
+
+    public Command moveIntake(double shooterPower) {
+        return new SetPower(intake, shooterPower);
+    }
 
     // Dynamic servo commands - read values from IntakeConstants each time
     public final Command moveServoPos = new Command() {
@@ -63,20 +69,30 @@ public class Intake implements Subsystem {
         }
     }.requires(this);
 
+    private long shootStartTimeNanos2 = 0L;
+
     public final Command turnOnReverse = new Command() {
         @Override
+        public void start() {
+            shootStartTimeNanos2 = System.nanoTime();
+            intake.setPower(-IntakeConstants.intakePowerSlow);
+        }
+
+        @Override
         public void update() {
+            // Ensure power remains set while running
             intake.setPower(-IntakeConstants.intakePowerSlow);
         }
 
         @Override
         public boolean isDone() {
-            return false;  // Runs continuously until interrupted
+            return System.nanoTime() - shootStartTimeNanos2 >= 100_000_000L; // 500 ms
         }
 
         @Override
         public void stop(boolean interrupted) {
-            // Don't stop motor here - let other commands control it
+            // Stop the motor when command finishes or is interrupted
+            intake.setPower(IntakeConstants.zeroPower);
         }
     }.requires(this);
 
@@ -110,7 +126,7 @@ public class Intake implements Subsystem {
 
         @Override
         public boolean isDone() {
-            return System.nanoTime() - shootStartTimeNanos >= 300_000_000L; // 500 ms
+            return System.nanoTime() - shootStartTimeNanos >= 100_000_000L; // 500 ms
         }
 
         @Override
