@@ -1,6 +1,7 @@
 // java
 package org.firstinspires.ftc.teamcode.opmodes.teleops;
 
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -8,6 +9,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
 
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
@@ -18,7 +20,9 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
+
 import java.util.List;
+
 
 import dev.nextftc.core.commands.Command;
 import dev.nextftc.core.components.BindingsComponent;
@@ -28,6 +32,7 @@ import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
 import dev.nextftc.hardware.driving.MecanumDriverControlled;
 import dev.nextftc.hardware.impl.MotorEx;
+
 
 /**
  * Main TeleOp with AUTOMATIC TURRET TRACKING!
@@ -56,8 +61,10 @@ public class Teleop extends NextFTCOpMode {
     public static double NO_TARGET_TIMEOUT_SEC = 2.5;  // Time before returning to center when no target detected
     public static double MAX_HOOD_HEIGHT = 0.6;  // Maximum hood servo position
 
+
     // Estimated RPM per unit power at full power (adjust if your shooter differs)
     private static final double TARGET_RPM_PER_POWER = 6000.0;
+
 
     public Teleop() {
         addComponents(
@@ -67,10 +74,12 @@ public class Teleop extends NextFTCOpMode {
         );
     }
 
+
     private final MotorEx frontLeftMotor = new MotorEx("frontLeftMotor").brakeMode().reversed();
     private final MotorEx frontRightMotor = new MotorEx("frontRightMotor").brakeMode();
     private final MotorEx backLeftMotor = new MotorEx("backLeftMotor").brakeMode().reversed();
     private final MotorEx backRightMotor = new MotorEx("backRightMotor").brakeMode();
+
 
     Limelight3A limelight;
     double motorTargetX = 0.0;
@@ -78,13 +87,16 @@ public class Teleop extends NextFTCOpMode {
     boolean hasSeenTarget = false;  // Track if we've ever seen a target
     long lastTargetSeenTime = 0;  // Timestamp of last valid target detection
 
+
     double servoPos = ShooterConstants.defaultPos;
     double shooterPower = 0.5;
+
 
     // Shooter timing
     boolean hasRumbled = false;
     private long shooterStartTime = 0;
     private boolean shooterTiming = false;
+
 
     @Override
     public void onInit() {
@@ -92,8 +104,11 @@ public class Teleop extends NextFTCOpMode {
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
+
         Intake.INSTANCE.defaultPos.schedule();
         Shooter.INSTANCE.defaultPos.schedule();
+        Shooter.INSTANCE.kickDefaultPos.schedule();
+
 
         // IMPORTANT: Zero the turret and set initial target to 0 (front)
         Turret.INSTANCE.turret.zeroed();
@@ -102,6 +117,7 @@ public class Teleop extends NextFTCOpMode {
         hasSeenTarget = false;
         lastTargetSeenTime = System.currentTimeMillis();  // Initialize timeout timer
 
+
         // Initialize Limelight with camera streaming
         try {
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -109,8 +125,10 @@ public class Teleop extends NextFTCOpMode {
             limelight.start();
             limelight.pipelineSwitch(0);
 
+
             // Stream camera to dashboard
             dashboard.startCameraStream(limelight, 0);
+
 
             telemetry.addData("Limelight", "✓ Connected");
             telemetry.addData("Camera", "✓ Streaming to dashboard");
@@ -118,11 +136,13 @@ public class Teleop extends NextFTCOpMode {
             telemetry.addData("Limelight", "✗ ERROR: " + e.getMessage());
         }
 
+
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Mode", "Driver Control + Auto Turret");
         telemetry.addData("Turret", "Centered at 0° (FRONT)");
         telemetry.update();
     }
+
 
     @Override
     public void onStartButtonPressed() {
@@ -138,6 +158,7 @@ public class Teleop extends NextFTCOpMode {
         );
         driverControlled.schedule();
 
+
         // Left Bumper - Intake sequence (press to start, release to stop)
         Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> {
             IntakeSeqCmd.create().schedule();
@@ -145,6 +166,7 @@ public class Teleop extends NextFTCOpMode {
         Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> {
             Intake.INSTANCE.zeroPower.schedule();
         });
+
 
         // Right Bumper - Shooter on
         Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
@@ -154,13 +176,15 @@ public class Teleop extends NextFTCOpMode {
             Shooter.INSTANCE.moveShooter(shooterPower).schedule();
         });
 
+
         // A Button - Manual intake (hold to run, release to stop)
-        Gamepads.gamepad1().a().whenBecomesTrue(() -> {
+        Gamepads.gamepad1().a().whenTrue(() -> {
             ShootBallCmd.create().schedule();
         });
-        Gamepads.gamepad1().a().whenBecomesFalse(() -> {
-            Intake.INSTANCE.zeroPower.schedule();
-        });
+//        Gamepads.gamepad1().a().whenBecomesFalse(() -> {
+//            Intake.INSTANCE.zeroPower.schedule();
+//        });
+
 
         // B Button - Intake OUTTAKE (reverse direction)
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
@@ -171,11 +195,13 @@ public class Teleop extends NextFTCOpMode {
             Intake.INSTANCE.zeroPower.schedule();
         });
 
+
         // Shooter power adjustment
         Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
             shooterPower = Math.min(1.0, shooterPower + 0.1);
             hasRumbled = false; // new power => allow rumble again
         });
+
 
         Gamepads.gamepad1().dpadLeft().whenBecomesTrue(() -> {
             shooterPower = Math.max(0.0, shooterPower - 0.1);
@@ -183,11 +209,14 @@ public class Teleop extends NextFTCOpMode {
         });
 
 
+
+
         // Servo position adjustment with MAX_HOOD_HEIGHT limit
         Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
             servoPos = Math.min(MAX_HOOD_HEIGHT, servoPos + 0.1);  // DPad Up increases servo position (capped at MAX_HOOD_HEIGHT)
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
+
 
         Gamepads.gamepad1().dpadDown().whenBecomesTrue(() -> {
             servoPos = Math.max(0.0, servoPos - 0.1);  // DPad Down decreases servo position (capped at 0.0)
@@ -206,6 +235,7 @@ public class Teleop extends NextFTCOpMode {
 //            telemetry.update();
         });
 
+
         // Y Button - Manual turret reset to center (straight/front)
         Gamepads.gamepad1().y().whenBecomesTrue(() -> {
             motorTargetX = 0.0;  // Reset turret to center (0 degrees = straight ahead)
@@ -217,10 +247,12 @@ public class Teleop extends NextFTCOpMode {
         });
     }
 
+
     @Override
     public void onUpdate() {
         // Simple shooter monitoring - just track power and basic RPM for display
         double rpm = Shooter.INSTANCE.getRPM() * 5;
+
 
         // RUMBLE WHEN TARGET RPM REACHED
         if (shooterTiming && !hasRumbled) {
@@ -232,6 +264,7 @@ public class Teleop extends NextFTCOpMode {
                 hasRumbled = true;
             }
         }
+
 
         // ========================================================================
         // AUTOMATIC TURRET TRACKING - Tracks CLOSEST AprilTag
@@ -245,18 +278,22 @@ public class Teleop extends NextFTCOpMode {
             }
         }
 
+
         if (AUTO_TRACK_ENABLED && result != null && result.isValid()) {
             // Get all detected AprilTags
             List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+
 
             if (fiducials != null && !fiducials.isEmpty()) {
                 // Find the CLOSEST tag (largest area = closest)
                 LLResultTypes.FiducialResult closestTag = null;
                 double largestArea = 0.0;
 
+
                 for (LLResultTypes.FiducialResult fiducial : fiducials) {
                     // Calculate area from target XY coordinates (larger = closer)
                     double targetArea = fiducial.getTargetXPixels() * fiducial.getTargetYPixels();
+
 
                     if (closestTag == null || targetArea > largestArea) {
                         closestTag = fiducial;
@@ -264,15 +301,19 @@ public class Teleop extends NextFTCOpMode {
                     }
                 }
 
+
                 if (closestTag != null) {
                     hasSeenTarget = true;
                     lastTargetSeenTime = System.currentTimeMillis();  // Update last seen time
 
+
                     // Use TX from the result for turret control
                     double tx = result.getTx();
 
+
                     // FIXED: Apply exponential smoothing to prevent jitter
                     smoothedTx = SMOOTHING * smoothedTx + (1.0 - SMOOTHING) * tx;
+
 
                     // Apply deadband to prevent jitter when close to aligned
                     if (Math.abs(smoothedTx) > DEADBAND) {
@@ -280,17 +321,21 @@ public class Teleop extends NextFTCOpMode {
                         // This prevents overshooting and oscillation
                         double adjustment = smoothedTx * TRACKING_GAIN;
 
+
                         // Scale down adjustment even more when we're getting close
                         if (Math.abs(smoothedTx) < 10.0) {
                             adjustment *= 0.5;  // Half speed when within 10 degrees
                         }
 
+
                         motorTargetX += adjustment;
+
 
                         // Clamp to limits
                         motorTargetX = Math.max(-TURRET_LIMIT_DEG, Math.min(TURRET_LIMIT_DEG, motorTargetX));
                     }
                     // If within deadband, keep current target (don't update)
+
 
                     telemetry.addData("═══ TURRET TRACKING ═══", "");
                     telemetry.addData("Status", "✓ TRACKING");
@@ -327,6 +372,7 @@ public class Teleop extends NextFTCOpMode {
             }
         }
 
+
         // Check for timeout - return turret to center if no target detected for a while
         if (System.currentTimeMillis() - lastTargetSeenTime > NO_TARGET_TIMEOUT_SEC * 1000) {
             motorTargetX = 0.0;  // Return to center (front)
@@ -334,8 +380,10 @@ public class Teleop extends NextFTCOpMode {
             hasSeenTarget = false;
         }
 
+
         // Apply turret target - use direct control instead of scheduling commands
         Turret.INSTANCE.setTargetDegrees(motorTargetX);
+
 
         // ========================================================================
         // SHOOTER TELEMETRY
@@ -345,6 +393,8 @@ public class Teleop extends NextFTCOpMode {
         telemetry.addData("RPM", String.format("%.0f", rpm));
         telemetry.addData("Power", String.format("%.1f", shooterPower));
         telemetry.addData("Hood Position", String.format("%.2f / %.2f (Max)", servoPos, MAX_HOOD_HEIGHT));
+
+
 
 
         // ========================================================================
@@ -363,6 +413,8 @@ public class Teleop extends NextFTCOpMode {
         telemetry.addData("DPad Up/Down", "Adjust Hood Position");
         telemetry.addData("DPad Left/Right", "Adjust Shooter Power");
 
+
         telemetry.update();
     }
 }
+

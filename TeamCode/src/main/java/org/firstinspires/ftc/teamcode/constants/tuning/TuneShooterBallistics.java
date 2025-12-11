@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.subsystems.ShooterPIDF;
 import java.util.List;
 
 import dev.nextftc.core.components.SubsystemComponent;
+import dev.nextftc.ftc.Gamepads;
 import dev.nextftc.ftc.NextFTCOpMode;
 
 /**
@@ -73,8 +74,8 @@ public class TuneShooterBallistics extends NextFTCOpMode {
     @Override
     public void onStartButtonPressed() {
         // Simple control: right bumper toggles shooter enabled/disabled
-        dev.nextftc.ftc.Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> shooterEnabled = true);
-        dev.nextftc.ftc.Gamepads.gamepad1().rightBumper().whenBecomesFalse(() -> {
+        Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> shooterEnabled = true);
+        Gamepads.gamepad1().rightBumper().whenBecomesFalse(() -> {
             shooterEnabled = false;
             ShooterPIDF.INSTANCE.stopShooter();
         });

@@ -18,6 +18,7 @@ public class Shooter implements Subsystem {
 
     // Expansion Hub Servo Port 1
     private final ServoEx servo = new ServoEx("HoodServo");
+    private final ServoEx servo2 = new ServoEx("KickerServo");
     // Expansion Hub Motor Port 0
     private final MotorEx motor1 = new MotorEx("ShooterRight").brakeMode();
     // Expansion Hub Motor Port 1
@@ -43,6 +44,30 @@ public class Shooter implements Subsystem {
         @Override
         public void start() {
             servo.setPosition(ShooterConstants.defaultPos);
+        }
+
+        @Override
+        public boolean isDone() {
+            return true;  // Completes immediately after setting position
+        }
+    }.requires(this);
+
+    public final Command kick = new Command() {
+        @Override
+        public void start() {
+            servo2.setPosition(ShooterConstants.kickerPos);
+        }
+
+        @Override
+        public boolean isDone() {
+            return true;  // Completes immediately after setting position
+        }
+    }.requires(this);
+
+    public final Command kickDefaultPos = new Command() {
+        @Override
+        public void start() {
+            servo2.setPosition(ShooterConstants.kickDefaultPos);
         }
 
         @Override

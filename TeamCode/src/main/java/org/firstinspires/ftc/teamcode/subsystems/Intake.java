@@ -92,20 +92,31 @@ public class Intake implements Subsystem {
         }
     }.requires(this);
 
+    // Shoot for 0.5 seconds
+    private long shootStartTimeNanos = 0L;
+
     public final Command shoot = new Command() {
         @Override
+        public void start() {
+            shootStartTimeNanos = System.nanoTime();
+            intake.setPower(IntakeConstants.shootPower);
+        }
+
+        @Override
         public void update() {
+            // Ensure power remains set while running
             intake.setPower(IntakeConstants.shootPower);
         }
 
         @Override
         public boolean isDone() {
-            return false;  // Runs continuously until interrupted
+            return System.nanoTime() - shootStartTimeNanos >= 300_000_000L; // 500 ms
         }
 
         @Override
         public void stop(boolean interrupted) {
-            // Don't stop motor here - let other commands control it
+            // Stop the motor when command finishes or is interrupted
+            intake.setPower(IntakeConstants.zeroPower);
         }
     }.requires(this);
 }
