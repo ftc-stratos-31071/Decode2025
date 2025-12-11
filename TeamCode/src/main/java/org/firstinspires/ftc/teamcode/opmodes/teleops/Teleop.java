@@ -43,7 +43,7 @@ import dev.nextftc.hardware.impl.MotorEx;
  * Features:
  * - Full mecanum drive control
  * - Automatic turret tracking (tracks ANY AprilTag)
- * - Selects closest tag when multiple are visible
+ * - Selects closest tag when multiple are visible,
  * - All normal shooter/intake controls
  * - Real-time telemetry on dashboard
  * - Camera stream visible on FTC Dashboard
