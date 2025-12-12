@@ -230,7 +230,7 @@ public class TuneShooterBallistics extends OpMode {
         hoodServo.setPosition(targetHood);
 
         // ===== 4. GET CURRENT RPM =====
-        double ticksPerSecond = shooterRight.getVelocity();
+        double ticksPerSecond = Math.abs(shooterRight.getVelocity());
         currentRpm = (ticksPerSecond / 112.0) * 60.0 * 5;  // Same multiplier as TeleOp
 
         // ===== 5. RUN SHOOTER WITH PIDF =====

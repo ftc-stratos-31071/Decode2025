@@ -13,8 +13,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
-import org.firstinspires.ftc.teamcode.commands.ShooterOffCmd;
-import org.firstinspires.ftc.teamcode.commands.ShooterOnCmd;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
@@ -23,7 +21,6 @@ import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 
 import dev.nextftc.core.commands.Command;
@@ -63,6 +60,12 @@ public class Teleop extends NextFTCOpMode {
     public static double NO_TARGET_TIMEOUT_SEC = 2.5;  // Time before returning to center when no target detected
     public static double MAX_HOOD_HEIGHT = 0.6;  // Maximum hood servo position
 
+    // PIDF-based shooter control - adjustable target RPM
+    public static double TARGET_RPM = 3850.0;  // Target RPM for PIDF control
+    public static double RPM_INCREMENT = 250.0;  // How much to adjust RPM per button press
+    public static double MIN_TARGET_RPM = 1000.0;
+    public static double MAX_TARGET_RPM = 6000.0;
+
 
     // Estimated RPM per unit power at full power (adjust if your shooter differs)
     private static final double TARGET_RPM_PER_POWER = 6000.0;
@@ -91,7 +94,7 @@ public class Teleop extends NextFTCOpMode {
 
 
     double servoPos = ShooterConstants.defaultPos;
-    double shooterPower = 0.5;
+    double targetRpm = TARGET_RPM;  // Use RPM instead of power
 
 
     // Shooter timing
@@ -106,19 +109,16 @@ public class Teleop extends NextFTCOpMode {
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
-
-        Intake.INSTANCE.defaultPos.schedule();
-        Shooter.INSTANCE.defaultPos.schedule();
-        Shooter.INSTANCE.kickDefaultPos.schedule();
-
-
-        // IMPORTANT: Zero the turret and set initial target to 0 (front)
-        Turret.INSTANCE.turret.zeroed();
+        // DON'T schedule any commands during init - wait for start button
+        // Just reset state variables
         motorTargetX = 0.0;
         smoothedTx = 0.0;
         hasSeenTarget = false;
-        lastTargetSeenTime = System.currentTimeMillis();  // Initialize timeout timer
-
+        lastTargetSeenTime = System.currentTimeMillis();
+        hasRumbled = false;
+        shooterTiming = false;
+        servoPos = ShooterConstants.defaultPos;
+        targetRpm = TARGET_RPM;
 
         // Initialize Limelight with camera streaming
         try {
@@ -127,10 +127,8 @@ public class Teleop extends NextFTCOpMode {
             limelight.start();
             limelight.pipelineSwitch(0);
 
-
             // Stream camera to dashboard
             dashboard.startCameraStream(limelight, 0);
-
 
             telemetry.addData("Limelight", "✓ Connected");
             telemetry.addData("Camera", "✓ Streaming to dashboard");
@@ -138,25 +136,30 @@ public class Teleop extends NextFTCOpMode {
             telemetry.addData("Limelight", "✗ ERROR: " + e.getMessage());
         }
 
-
-        telemetry.addData("Status", "Initialized");
+        telemetry.addData("Status", "Initialized - Press START to begin");
         telemetry.addData("Mode", "Driver Control + Auto Turret");
-        telemetry.addData("Turret", "Centered at 0° (FRONT)");
+        telemetry.addData("Turret", "Will center on START");
         telemetry.update();
     }
 
 
     @Override
     public void onStartButtonPressed() {
+        // Reset servos and turret to default positions when START is pressed
+        Intake.INSTANCE.defaultPos.schedule();
+        Shooter.INSTANCE.defaultPos.schedule();
+        Shooter.INSTANCE.kickDefaultPos.schedule();
+        Turret.INSTANCE.turret.zeroed();
+
         // Driver controls - normal mecanum drive
         Command driverControlled = new MecanumDriverControlled(
                 frontLeftMotor,
                 frontRightMotor,
                 backLeftMotor,
                 backRightMotor,
-                Gamepads.gamepad1().leftStickY(),              // forward/back (correct)
-                Gamepads.gamepad1().leftStickX().negate(),     // <-- FIX: flip strafe
-                Gamepads.gamepad1().rightStickX().negate()     // rotate (already flipped)
+                Gamepads.gamepad1().leftStickY(),
+                Gamepads.gamepad1().leftStickX().negate(),
+                Gamepads.gamepad1().rightStickX().negate()
         );
         driverControlled.schedule();
 
@@ -170,89 +173,75 @@ public class Teleop extends NextFTCOpMode {
         });
 
 
-        // Right Bumper - Shooter on
-        AtomicBoolean shooterOn = new AtomicBoolean(false);
-
+        // Right Bumper - Shooter ON (starts and keeps running until X is pressed)
         Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
-            if (!shooterOn.get()) {
-                shooterStartTime = System.currentTimeMillis();
-                shooterTiming = true;
-                hasRumbled = false;
-                ShooterOnCmd.create(shooterPower).schedule();
-            } else {
-                Shooter.INSTANCE.moveShooter(0).schedule();
-                shooterTiming = false;
-                hasRumbled = false;
-                shooterStartTime = 0;
-            }
-            shooterOn.set(!shooterOn.get());
+            shooterStartTime = System.currentTimeMillis();
+            shooterTiming = true;
+            hasRumbled = false;
+            Shooter.INSTANCE.setTargetRPM(targetRpm);
         });
 
 
-        // A Button - Manual intake (hold to run, release to stop)
-        Gamepads.gamepad1().a().whenTrue(() -> {
+        // X Button - Shooter OFF
+        Gamepads.gamepad1().x().whenBecomesTrue(() -> {
+            Shooter.INSTANCE.stopShooter();
+            shooterTiming = false;
+            hasRumbled = false;
+        });
+
+
+        // A Button - Shoot ball (kick)
+        Gamepads.gamepad1().a().whenBecomesTrue(() -> {
             ShootBallCmd.create().schedule();
         });
-//        Gamepads.gamepad1().a().whenBecomesFalse(() -> {
-//            Intake.INSTANCE.zeroPower.schedule();
-//        });
 
 
         // B Button - Intake OUTTAKE (reverse direction)
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
-            Intake.INSTANCE.moveIntake(-IntakeConstants.intakePowerSlow).schedule();  // Spins intake in reverse
+            Intake.INSTANCE.moveIntake(-IntakeConstants.intakePowerSlow).schedule();
         });
         Gamepads.gamepad1().b().whenBecomesFalse(() -> {
             Intake.INSTANCE.zeroPower.schedule();
         });
 
 
-        // Shooter power adjustment
+        // Shooter RPM adjustment
         Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
-            shooterPower = Math.min(1.0, shooterPower + 0.1);
-            hasRumbled = false; // new power => allow rumble again
+            targetRpm = Math.min(MAX_TARGET_RPM, targetRpm + RPM_INCREMENT);
+            hasRumbled = false;
+            if (Shooter.INSTANCE.getTargetRPM() > 0) {
+                Shooter.INSTANCE.setTargetRPM(targetRpm);
+            }
         });
-
 
         Gamepads.gamepad1().dpadLeft().whenBecomesTrue(() -> {
-            shooterPower = Math.max(0.0, shooterPower - 0.1);
-            hasRumbled = false; // new power => allow rumble again
+            targetRpm = Math.max(MIN_TARGET_RPM, targetRpm - RPM_INCREMENT);
+            hasRumbled = false;
+            if (Shooter.INSTANCE.getTargetRPM() > 0) {
+                Shooter.INSTANCE.setTargetRPM(targetRpm);
+            }
         });
-
-
 
 
         // Servo position adjustment with MAX_HOOD_HEIGHT limit
         Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
-            servoPos = Math.min(MAX_HOOD_HEIGHT, servoPos + 0.1);  // DPad Up increases servo position (capped at MAX_HOOD_HEIGHT)
+            servoPos = Math.min(MAX_HOOD_HEIGHT, servoPos + 0.1);
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
 
 
         Gamepads.gamepad1().dpadDown().whenBecomesTrue(() -> {
-            servoPos = Math.max(0.0, servoPos - 0.1);  // DPad Down decreases servo position (capped at 0.0)
+            servoPos = Math.max(0.0, servoPos - 0.1);
             Shooter.INSTANCE.moveServo(servoPos).schedule();
-        });
-
-        // X Button - Toggle auto-tracking (enable/disable)
-        Gamepads.gamepad1().x().whenBecomesTrue(() -> {
-            ShooterOffCmd.create().schedule();
-//            AUTO_TRACK_ENABLED = !AUTO_TRACK_ENABLED;  // Toggle: if enabled -> disabled, if disabled -> enabled
-//            if (!AUTO_TRACK_ENABLED) {
-//                motorTargetX = 0.0;  // Return to center when disabled
-//                hasSeenTarget = false;
-//            }
-//            telemetry.addData("Auto-Tracking", AUTO_TRACK_ENABLED ? "ENABLED" : "DISABLED");
-//            telemetry.update();
         });
 
 
         // Y Button - Manual turret reset to center (straight/front)
         Gamepads.gamepad1().y().whenBecomesTrue(() -> {
-            motorTargetX = 0.0;  // Reset turret to center (0 degrees = straight ahead)
+            motorTargetX = 0.0;
             smoothedTx = 0.0;
             hasSeenTarget = false;
-            Turret.INSTANCE.setTargetDegrees(0.0);  // Immediately command turret to center
+            Turret.INSTANCE.setTargetDegrees(0.0);
             telemetry.addData("Turret", "Reset to Center");
             telemetry.update();
         });
@@ -261,14 +250,13 @@ public class Teleop extends NextFTCOpMode {
 
     @Override
     public void onUpdate() {
-        // Simple shooter monitoring - just track power and basic RPM for display
-        double rpm = Shooter.INSTANCE.getRPM() * 5;
+        // Get current RPM directly from shooter (now matches TuneShooter calculation)
+        double currentRpm = Shooter.INSTANCE.getRPM();
 
 
-        // RUMBLE WHEN TARGET RPM REACHED
+        // RUMBLE WHEN TARGET RPM REACHED (within 5% tolerance)
         if (shooterTiming && !hasRumbled) {
-            double targetRpm = shooterPower * TARGET_RPM_PER_POWER;
-            if (rpm >= targetRpm) {
+            if (currentRpm >= targetRpm * 0.95) {  // 95% of target = ready to shoot
                 try {
                     Gamepads.gamepad1().getGamepad().invoke().rumble(500);
                 } catch (Exception ignored) { }
@@ -400,12 +388,14 @@ public class Teleop extends NextFTCOpMode {
         // SHOOTER TELEMETRY
         // ========================================================================
         telemetry.addData("", "");
-        telemetry.addData("═══ SHOOTER ═══", "");
-        telemetry.addData("RPM", String.format("%.0f", rpm));
-        telemetry.addData("Power", String.format("%.1f", shooterPower));
+        telemetry.addData("═══ SHOOTER (PIDF) ═══", "");
+        telemetry.addData("Target RPM", String.format("%.0f", targetRpm));
+        telemetry.addData("Current RPM", String.format("%.0f", currentRpm));
+        telemetry.addData("Error", String.format("%.0f", targetRpm - currentRpm));
         telemetry.addData("Hood Position", String.format("%.2f / %.2f (Max)", servoPos, MAX_HOOD_HEIGHT));
-
-
+        telemetry.addData("PIDF Status", Shooter.INSTANCE.getTargetRPM() > 0 ? "✓ ACTIVE" : "✗ OFF");
+        telemetry.addData("PIDF Enabled", Shooter.INSTANCE.isPidfEnabled() ? "YES" : "NO");
+        telemetry.addData("Subsystem Target", String.format("%.0f", Shooter.INSTANCE.getTargetRPM()));
 
 
         // ========================================================================
@@ -422,7 +412,7 @@ public class Teleop extends NextFTCOpMode {
         telemetry.addData("A Button", "Shoot Ball");
         telemetry.addData("B Button", "Outtake (Reverse Intake)");
         telemetry.addData("DPad Up/Down", "Adjust Hood Position");
-        telemetry.addData("DPad Left/Right", "Adjust Shooter Power");
+        telemetry.addData("DPad Left/Right", "Adjust Target RPM");
 
 
         telemetry.update();

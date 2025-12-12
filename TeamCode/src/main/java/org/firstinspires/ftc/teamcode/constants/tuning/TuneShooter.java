@@ -108,8 +108,9 @@ public class TuneShooter extends OpMode {
         double velocityRight = shooterRight.getVelocity();
         double velocityLeft = shooterLeft.getVelocity();
 
-        // Use whichever motor has the encoder connected
-        double ticksPerSecond = velocityRight != 0 ? velocityRight : velocityLeft;
+        // Use absolute value to handle reversed encoders
+        // Pick whichever motor has a non-zero reading
+        double ticksPerSecond = Math.abs(velocityRight) > 0 ? Math.abs(velocityRight) : Math.abs(velocityLeft);
 
         // Convert to RPM: (ticks/sec) / (ticks/rev) * 60 = RPM
         // 112 ticks per revolution for this motor, * 5 multiplier used in Teleop

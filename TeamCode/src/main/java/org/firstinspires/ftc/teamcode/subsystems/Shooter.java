@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 
@@ -8,7 +10,6 @@ import dev.nextftc.core.commands.Command;
 import dev.nextftc.core.subsystems.Subsystem;
 import dev.nextftc.hardware.impl.MotorEx;
 import dev.nextftc.hardware.impl.ServoEx;
-import dev.nextftc.hardware.positionable.SetPosition;
 
 @Config
 public class Shooter implements Subsystem {
@@ -17,9 +18,10 @@ public class Shooter implements Subsystem {
     // Expansion Hub Servo Port 1
     private final ServoEx servo = new ServoEx("HoodServo");
     private final ServoEx servo2 = new ServoEx("KickerServo");
-    // Expansion Hub Motor Port 0
+
+    // Use MotorEx for shooter motors (NextFTC pattern)
+    // MotorEx automatically sets RUN_WITHOUT_ENCODER when power is set
     private final MotorEx motor1 = new MotorEx("ShooterRight").brakeMode();
-    // Expansion Hub Motor Port 1
     private final MotorEx motor2 = new MotorEx("ShooterLeft").brakeMode().reversed();
 
     // PIDF state
@@ -27,6 +29,13 @@ public class Shooter implements Subsystem {
     private double integral = 0.0;
     private double lastError = 0.0;
     private boolean pidfEnabled = false;  // When true, PIDF controls motors in periodic()
+
+    // Debug values (visible in dashboard)
+    public static double DEBUG_currentRpm = 0;
+    public static double DEBUG_error = 0;
+    public static double DEBUG_output = 0;
+    public static double DEBUG_velocityRight = 0;
+    public static double DEBUG_velocityLeft = 0;
 
     private Shooter() {
     }
@@ -37,10 +46,18 @@ public class Shooter implements Subsystem {
     public void setTargetRPM(double rpm) {
         targetRpm = Math.max(0, rpm);
         pidfEnabled = true;
+        // Reset integral when starting fresh
+        integral = 0.0;
+        lastError = 0.0;
     }
 
     public double getTargetRPM() {
         return targetRpm;
+    }
+
+    /** Check if PIDF control is currently enabled */
+    public boolean isPidfEnabled() {
+        return pidfEnabled;
     }
 
     /** Stop shooter and reset PIDF controller */
@@ -95,7 +112,7 @@ public class Shooter implements Subsystem {
         public boolean isDone() {
             return true;
         }
-    }.requires(this);
+    };  // No .requires(this) - kicker is independent of shooter motors
 
     public final Command kickDefaultPos = new Command() {
         @Override
@@ -107,10 +124,20 @@ public class Shooter implements Subsystem {
         public boolean isDone() {
             return true;
         }
-    }.requires(this);
+    };  // No .requires(this) - kicker is independent of shooter motors
 
     public Command moveServo(double servoPos) {
-        return new SetPosition(servo, servoPos).requires(this);
+        return new Command() {
+            @Override
+            public void start() {
+                servo.setPosition(servoPos);
+            }
+
+            @Override
+            public boolean isDone() {
+                return true;
+            }
+        };
     }
 
     // ========= OPEN-LOOP POWER CONTROL (disables PIDF) =========
@@ -196,10 +223,17 @@ public class Shooter implements Subsystem {
 
     // ========= SENSOR =========
 
-    /** Get current shooter RPM */
+    /** Get current shooter RPM - uses MotorEx velocity */
     public double getRPM() {
-        double ticksPerSecond = motor1.getVelocity();
-        return (ticksPerSecond / 112.0) * 60.0;
+        // Get velocity from both motors
+        double velocityRight = Math.abs(motor1.getVelocity());
+        double velocityLeft = Math.abs(motor2.getVelocity());
+
+        // Use whichever has non-zero reading
+        double ticksPerSecond = velocityRight > 0 ? velocityRight : velocityLeft;
+
+        // Convert to RPM: (ticks/sec) / (ticks/rev) * 60 * 5 (same as TuneShooter)
+        return (ticksPerSecond / 112.0) * 60.0 * 5.0;
     }
 
     // ========= MAIN PIDF LOOP (CALLED EVERY CYCLE BY NEXTFTC) =========
@@ -219,23 +253,50 @@ public class Shooter implements Subsystem {
             return;
         }
 
-        double currentRpm = getRPM();
+        // Get velocity from motors
+        double velocityRight = Math.abs(motor1.getVelocity());
+        double velocityLeft = Math.abs(motor2.getVelocity());
+        double ticksPerSecond = velocityRight > 0 ? velocityRight : velocityLeft;
+        double currentRpm = (ticksPerSecond / 112.0) * 60.0 * 5.0;
+
         double error = targetRpm - currentRpm;
 
+        // Accumulate integral
         integral += error;
+
         double derivative = error - lastError;
         lastError = error;
 
-        // Read PIDF gains from ShooterConstants (live tunable via Dashboard)
-        double output =
-                ShooterConstants.kF * targetRpm +
-                ShooterConstants.kP * error +
-                ShooterConstants.kI * integral +
-                ShooterConstants.kD * derivative;
+        // Compute output using ShooterConstants (live tunable!)
+        double output = ShooterConstants.kF * targetRpm
+                      + ShooterConstants.kP * error
+                      + ShooterConstants.kI * integral
+                      + ShooterConstants.kD * derivative;
 
-        // Clamp output to power limits from ShooterConstants
+        // Anti-windup: If output is saturated, prevent further integral accumulation
+        if (output >= ShooterConstants.MAX_POWER || output <= ShooterConstants.MIN_POWER) {
+            integral -= error;
+        }
+
+        // Clamp output to power limits
         output = Math.max(ShooterConstants.MIN_POWER, Math.min(ShooterConstants.MAX_POWER, output));
 
+        // Update debug values (visible in FTC Dashboard under "Shooter")
+        DEBUG_currentRpm = currentRpm;
+        DEBUG_error = error;
+        DEBUG_output = output;
+        DEBUG_velocityRight = velocityRight;
+        DEBUG_velocityLeft = velocityLeft;
+
+        // Send to dashboard graph
+        TelemetryPacket packet = new TelemetryPacket();
+        packet.put("Shooter_TargetRPM", targetRpm);
+        packet.put("Shooter_CurrentRPM", currentRpm);
+        packet.put("Shooter_Error", error);
+        packet.put("Shooter_Output", output);
+        FtcDashboard.getInstance().sendTelemetryPacket(packet);
+
+        // Apply power to motors
         motor1.setPower(output);
         motor2.setPower(output);
     }
