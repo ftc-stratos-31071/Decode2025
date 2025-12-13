@@ -35,6 +35,12 @@ public class MecanumDrive extends NextFTCMecanumDrive implements Subsystem {
 
     public MecanumDrive() {}
 
+    /** Constructor for tuning opmodes and standalone use */
+    public MecanumDrive(HardwareMap hardwareMap, Pose2d startPose) {
+        IMU imu = hardwareMap.get(IMU.class, "imu");
+        init(hardwareMap, imu, startPose);
+    }
+
     public static class Params {
         // IMU orientation
         public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
@@ -544,7 +550,7 @@ public class MecanumDrive extends NextFTCMecanumDrive implements Subsystem {
         );
     }
 
-    private HolonomicController controller = new HolonomicController(
+    public HolonomicController controller = new HolonomicController(
             PARAMS.axialGain, PARAMS.lateralGain, PARAMS.headingGain,
             PARAMS.axialVelGain, PARAMS.lateralVelGain, PARAMS.headingVelGain
     );
