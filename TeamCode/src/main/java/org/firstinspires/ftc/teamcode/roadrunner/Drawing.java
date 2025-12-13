@@ -7,6 +7,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 public final class Drawing {
     private Drawing() {}
 
+
     public static void drawRobot(Canvas c, Pose2d t) {
         final double ROBOT_RADIUS = 9;
 
@@ -19,4 +20,3 @@ public final class Drawing {
         c.strokeLine(p1.x, p1.y, p2.x, p2.y);
     }
 }
-

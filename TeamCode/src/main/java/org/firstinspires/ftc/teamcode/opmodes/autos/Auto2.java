@@ -5,9 +5,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
@@ -39,19 +37,15 @@ public class Auto2 extends NextFTCOpMode {
 
     public Auto2() {
         addComponents(
-                new SubsystemComponent(Turret.INSTANCE, MecanumDrive.INSTANCE),
+                new SubsystemComponent(Turret.INSTANCE),
                 BulkReadComponent.INSTANCE
         );
     }
 
     @Override
     public void onInit() {
-        // Get IMU from hardware map
-        IMU imu = hardwareMap.get(IMU.class, "imu");
-
-        // Initialize the MecanumDrive singleton with hardware and start pose
-        drive = MecanumDrive.INSTANCE;
-        drive.init(hardwareMap, imu, startPose);
+        // Initialize the MecanumDrive with hardware and start pose
+        drive = new MecanumDrive(hardwareMap, startPose);
 
         // Build the complete trajectory action matching MeepMeep paths
         trajectoryAction = drive.actionBuilder(startPose)
