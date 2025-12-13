@@ -148,6 +148,7 @@ public class Teleop extends NextFTCOpMode {
     public void onStartButtonPressed() {
         // Reset servos and turret to default positions when START is pressed
         Intake.INSTANCE.defaultPos.schedule();
+
         Shooter.INSTANCE.moveServo(0.1).schedule();
         Shooter.INSTANCE.kickDefaultPos.schedule();
         Turret.INSTANCE.turret.zeroed();

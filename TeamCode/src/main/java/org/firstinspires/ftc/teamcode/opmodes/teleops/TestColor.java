@@ -22,6 +22,9 @@ import dev.nextftc.ftc.NextFTCOpMode;
  *
  * Detects if a ball is present based on distance threshold.
  *
+ * NOTE: RevColorSensorV3 max range is 6 inches (~152mm).
+ * Values at or near 6 inches mean nothing is detected.
+ *
  * Controls:
  * - Left Bumper: Toggle intake on/off
  * - Right Bumper: Hold for outtake (reverse)
@@ -34,7 +37,8 @@ public class TestColor extends NextFTCOpMode {
     private boolean intakeRunning = false;
 
     // ===== TUNABLE VIA FTC DASHBOARD =====
-    public static double DETECTION_DISTANCE_MM = 100.0;
+    // Max sensor range is 6 inches. Ball detected if distance < threshold.
+    public static double DETECTION_DISTANCE_INCHES = 4.0;
 
     public TestColor() {
         addComponents(
@@ -58,6 +62,8 @@ public class TestColor extends NextFTCOpMode {
         Intake.INSTANCE.defaultPos.schedule();
 
         telemetry.addLine("TestColor - Ball Detection");
+        telemetry.addLine("Sensor max range: 6 inches");
+        telemetry.addLine();
         telemetry.addLine("Left Bumper: Toggle Intake");
         telemetry.addLine("Right Bumper: Hold for Outtake");
         telemetry.update();
@@ -87,18 +93,23 @@ public class TestColor extends NextFTCOpMode {
 
     @Override
     public void onUpdate() {
-        double distanceMM = colorSensor.getDistance(DistanceUnit.MM);
+        // Read distance in INCHES (sensor max is 6 inches)
+        double distanceInches = colorSensor.getDistance(DistanceUnit.INCH);
 
+        // Read colors
         NormalizedRGBA colors = colorSensor.getNormalizedColors();
         int red = (int) (colors.red * 255);
         int green = (int) (colors.green * 255);
         int blue = (int) (colors.blue * 255);
 
+        // Calculate HSV
         float[] hsv = new float[3];
         Color.RGBToHSV(red, green, blue, hsv);
 
-        boolean ballDetected = distanceMM < DETECTION_DISTANCE_MM;
+        // Ball detection - distance less than threshold (and less than max range)
+        boolean ballDetected = distanceInches < DETECTION_DISTANCE_INCHES && distanceInches < 5.5;
 
+        // ===== TELEMETRY =====
         telemetry.addLine("===== BALL DETECTION =====");
 
         if (ballDetected) {
@@ -108,8 +119,9 @@ public class TestColor extends NextFTCOpMode {
         }
         telemetry.addLine();
 
-        telemetry.addData("Distance", "%.1f mm", distanceMM);
-        telemetry.addData("Threshold", "%.1f mm", DETECTION_DISTANCE_MM);
+        telemetry.addData("Distance", "%.2f inches", distanceInches);
+        telemetry.addData("Threshold", "%.2f inches", DETECTION_DISTANCE_INCHES);
+        telemetry.addData("Max Range", "6.0 inches");
         telemetry.addLine();
 
         telemetry.addData("RGB", "%d, %d, %d", red, green, blue);
@@ -118,6 +130,11 @@ public class TestColor extends NextFTCOpMode {
 
         telemetry.addData("Intake", intakeRunning ? "RUNNING" : "STOPPED");
 
+        // Warning if at max range
+        if (distanceInches >= 5.5) {
+            telemetry.addLine();
+            telemetry.addLine("(At max range - nothing detected)");
+        }
         telemetry.update();
     }
 }
