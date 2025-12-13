@@ -26,40 +26,39 @@ public class MeepMeepTesting {
                 myBot.getDrive()
                         .actionBuilder(startPose)
 
-                        // --- Path1: Score Preload ---
+                        // --- score preload ---
                         .setReversed(true)
-                        .strafeTo(new Vector2d(-14.0, 13.0))
+                        .strafeTo(new Vector2d(-14.0, -13.0))
 
-//                        // --- Pick up artifacts Line 1 ---
+//                        // --- pick up artifacts line 1 ---
                         .setReversed(false)
                         .splineTo(
-                                new Vector2d(-14.0, -32.0),
+                                new Vector2d(-12.0, -54.0),
                                 Math.toRadians(270)  // radians
                         )
 //
-//                        // --- Path3: Pedro BezierLine, reversed ---
+//                        // --- back to shoot position ---
                         .setReversed(true)
-                        .splineTo(new Vector2d(-14.0, 13.5),
+//                        .splineTo(new Vector2d(-14.0, -13),
+//                                Math.toRadians(45) )
+                        .splineToLinearHeading(new Pose2d(-14.0, -13.0, Math.toRadians(225)),
                                 Math.toRadians(90) )
 //
-//                        // --- Path4: Pedro BezierCurve, tangent heading ---
-//                        .setReversed(false)
-//                        .splineTo(
-//                                new Vector2d(-59.0, -13.0),
-//                                2.474  // radians
-//                        )
+//                        // --- pick up line 2---
+                        .setReversed(false)
+                        .splineTo(
+                                new Vector2d(12, -48.0),
+                                Math.toRadians(270)  // radians
+                        )
 //
-//                        // --- Path5: Pedro BezierCurve, reversed, tangent heading ---
-//                        // End tangent from last cp→end ≈ 21.63°.
-//                        .setReversed(true)
-//                        .splineTo(
-//                                new Vector2d(-14.0, 13.0),
-//                                0.378  // radians
+                        // --- return to score ---
+                        .setReversed(true)
+                        .splineToLinearHeading(new Pose2d(-14.0, -13.0, Math.toRadians(225)),
+                                Math.toRadians(90) )
 //                        )
+
+
 //
-//                        // --- Path6: Pedro BezierLine ---
-//                        .setReversed(false)
-//                        .strafeTo(new Vector2d(-39.0, 12.0))
 //
 //                        // --- Path7: Pedro BezierLine, reversed ---
 //                        .setReversed(true)
