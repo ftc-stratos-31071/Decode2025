@@ -21,6 +21,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 import dev.nextftc.core.commands.Command;
@@ -57,11 +58,11 @@ public class Teleop extends NextFTCOpMode {
     public static double TURRET_LIMIT_DEG = 90.0;  // Max turret rotation
     public static double DEADBAND = 3.0;  // Increased from 2.0 - larger tolerance to prevent jitter
     public static boolean AUTO_TRACK_ENABLED = true;  // Enable/disable tracking
-    public static double NO_TARGET_TIMEOUT_SEC = 2.5;  // Time before returning to center when no target detected
+    public static double NO_TARGET_TIMEOUT_SEC = 2.0;  // Time before returning to center when no target detected
     public static double MAX_HOOD_HEIGHT = 0.6;  // Maximum hood servo position
 
     // PIDF-based shooter control - adjustable target RPM
-    public static double TARGET_RPM = 3850.0;  // Target RPM for PIDF control
+    public static double TARGET_RPM = 3500.0;  // Target RPM for PIDF control
     public static double RPM_INCREMENT = 250.0;  // How much to adjust RPM per button press
     public static double MIN_TARGET_RPM = 1000.0;
     public static double MAX_TARGET_RPM = 6000.0;
@@ -147,7 +148,7 @@ public class Teleop extends NextFTCOpMode {
     public void onStartButtonPressed() {
         // Reset servos and turret to default positions when START is pressed
         Intake.INSTANCE.defaultPos.schedule();
-        Shooter.INSTANCE.defaultPos.schedule();
+        Shooter.INSTANCE.moveServo(0.1).schedule();
         Shooter.INSTANCE.kickDefaultPos.schedule();
         Turret.INSTANCE.turret.zeroed();
 
@@ -172,21 +173,28 @@ public class Teleop extends NextFTCOpMode {
             Intake.INSTANCE.zeroPower.schedule();
         });
 
+        final AtomicBoolean shooterToggle = new AtomicBoolean(false);
 
-        // Right Bumper - Shooter ON (starts and keeps running until X is pressed)
+        // Right Bumper - Toggle Shooter ON/OFF (press again to turn off)
         Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
-            shooterStartTime = System.currentTimeMillis();
-            shooterTiming = true;
-            hasRumbled = false;
-            Shooter.INSTANCE.setTargetRPM(targetRpm);
-        });
-
-
-        // X Button - Shooter OFF
-        Gamepads.gamepad1().x().whenBecomesTrue(() -> {
-            Shooter.INSTANCE.stopShooter();
-            shooterTiming = false;
-            hasRumbled = false;
+            boolean nowOn;
+            while (true) {
+                boolean prev = shooterToggle.get();
+                if (shooterToggle.compareAndSet(prev, !prev)) {
+                    nowOn = !prev;
+                    break;
+                }
+            }
+            if (nowOn) {
+                shooterStartTime = System.currentTimeMillis();
+                shooterTiming = true;
+                hasRumbled = false;
+                Shooter.INSTANCE.setTargetRPM(targetRpm);
+            } else {
+                Shooter.INSTANCE.setTargetRPM(0);
+                shooterTiming = false;
+                hasRumbled = false;
+            }
         });
 
 
@@ -225,13 +233,12 @@ public class Teleop extends NextFTCOpMode {
 
         // Servo position adjustment with MAX_HOOD_HEIGHT limit
         Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
-            servoPos = Math.min(MAX_HOOD_HEIGHT, servoPos + 0.1);
+            servoPos = Math.max(0.0, servoPos - 0.1);
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
 
-
         Gamepads.gamepad1().dpadDown().whenBecomesTrue(() -> {
-            servoPos = Math.max(0.0, servoPos - 0.1);
+            servoPos = Math.min(MAX_HOOD_HEIGHT, servoPos + 0.1);
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
 
@@ -418,4 +425,3 @@ public class Teleop extends NextFTCOpMode {
         telemetry.update();
     }
 }
-

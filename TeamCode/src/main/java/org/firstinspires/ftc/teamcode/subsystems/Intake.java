@@ -5,7 +5,6 @@ import com.acmerobotics.dashboard.config.Config;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 
 import dev.nextftc.core.commands.Command;
-import dev.nextftc.core.commands.groups.ParallelGroup;
 import dev.nextftc.core.subsystems.Subsystem;
 import dev.nextftc.hardware.impl.MotorEx;
 import dev.nextftc.hardware.impl.ServoEx;
@@ -69,12 +68,12 @@ public class Intake implements Subsystem {
         }
     }.requires(this);
 
-    private long shootStartTimeNanos2 = 0L;
+    private double shootStartTimeSec2 = 0.0;
 
     public final Command turnOnReverse = new Command() {
         @Override
         public void start() {
-            shootStartTimeNanos2 = System.nanoTime();
+            shootStartTimeSec2 = System.currentTimeMillis() / 1000.0;
             intake.setPower(-IntakeConstants.intakePowerSlow);
         }
 
@@ -86,7 +85,8 @@ public class Intake implements Subsystem {
 
         @Override
         public boolean isDone() {
-            return System.nanoTime() - shootStartTimeNanos2 >= 100_000_000L; // 500 ms
+            // Run for 0.1 seconds
+            return System.currentTimeMillis() / 1000.0 - shootStartTimeSec2 >= IntakeConstants.reverseTime;
         }
 
         @Override
@@ -108,13 +108,13 @@ public class Intake implements Subsystem {
         }
     }.requires(this);
 
-    // Shoot for 0.5 seconds
-    private long shootStartTimeNanos = 0L;
+    // Shoot for 0.3 seconds
+    private double shootStartTimeSec = 0.0;
 
     public final Command shoot = new Command() {
         @Override
         public void start() {
-            shootStartTimeNanos = System.nanoTime();
+            shootStartTimeSec = System.currentTimeMillis() / 1000.0;
             intake.setPower(IntakeConstants.shootPower);
         }
 
@@ -126,7 +126,7 @@ public class Intake implements Subsystem {
 
         @Override
         public boolean isDone() {
-            return System.nanoTime() - shootStartTimeNanos >= 100_000_000L; // 500 ms
+            return System.currentTimeMillis() / 1000.0 - shootStartTimeSec >= IntakeConstants.shootTime;
         }
 
         @Override
