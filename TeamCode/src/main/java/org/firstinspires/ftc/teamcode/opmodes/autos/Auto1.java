@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.autos;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -7,9 +9,9 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
+
 import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
-import org.firstinspires.ftc.teamcode.commands.RobotResetCmd;
+import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.roadrunner.AutoMecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
@@ -18,9 +20,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Turret;
 import java.util.List;
 
 import dev.nextftc.core.commands.Command;
-import dev.nextftc.core.commands.delays.Delay;
-import dev.nextftc.core.commands.groups.SequentialGroup;
-import dev.nextftc.core.commands.groups.ParallelRaceGroup;
+import dev.nextftc.core.components.BindingsComponent;
 import dev.nextftc.core.components.SubsystemComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
@@ -28,220 +28,302 @@ import dev.nextftc.ftc.components.BulkReadComponent;
 @Autonomous(name = "Auto1")
 public class Auto1 extends NextFTCOpMode {
 
-    /* ==================== TUNABLES ==================== */
+    // =============================
+    // Trajectory points (from MeepMeep)
+    // =============================
+    private static final Pose2d START_POSE = new Pose2d(
+            -52.5,
+            -51.5,
+            Math.toRadians(-124)
+    );
 
-    public static double SHOOT_RPM = 3500.0;  // Shooter RPM
-    public static double PICKUP_TIME = 1.0;   // Pickup time
-    public static double SPINUP_TIMEOUT = 3.0; // Shooter spin-up timeout
+    private static final Vector2d SCORE_PRELOAD_POS = new Vector2d(-14.0, -13.0);
 
-    // Turret auto-align constants
+    private static final Vector2d PICKUP_1_POS = new Vector2d(-12.0, -54.0);
+    private static final double PICKUP_1_TANGENT = Math.toRadians(270);
+
+    private static final Pose2d SHOOT_POSE = new Pose2d(-14.0, -13.0, Math.toRadians(225));
+    private static final double SHOOT_TANGENT = Math.toRadians(90);
+
+    private static final Vector2d PICKUP_2_POS = new Vector2d(12.0, -48.0);
+    private static final double PICKUP_2_TANGENT = Math.toRadians(270);
+
+    // =============================
+    // Auto behavior config
+    // =============================
+    public static double AUTO_TARGET_RPM = 3500.0;     // shooter runs ALL the time (after START)
+    public static double AUTO_HOOD_POS = 0.1;          // hood position set on START
+    public static boolean STREAM_LIMELIGHT_TO_DASH = true;
+
+    // Turret auto-tracking
     public static double TRACKING_GAIN = 0.08;
     public static double SMOOTHING = 0.7;
-    public static double DEADBAND = 3.0;
     public static double TURRET_LIMIT_DEG = 90.0;
+    public static double DEADBAND = 3.0;
+    public static boolean AUTO_TRACK_ENABLED = true;
     public static double NO_TARGET_TIMEOUT_SEC = 2.0;
 
-    /* ==================== POSES ==================== */
-
-    private final Pose2d startPose = new Pose2d(-52.5, -51.5, Math.toRadians(-124));
-
-    // Score position
-    private final Pose2d scorePose = new Pose2d(-14.0, -13.0, Math.toRadians(225));
-    private final Vector2d scorePoint = scorePose.position;
-
-    // Pickup positions
-    private final Vector2d pickup1 = new Vector2d(-12.0, -54.0);
-    private final Vector2d pickup2 = new Vector2d(12.0, -48.0);
-
-    /* ==================== STATE ==================== */
-
+    // =============================
+    // NextFTC + RR objects
+    // =============================
     private AutoMecanumDrive drive;
     private Command autoCommand;
 
-    // Limelight state
+    // =============================
+    // Limelight + turret tracking state
+    // =============================
     private Limelight3A limelight;
     private double motorTargetX = 0.0;
     private double smoothedTx = 0.0;
-    private long lastTargetSeenTime = 0;
+    private boolean hasSeenTarget = false;
+    private long lastTargetSeenTimeMs = 0;
 
     public Auto1() {
         addComponents(
                 new SubsystemComponent(Intake.INSTANCE, Shooter.INSTANCE, Turret.INSTANCE),
-                BulkReadComponent.INSTANCE
+                BulkReadComponent.INSTANCE,
+                BindingsComponent.INSTANCE
         );
     }
 
     @Override
     public void onInit() {
-        // Initialize the drivetrain and components
-        drive = new AutoMecanumDrive(hardwareMap, startPose);
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        // Initialize Limelight
+        // Build drive + command on init, but DO NOT move mechanisms yet.
+        drive = new AutoMecanumDrive(hardwareMap, START_POSE);
+
+        // HARD STOP EVERYTHING immediately on init (prevents leftover state from a prior OpMode)
+        hardStopAll();
+
+        // ===== init Limelight (camera can run on init without moving hardware) =====
         try {
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
             limelight.setPollRateHz(100);
             limelight.start();
             limelight.pipelineSwitch(0);
+
+            if (STREAM_LIMELIGHT_TO_DASH) {
+                FtcDashboard.getInstance().startCameraStream(limelight, 0);
+            }
+
+            telemetry.addData("Limelight", "✓ Connected");
         } catch (Exception e) {
             limelight = null;
+            telemetry.addData("Limelight", "✗ ERROR: " + e.getMessage());
         }
 
-        // Initialize the autonomous sequence commands
-        Command driveToScore = drive.commandBuilder(startPose)
-                .afterTime(0.25, () -> Shooter.INSTANCE.setTargetRPM(SHOOT_RPM))
-                .setReversed(true)
-                .strafeTo(scorePoint)
-                .build();
+        // Reset tracking state (we will start tracking AFTER START)
+        motorTargetX = 0.0;
+        smoothedTx = 0.0;
+        hasSeenTarget = false;
+        lastTargetSeenTimeMs = System.currentTimeMillis();
 
-        Command driveToPickup1 = drive.commandBuilder(scorePose)
+        // Build autonomous command (same path + stopAndAdd actions)
+        autoCommand = drive.commandBuilder(START_POSE)
+
+                // --- score preload ---
+                .setReversed(true)
+                .strafeTo(SCORE_PRELOAD_POS)
+
+                // Shoot preload
+                .stopAndAdd(ShootBallCmd.create())
+
+                // --- pickup artifacts line 1 ---
+                .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
                 .setReversed(false)
-                .splineTo(pickup1, Math.toRadians(270))
-                .build();
+                .splineTo(PICKUP_1_POS, PICKUP_1_TANGENT)
+                .stopAndAdd(Intake.INSTANCE.zeroPower)
 
-        Command pickup1Seq = new SequentialGroup(
-                IntakeSeqCmd.create(),
-                new Delay(PICKUP_TIME),
-                Intake.INSTANCE.zeroPower
-        );
-
-        Command backToScore1 = drive.commandBuilder(
-                        new Pose2d(pickup1.x, pickup1.y, Math.toRadians(270)))
+                // --- back to shoot position ---
                 .setReversed(true)
-                .splineToLinearHeading(scorePose, Math.toRadians(90))
-                .build();
+                .splineToLinearHeading(SHOOT_POSE, SHOOT_TANGENT)
 
-        Command driveToPickup2 = drive.commandBuilder(scorePose)
+                // shoot
+                .stopAndAdd(ShootBallCmd.create())
+
+                // --- pickup artifacts line 2 ---
+                .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
                 .setReversed(false)
-                .splineTo(pickup2, Math.toRadians(270))
-                .build();
+                .splineTo(PICKUP_2_POS, PICKUP_2_TANGENT)
+                .stopAndAdd(Intake.INSTANCE.zeroPower)
 
-        Command pickup2Seq = new SequentialGroup(
-                IntakeSeqCmd.create(),
-                new Delay(PICKUP_TIME),
-                Intake.INSTANCE.zeroPower
-        );
-
-        Command backToScore2 = drive.commandBuilder(
-                        new Pose2d(pickup2.x, pickup2.y, Math.toRadians(270)))
+                // --- return to shoot + shoot ---
                 .setReversed(true)
-                .splineToLinearHeading(scorePose, Math.toRadians(90))
+                .splineToLinearHeading(SHOOT_POSE, SHOOT_TANGENT)
+                .stopAndAdd(ShootBallCmd.create())
+
                 .build();
 
-        // Full Auto Sequence
-        autoCommand = new SequentialGroup(
-                driveToScore,
-                stopDrive(),
-                spinUpAndWaitReady(),
-                ShootBallCmd.create()
+        telemetry.addData("Status", "Initialized (HARD STOP applied)");
+        telemetry.addData("Auto", "Ready - press START");
+        telemetry.update();
+    }
 
-                // Pickup line 1
-//                driveToPickup1
-//                stopDrive(),
-//                pickup1Seq,
-//                backToScore1,
-//                stopDrive(),
-//                spinUpAndWaitReady(),
-//                ShootBallCmd.create(),
-
-                // Pickup line 2 (optional)
-                // driveToPickup2,
-                // stopDrive(),
-                // pickup2Seq,
-                // backToScore2,
-                // stopDrive(),
-                // spinUpAndWaitReady(),
-                // ShootBallCmd.create()
-        ).named("Auto1Sequence");
+    /**
+     * Runs every loop while sitting on INIT (before START).
+     * This is the best place to prevent “glitch running” from old commands/state.
+     */
+    @Override
+    public void onWaitForStart() {
+        hardStopMotorsOnly(); // keep everything OFF while waiting
+        telemetry.addData("Safety", "Holding all motors at 0 during INIT");
+        telemetry.update();
     }
 
     @Override
     public void onStartButtonPressed() {
-        // Reset robot subsystems when the start button is pressed
-        RobotResetCmd.create().schedule();
+        // Once START is pressed, NOW set your start positions like TeleOp
+        Intake.INSTANCE.defaultPos.schedule();
+        Shooter.INSTANCE.moveServo(AUTO_HOOD_POS).schedule();
+        Shooter.INSTANCE.kickDefaultPos.schedule();
 
-        // Start the autonomous sequence
+        // Turret: zero + center
+        Turret.INSTANCE.turret.zeroed();
+        Turret.INSTANCE.setTargetDegrees(0.0);
+
+        // Start shooter immediately and keep running all auto
+        Shooter.INSTANCE.setTargetRPM(AUTO_TARGET_RPM);
+
+        // Reset tracking state and begin tracking after start
+        motorTargetX = 0.0;
+        smoothedTx = 0.0;
+        hasSeenTarget = false;
+        lastTargetSeenTimeMs = System.currentTimeMillis();
+
+        // Run auto
         autoCommand.schedule();
     }
 
-    /* ==================== HELPERS ==================== */
-
-    // Hard-stop the drivetrain output
-    private Command stopDrive() {
-        return new Command() {
-            @Override
-            public void start() {
-                drive.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-            }
-
-            @Override
-            public boolean isDone() {
-                return true;
-            }
-        }.requires(drive);
-    }
-
-    // Start the shooter at the target RPM and wait for it to be ready
-    private Command spinUpAndWaitReady() {
-        Command startSpin = new Command() {
-            @Override
-            public void start() {
-                Shooter.INSTANCE.setTargetRPM(SHOOT_RPM);
-            }
-            @Override
-            public boolean isDone() { return true; }
-        }.requires(Shooter.INSTANCE);
-
-        Command waitReady = new Command() {
-            @Override
-            public boolean isDone() {
-                return Shooter.INSTANCE.getRPM() >= SHOOT_RPM * 0.95;
-            }
-        };
-
-        // Wait until ready or timeout occurs
-        Command waitWithTimeout = new ParallelRaceGroup(
-                waitReady,
-                new Delay(SPINUP_TIMEOUT)
-        );
-
-        return new SequentialGroup(
-                startSpin,
-                waitWithTimeout
-        ).named("SpinUpAndWait");
-    }
-
-    /* ==================== TURRET AUTO ALIGN ==================== */
-
     @Override
     public void onUpdate() {
-        if (limelight == null) return;
+        // Always track during the match
+        updateTurretTracking();
 
-        LLResult result;
+        telemetry.addData("Shooter Target RPM", Shooter.INSTANCE.getTargetRPM());
+        telemetry.addData("Shooter RPM", String.format("%.0f", Shooter.INSTANCE.getRPM()));
+        telemetry.addData("Turret Target (deg)", String.format("%.2f", motorTargetX));
+        telemetry.update();
+    }
+
+    @Override
+    public void onStop() {
+        // HARD STOP at end of OpMode too
+        hardStopAll();
+
         try {
-            result = limelight.getLatestResult();
-        } catch (Exception e) {
-            return;
+            if (limelight != null) limelight.stop();
+        } catch (Exception ignored) { }
+    }
+
+    // ==========================================================
+    // SAFETY STOP HELPERS
+    // ==========================================================
+
+    /** Stop motors AND reset control loops. Safe to call repeatedly. */
+    private void hardStopAll() {
+        // Shooter: hard stop (sets power 0 directly + disables PIDF)
+        Shooter.INSTANCE.stopShooter();
+
+        // Intake: stop
+        Intake.INSTANCE.zeroPower.schedule();
+
+        // Turret: stop and disable manual tracking
+        Turret.INSTANCE.disableManualControl();
+        Turret.INSTANCE.turret.setPower(0.0);
+        motorTargetX = 0.0;
+        smoothedTx = 0.0;
+
+        // Drive: stop
+        if (drive != null) {
+            drive.setDrivePowers(new PoseVelocity2d(new Vector2d(0.0, 0.0), 0.0));
         }
+    }
 
-        if (result != null && result.isValid()) {
-            List<LLResultTypes.FiducialResult> tags = result.getFiducialResults();
+    /** Keep motors off during INIT without constantly resetting servo positions. */
+    private void hardStopMotorsOnly() {
+        // Shooter motors off + PIDF disabled
+        Shooter.INSTANCE.stopShooter();
 
-            if (tags != null && !tags.isEmpty()) {
-                lastTargetSeenTime = System.currentTimeMillis();
+        // Intake motor off
+        Intake.INSTANCE.zeroPower.schedule();
 
-                double tx = result.getTx();
-                smoothedTx = SMOOTHING * smoothedTx + (1 - SMOOTHING) * tx;
+        // Turret motor off (no tracking while in INIT)
+        Turret.INSTANCE.disableManualControl();
+        Turret.INSTANCE.turret.setPower(0.0);
 
-                if (Math.abs(smoothedTx) > DEADBAND) {
-                    motorTargetX += smoothedTx * TRACKING_GAIN;
-                    motorTargetX = Math.max(-TURRET_LIMIT_DEG, Math.min(TURRET_LIMIT_DEG, motorTargetX));
-                }
+        // Drive motors off
+        if (drive != null) {
+            drive.setDrivePowers(new PoseVelocity2d(new Vector2d(0.0, 0.0), 0.0));
+        }
+    }
+
+    // ==========================================================
+    // Limelight -> turret tracking (active AFTER START)
+    // ==========================================================
+    private void updateTurretTracking() {
+        LLResult result = null;
+        if (limelight != null) {
+            try {
+                result = limelight.getLatestResult();
+            } catch (Exception e) {
+                telemetry.addData("Limelight Error", e.getMessage());
             }
         }
 
-        if (System.currentTimeMillis() - lastTargetSeenTime > NO_TARGET_TIMEOUT_SEC * 1000) {
-            motorTargetX = 0;
-            smoothedTx = 0;
+        if (AUTO_TRACK_ENABLED && result != null && result.isValid()) {
+            List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+
+            if (fiducials != null && !fiducials.isEmpty()) {
+                LLResultTypes.FiducialResult closestTag = null;
+                double largestArea = 0.0;
+
+                for (LLResultTypes.FiducialResult fiducial : fiducials) {
+                    double targetArea = fiducial.getTargetXPixels() * fiducial.getTargetYPixels();
+                    if (closestTag == null || targetArea > largestArea) {
+                        closestTag = fiducial;
+                        largestArea = targetArea;
+                    }
+                }
+
+                if (closestTag != null) {
+                    hasSeenTarget = true;
+                    lastTargetSeenTimeMs = System.currentTimeMillis();
+
+                    double tx = result.getTx();
+                    smoothedTx = SMOOTHING * smoothedTx + (1.0 - SMOOTHING) * tx;
+
+                    if (Math.abs(smoothedTx) > DEADBAND) {
+                        double adjustment = smoothedTx * TRACKING_GAIN;
+                        if (Math.abs(smoothedTx) < 10.0) adjustment *= 0.5;
+
+                        motorTargetX += adjustment;
+                        motorTargetX = Math.max(-TURRET_LIMIT_DEG, Math.min(TURRET_LIMIT_DEG, motorTargetX));
+                    }
+
+                    telemetry.addData("Tag", closestTag.getFiducialId());
+                    telemetry.addData("TX raw", String.format("%.2f", tx));
+                    telemetry.addData("TX smooth", String.format("%.2f", smoothedTx));
+                }
+            } else {
+                telemetry.addData("Tag", "None");
+                if (!hasSeenTarget) {
+                    motorTargetX = 0.0;
+                    smoothedTx = 0.0;
+                }
+            }
+        } else {
+            telemetry.addData("Tag", "No valid target");
+            if (!hasSeenTarget) {
+                motorTargetX = 0.0;
+                smoothedTx = 0.0;
+            }
+        }
+
+        if (System.currentTimeMillis() - lastTargetSeenTimeMs > (long) (NO_TARGET_TIMEOUT_SEC * 1000.0)) {
+            motorTargetX = 0.0;
+            smoothedTx = 0.0;
+            hasSeenTarget = false;
         }
 
         Turret.INSTANCE.setTargetDegrees(motorTargetX);
