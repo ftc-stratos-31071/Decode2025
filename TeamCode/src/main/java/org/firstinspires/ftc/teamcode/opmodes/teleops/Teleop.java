@@ -62,8 +62,8 @@ public class Teleop extends NextFTCOpMode {
     public static double MAX_HOOD_HEIGHT = 0.1;  // Maximum hood servo position
 
     // PIDF-based shooter control - adjustable target RPM
-    public static double TARGET_RPM = 3500.0;  // Target RPM for PIDF control
-    public static double RPM_INCREMENT = 250.0;  // How much to adjust RPM per button press
+    public static double TARGET_RPM = 3600.0;  // Target RPM for PIDF control
+    public static double RPM_INCREMENT = 100.0;  // How much to adjust RPM per button press
     public static double MIN_TARGET_RPM = 1000.0;
     public static double MAX_TARGET_RPM = 6000.0;
 

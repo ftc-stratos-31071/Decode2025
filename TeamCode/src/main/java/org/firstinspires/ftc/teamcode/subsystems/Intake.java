@@ -135,4 +135,29 @@ public class Intake implements Subsystem {
             intake.setPower(IntakeConstants.zeroPower);
         }
     }.requires(this);
+
+    public final Command shootEnd = new Command() {
+        @Override
+        public void start() {
+            shootStartTimeSec = System.currentTimeMillis() / 1000.0;
+            intake.setPower(IntakeConstants.shootPower);
+        }
+
+        @Override
+        public void update() {
+            // Ensure power remains set while running
+            intake.setPower(IntakeConstants.shootPower);
+        }
+
+        @Override
+        public boolean isDone() {
+            return System.currentTimeMillis() / 1000.0 - shootStartTimeSec >= IntakeConstants.shootTimeEnd;
+        }
+
+        @Override
+        public void stop(boolean interrupted) {
+            // Stop the motor when command finishes or is interrupted
+            intake.setPower(IntakeConstants.zeroPower);
+        }
+    }.requires(this);
 }
