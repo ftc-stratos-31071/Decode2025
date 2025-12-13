@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.constants.TurretConstants;
 
 
-@TeleOp(name = "TurretTuning")
+//@TeleOp(name = "TurretTuning")
 public class TurretTuning extends OpMode {
     private PIDController controller;
 

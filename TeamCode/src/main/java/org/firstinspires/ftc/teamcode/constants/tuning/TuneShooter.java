@@ -34,7 +34,7 @@ import java.util.List;
  * 5. Usually keep kI at 0
  */
 @Config
-@TeleOp(name = "TuneShooter", group = "Tuning")
+//@TeleOp(name = "TuneShooter", group = "Tuning")
 public class TuneShooter extends OpMode {
 
     // ===== DASHBOARD TUNABLE VALUES =====

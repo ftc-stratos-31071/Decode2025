@@ -30,7 +30,7 @@ import dev.nextftc.ftc.components.BulkReadComponent;
  * - Adjust TEST_POWER to find optimal shooter speed
  */
 @Config
-@TeleOp(name = "Shooter Power Test", group = "Tuning")
+//@TeleOp(name = "Shooter Power Test", group = "Tuning")
 public class PIDTest extends NextFTCOpMode {
 
     // Tunable test parameter

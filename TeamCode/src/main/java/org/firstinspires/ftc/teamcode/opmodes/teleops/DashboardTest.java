@@ -26,7 +26,7 @@ import java.util.List;
  * 3. You should see telemetry data streaming in real-time
  * 4. Camera stream should show in the Camera section
  */
-@TeleOp(name = "Dashboard Test", group = "Diagnostics")
+//@TeleOp(name = "Dashboard Test", group = "Diagnostics")
 public class DashboardTest extends OpMode {
     private Limelight3A limelight;
     private FtcDashboard dashboard;

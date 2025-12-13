@@ -30,7 +30,7 @@ import dev.nextftc.ftc.NextFTCOpMode;
  * - Right Bumper: Hold for outtake (reverse)
  */
 @Config
-@TeleOp(name = "TestColor", group = "Testing")
+//@TeleOp(name = "TestColor", group = "Testing")
 public class TestColor extends NextFTCOpMode {
 
     private RevColorSensorV3 colorSensor;

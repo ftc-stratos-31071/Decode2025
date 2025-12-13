@@ -50,7 +50,7 @@ import dev.nextftc.hardware.impl.MotorEx;
  * - Toggle tracking on/off with X button
  */
 @Config
-@TeleOp(name = "TeleOp")
+//@TeleOp(name = "TeleOp")
 public class Teleop extends NextFTCOpMode {
     // Tunable via FTC Dashboard
     public static double TRACKING_GAIN = 0.08;  // Reduced from 0.15 - much smoother

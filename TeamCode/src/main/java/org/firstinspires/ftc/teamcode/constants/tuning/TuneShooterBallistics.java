@@ -59,7 +59,7 @@ import java.util.List;
  * ==================================================================
  */
 @Config
-@TeleOp(name = "TuneShooterBallistics", group = "Tuning")
+//@TeleOp(name = "TuneShooterBallistics", group = "Tuning")
 public class TuneShooterBallistics extends OpMode {
 
     // ===== DASHBOARD TUNABLE - TUNING MODE =====

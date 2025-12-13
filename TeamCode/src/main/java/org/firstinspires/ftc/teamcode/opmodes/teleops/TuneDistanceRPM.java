@@ -42,7 +42,7 @@ import dev.nextftc.hardware.impl.MotorEx;
  *  - HOOD_LOCK_POS
  */
 @Config
-@TeleOp(name = "TuneDistanceRPM", group = "Tuning")
+//@TeleOp(name = "TuneDistanceRPM", group = "Tuning")
 public class TuneDistanceRPM extends NextFTCOpMode {
 
     // ===== Drive (useful while tuning) =====

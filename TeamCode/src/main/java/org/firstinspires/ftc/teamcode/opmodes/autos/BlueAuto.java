@@ -18,7 +18,6 @@ import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
 import java.util.List;
-import java.util.Vector;
 
 import dev.nextftc.core.commands.Command;
 import dev.nextftc.core.components.BindingsComponent;
@@ -26,8 +25,8 @@ import dev.nextftc.core.components.SubsystemComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
 
-@Autonomous(name = "Auto1")
-public class Auto1 extends NextFTCOpMode {
+@Autonomous(name = "BlueAuto", preselectTeleOp = "BlueTeleOp")
+public class BlueAuto extends NextFTCOpMode {
 
     // =============================
     // Trajectory points (from MeepMeep)
@@ -40,21 +39,21 @@ public class Auto1 extends NextFTCOpMode {
 
     private static final Vector2d SCORE_PRELOAD_POS = new Vector2d(-16.0, -13.0);
 
-    private static final Vector2d PICKUP_1_POS = new Vector2d(-14.0, -50.0);
+    private static final Vector2d PICKUP_1_POS = new Vector2d(-14.0, -48.0);
     private static final double PICKUP_1_TANGENT = Math.toRadians(270);
 
-    private static final Pose2d SHOOT_POSE = new Pose2d(-20.0, -13.0, Math.toRadians(225));
+    private static final Pose2d SHOOT_POSE = new Pose2d(-18.0, -8.0, Math.toRadians(225));
     private static final double SHOOT_TANGENT = Math.toRadians(90);
 
-    private static final Vector2d PICKUP_2_POS = new Vector2d(12.0, -48.0);
+    private static final Vector2d PICKUP_2_POS = new Vector2d(12.0, -50.0);
     private static final double PICKUP_2_TANGENT = Math.toRadians(270);
 
-    private static final Vector2d PARK_POS = new Vector2d(-8.0, -50.0);
+    private static final Vector2d PARK_POS = new Vector2d(-10.0, -50.0);
 
     // =============================
     // Auto behavior config
     // =============================
-    public static double AUTO_TARGET_RPM = 3600.0;     // shooter runs ALL the time (after START)
+    public static double AUTO_TARGET_RPM = 3250.0;     // shooter runs ALL the time (after START)
     public static double AUTO_HOOD_POS = 0.2;          // hood position set on START
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 
@@ -81,7 +80,7 @@ public class Auto1 extends NextFTCOpMode {
     private boolean hasSeenTarget = false;
     private long lastTargetSeenTimeMs = 0;
 
-    public Auto1() {
+    public BlueAuto() {
         addComponents(
                 new SubsystemComponent(Intake.INSTANCE, Shooter.INSTANCE, Turret.INSTANCE),
                 BulkReadComponent.INSTANCE,
@@ -154,10 +153,11 @@ public class Auto1 extends NextFTCOpMode {
                 // --- return to shoot + shoot ---
                 .setReversed(true)
                 .splineToLinearHeading(SHOOT_POSE, SHOOT_TANGENT)
+                .waitSeconds(1.0)
                 .stopAndAdd(ShootBallCmd.create())
 
                 //strafe out of launch zone
-                .strafeTo(PARK_POS)
+                .strafeToLinearHeading(PARK_POS, Math.toRadians(180.0))
 
                 .build();
 
