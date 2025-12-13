@@ -4,7 +4,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 
@@ -15,11 +14,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import dev.nextftc.core.subsystems.Subsystem;
 
 
-public class MecanumDrive implements Subsystem {
-    public static final MecanumDrive INSTANCE = new MecanumDrive();
+public class TeleopMecanumDrive implements Subsystem {
+    public static final TeleopMecanumDrive INSTANCE = new TeleopMecanumDrive();
 
 
-    private MecanumDrive() {}
+    private TeleopMecanumDrive() {}
     private DcMotorEx frontLeft;
     private DcMotorEx frontRight;
     private DcMotorEx backLeft;

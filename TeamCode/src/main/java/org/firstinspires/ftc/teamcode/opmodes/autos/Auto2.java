@@ -7,7 +7,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.roadrunner.AutoMecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
 import dev.nextftc.core.components.SubsystemComponent;
@@ -31,7 +31,7 @@ public class Auto2 extends NextFTCOpMode {
     // Position: (-52.5, -51.5) with heading -124 degrees
     private final Pose2d startPose = new Pose2d(-52.5, -51.5, Math.toRadians(-124));
 
-    private MecanumDrive drive;
+    private AutoMecanumDrive drive;
     private Action trajectoryAction;
     private boolean actionRunning = false;
 
@@ -45,7 +45,7 @@ public class Auto2 extends NextFTCOpMode {
     @Override
     public void onInit() {
         // Initialize the MecanumDrive with hardware and start pose
-        drive = new MecanumDrive(hardwareMap, startPose);
+        drive = new AutoMecanumDrive(hardwareMap, startPose);
 
         // Build the complete trajectory action matching MeepMeep paths
         trajectoryAction = drive.actionBuilder(startPose)

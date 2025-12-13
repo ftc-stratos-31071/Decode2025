@@ -40,12 +40,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
-import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
-import org.firstinspires.ftc.teamcode.roadrunner.OTOSLocalizer;
-import org.firstinspires.ftc.teamcode.roadrunner.PinpointLocalizer;
-import org.firstinspires.ftc.teamcode.roadrunner.TankDrive;
-import org.firstinspires.ftc.teamcode.roadrunner.ThreeDeadWheelLocalizer;
-import org.firstinspires.ftc.teamcode.roadrunner.TwoDeadWheelLocalizer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,7 +47,7 @@ import java.util.List;
 
 public final class TuningOpModes {
     // TODO: change this to TankDrive.class if you're using tank
-    public static final Class<?> DRIVE_CLASS = MecanumDrive.class;
+    public static final Class<?> DRIVE_CLASS = AutoMecanumDrive.class;
 
     public static final String GROUP = "quickstart";
     public static final boolean DISABLED = false;
@@ -128,16 +122,16 @@ public final class TuningOpModes {
         if (DISABLED) return;
 
         DriveViewFactory dvf;
-        if (DRIVE_CLASS.equals(MecanumDrive.class)) {
+        if (DRIVE_CLASS.equals(AutoMecanumDrive.class)) {
             dvf = hardwareMap -> {
-                MecanumDrive md = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+                AutoMecanumDrive md = new AutoMecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
                 LazyImu lazyImu = md.lazyImu;
 
                 List<EncoderGroup> encoderGroups = new ArrayList<>();
                 List<EncoderRef> leftEncs = new ArrayList<>(), rightEncs = new ArrayList<>();
                 List<EncoderRef> parEncs = new ArrayList<>(), perpEncs = new ArrayList<>();
-                if (md.localizer instanceof MecanumDrive.DriveLocalizer) {
-                    MecanumDrive.DriveLocalizer dl = (MecanumDrive.DriveLocalizer) md.localizer;
+                if (md.localizer instanceof AutoMecanumDrive.DriveLocalizer) {
+                    AutoMecanumDrive.DriveLocalizer dl = (AutoMecanumDrive.DriveLocalizer) md.localizer;
                     encoderGroups.add(new LynxQuadratureEncoderGroup(
                             hardwareMap.getAll(LynxModule.class),
                             Arrays.asList(dl.leftFront, dl.leftBack, dl.rightFront, dl.rightBack)
@@ -181,10 +175,10 @@ public final class TuningOpModes {
 
                 return new DriveView(
                     DriveType.MECANUM,
-                        MecanumDrive.PARAMS.inPerTick,
-                        MecanumDrive.PARAMS.maxWheelVel,
-                        MecanumDrive.PARAMS.minProfileAccel,
-                        MecanumDrive.PARAMS.maxProfileAccel,
+                        AutoMecanumDrive.PARAMS.inPerTick,
+                        AutoMecanumDrive.PARAMS.maxWheelVel,
+                        AutoMecanumDrive.PARAMS.minProfileAccel,
+                        AutoMecanumDrive.PARAMS.maxProfileAccel,
                         encoderGroups,
                         Arrays.asList(
                                 md.leftFront,
@@ -200,9 +194,9 @@ public final class TuningOpModes {
                         perpEncs,
                         lazyImu,
                         md.voltageSensor,
-                        () -> new MotorFeedforward(MecanumDrive.PARAMS.kS,
-                                MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
-                                MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick),
+                        () -> new MotorFeedforward(AutoMecanumDrive.PARAMS.kS,
+                                AutoMecanumDrive.PARAMS.kV / AutoMecanumDrive.PARAMS.inPerTick,
+                                AutoMecanumDrive.PARAMS.kA / AutoMecanumDrive.PARAMS.inPerTick),
                         0
                 );
             };

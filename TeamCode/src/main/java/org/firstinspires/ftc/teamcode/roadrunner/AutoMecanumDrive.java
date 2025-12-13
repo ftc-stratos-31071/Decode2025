@@ -61,7 +61,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class MecanumDrive {
+public final class AutoMecanumDrive {
     public static class Params {
         // IMU orientation
         // TODO: fill in these values based on
@@ -74,12 +74,12 @@ public final class MecanumDrive {
         // drive model parameters
         public double inPerTick = 0.00197807632078;
         public double lateralInPerTick = 0.0014224211304947937;
-        public double trackWidthTicks = 0;
+        public double trackWidthTicks = 5258.3991084719755;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.5785438711926165;
-        public double kV = 0.0002632926525895178;
-        public double kA = 0;
+        public double kS = 1.7390028093811307;
+        public double kV = 0.00026232271296396337;
+        public double kA = 0.0001;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
@@ -91,9 +91,9 @@ public final class MecanumDrive {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 0.0;
-        public double lateralGain = 0.0;
-        public double headingGain = 0.0; // shared with turn
+        public double axialGain = 1.0;
+        public double lateralGain = 1.0;
+        public double headingGain = 2.0; // shared with turn
 
         public double axialVelGain = 0.0;
         public double lateralVelGain = 0.0;
@@ -139,10 +139,10 @@ public final class MecanumDrive {
         private Pose2d pose;
 
         public DriveLocalizer(Pose2d pose) {
-            leftFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftFront));
-            leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
-            rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
-            rightFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightFront));
+            leftFront = new OverflowEncoder(new RawEncoder(AutoMecanumDrive.this.leftFront));
+            leftBack = new OverflowEncoder(new RawEncoder(AutoMecanumDrive.this.leftBack));
+            rightBack = new OverflowEncoder(new RawEncoder(AutoMecanumDrive.this.rightBack));
+            rightFront = new OverflowEncoder(new RawEncoder(AutoMecanumDrive.this.rightFront));
 
             imu = lazyImu.get();
 
@@ -225,7 +225,7 @@ public final class MecanumDrive {
         }
     }
 
-    public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
+    public AutoMecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
