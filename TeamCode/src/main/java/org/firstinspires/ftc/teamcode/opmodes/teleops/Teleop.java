@@ -50,8 +50,8 @@ import dev.nextftc.hardware.impl.MotorEx;
  * - Toggle tracking on/off with X button
  */
 @Config
-@TeleOp(name = "RedTeleOp")
-public class RedTeleop extends NextFTCOpMode {
+@TeleOp(name = "TeleOp")
+public class Teleop extends NextFTCOpMode {
     // Tunable via FTC Dashboard
     public static double TRACKING_GAIN = 0.08;  // Reduced from 0.15 - much smoother
     public static double SMOOTHING = 0.7;  // Exponential smoothing (0.0-1.0, lower = smoother)
@@ -72,7 +72,7 @@ public class RedTeleop extends NextFTCOpMode {
     private static final double TARGET_RPM_PER_POWER = 6000.0;
 
 
-    public RedTeleop() {
+    public Teleop() {
         addComponents(
                 new SubsystemComponent(Intake.INSTANCE, Shooter.INSTANCE, Turret.INSTANCE),
                 BulkReadComponent.INSTANCE,
@@ -126,7 +126,7 @@ public class RedTeleop extends NextFTCOpMode {
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
             limelight.setPollRateHz(100);
             limelight.start();
-            limelight.pipelineSwitch(1);
+            limelight.pipelineSwitch(0);
 
             // Stream camera to dashboard
             dashboard.startCameraStream(limelight, 0);
