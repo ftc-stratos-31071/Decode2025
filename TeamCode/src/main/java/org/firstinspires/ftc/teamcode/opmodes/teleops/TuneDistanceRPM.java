@@ -153,7 +153,7 @@ public class TuneDistanceRPM extends NextFTCOpMode {
         });
 
         // A: Shoot
-        Gamepads.gamepad1().a().whenBecomesTrue(() -> ShootBallCmd.create().schedule());
+//        Gamepads.gamepad1().a().whenBecomesTrue(() -> ShootBallCmd.create().schedule());
     }
 
     @Override

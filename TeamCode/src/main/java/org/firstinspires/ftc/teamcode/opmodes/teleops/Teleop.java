@@ -59,7 +59,7 @@ public class Teleop extends NextFTCOpMode {
     public static double DEADBAND = 3.0;  // Increased from 2.0 - larger tolerance to prevent jitter
     public static boolean AUTO_TRACK_ENABLED = true;  // Enable/disable tracking
     public static double NO_TARGET_TIMEOUT_SEC = 2.0;  // Time before returning to center when no target detected
-    public static double MAX_HOOD_HEIGHT = 0.6;  // Maximum hood servo position
+    public static double MAX_HOOD_HEIGHT = 0.1;  // Maximum hood servo position
 
     // PIDF-based shooter control - adjustable target RPM
     public static double TARGET_RPM = 3500.0;  // Target RPM for PIDF control
@@ -148,7 +148,6 @@ public class Teleop extends NextFTCOpMode {
     public void onStartButtonPressed() {
         // Reset servos and turret to default positions when START is pressed
         Intake.INSTANCE.defaultPos.schedule();
-
         Shooter.INSTANCE.moveServo(0.1).schedule();
         Shooter.INSTANCE.kickDefaultPos.schedule();
         Turret.INSTANCE.turret.zeroed();
@@ -213,6 +212,22 @@ public class Teleop extends NextFTCOpMode {
             Intake.INSTANCE.zeroPower.schedule();
         });
 
+        final AtomicBoolean xRpmToggle = new AtomicBoolean(false);
+        Gamepads.gamepad1().x().whenBecomesTrue(() -> {
+            boolean nowOn;
+            while (true) {
+                boolean prev = xRpmToggle.get();
+                if (xRpmToggle.compareAndSet(prev, !prev)) {
+                    nowOn = !prev;
+                    break;
+                }
+            }
+            targetRpm = nowOn ? 4000 : 3500;
+            hasRumbled = false;
+            if (Shooter.INSTANCE.getTargetRPM() > 0) {
+                Shooter.INSTANCE.setTargetRPM(targetRpm);
+            }
+        });
 
         // Shooter RPM adjustment
         Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
