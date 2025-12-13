@@ -18,6 +18,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
 import java.util.List;
+import java.util.Vector;
 
 import dev.nextftc.core.commands.Command;
 import dev.nextftc.core.components.BindingsComponent;
@@ -37,22 +38,24 @@ public class Auto1 extends NextFTCOpMode {
             Math.toRadians(-124)
     );
 
-    private static final Vector2d SCORE_PRELOAD_POS = new Vector2d(-14.0, -13.0);
+    private static final Vector2d SCORE_PRELOAD_POS = new Vector2d(-16.0, -13.0);
 
-    private static final Vector2d PICKUP_1_POS = new Vector2d(-12.0, -54.0);
+    private static final Vector2d PICKUP_1_POS = new Vector2d(-14.0, -50.0);
     private static final double PICKUP_1_TANGENT = Math.toRadians(270);
 
-    private static final Pose2d SHOOT_POSE = new Pose2d(-14.0, -13.0, Math.toRadians(225));
+    private static final Pose2d SHOOT_POSE = new Pose2d(-20.0, -13.0, Math.toRadians(225));
     private static final double SHOOT_TANGENT = Math.toRadians(90);
 
     private static final Vector2d PICKUP_2_POS = new Vector2d(12.0, -48.0);
     private static final double PICKUP_2_TANGENT = Math.toRadians(270);
 
+    private static final Vector2d PARK_POS = new Vector2d(-8.0, -50.0);
+
     // =============================
     // Auto behavior config
     // =============================
-    public static double AUTO_TARGET_RPM = 3500.0;     // shooter runs ALL the time (after START)
-    public static double AUTO_HOOD_POS = 0.1;          // hood position set on START
+    public static double AUTO_TARGET_RPM = 3600.0;     // shooter runs ALL the time (after START)
+    public static double AUTO_HOOD_POS = 0.2;          // hood position set on START
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 
     // Turret auto-tracking
@@ -153,6 +156,9 @@ public class Auto1 extends NextFTCOpMode {
                 .splineToLinearHeading(SHOOT_POSE, SHOOT_TANGENT)
                 .stopAndAdd(ShootBallCmd.create())
 
+                //strafe out of launch zone
+                .strafeTo(PARK_POS)
+
                 .build();
 
         telemetry.addData("Status", "Initialized (HARD STOP applied)");
@@ -174,7 +180,7 @@ public class Auto1 extends NextFTCOpMode {
     @Override
     public void onStartButtonPressed() {
         // Once START is pressed, NOW set your start positions like TeleOp
-        Intake.INSTANCE.defaultPos.schedule();
+        Intake.INSTANCE.moveServoPos.schedule();
         Shooter.INSTANCE.moveServo(AUTO_HOOD_POS).schedule();
         Shooter.INSTANCE.kickDefaultPos.schedule();
 
