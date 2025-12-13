@@ -8,6 +8,9 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
+import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
 import java.util.List;
@@ -22,16 +25,16 @@ import dev.nextftc.hardware.driving.MecanumDriverControlled;
 import dev.nextftc.hardware.impl.MotorEx;
 
 /**
- * TuneDistanceRPM
+ * TuneDistanceRPM (Minimal Controls)
  *
  * Purpose: tune distance -> RPM mapping using Limelight AprilTag distance.
  * Hood is LOCKED at a constant position. You only tune RPM curve.
  *
- * Controls:
- *  - Right Bumper: enable shooter (distance-based RPM)
- *  - X: stop shooter
- *  - DPad Left/Right: adjust RPM_A
- *  - DPad Down/Up: adjust RPM_B
+ * Controls (minimal):
+ *  - Left Bumper:  Intake sequence (press to start, release to stop)
+ *  - Right Bumper: Shooter ON (distance-based RPM)
+ *  - A:            Shoot ball (kick)
+ *  - X:            Shooter OFF
  *
  * Tune from FTC Dashboard:
  *  - CAM_HEIGHT_M, TAG_HEIGHT_M, CAM_PITCH_DEG, DISTANCE_SCALE
@@ -42,7 +45,7 @@ import dev.nextftc.hardware.impl.MotorEx;
 @TeleOp(name = "TuneDistanceRPM", group = "Tuning")
 public class TuneDistanceRPM extends NextFTCOpMode {
 
-    // ===== Drive (optional but useful to reposition while tuning) =====
+    // ===== Drive (useful while tuning) =====
     private final MotorEx frontLeftMotor  = new MotorEx("frontLeftMotor").brakeMode().reversed();
     private final MotorEx frontRightMotor = new MotorEx("frontRightMotor").brakeMode();
     private final MotorEx backLeftMotor   = new MotorEx("backLeftMotor").brakeMode().reversed();
@@ -55,7 +58,7 @@ public class TuneDistanceRPM extends NextFTCOpMode {
     public static boolean HOOD_LOCKED = true;
     public static double HOOD_LOCK_POS = 0.45; // tune once, then leave
 
-    // ===== Distance math (tune until Distance(m) looks correct) =====
+    // ===== Distance math =====
     public static double CAM_HEIGHT_M = 0.30;
     public static double TAG_HEIGHT_M = 1.20;
     public static double CAM_PITCH_DEG = 20.0;
@@ -76,10 +79,6 @@ public class TuneDistanceRPM extends NextFTCOpMode {
     public static double MIN_RPM = 1000;
     public static double MAX_RPM = 6000;
 
-    // Quick bump tuning from gamepad
-    public static double RPM_A_STEP = 50;
-    public static double RPM_B_STEP = 25;
-
     // ===== Runtime state =====
     private boolean shooterEnabled = false;
     private double distanceM = Double.NaN;
@@ -88,7 +87,7 @@ public class TuneDistanceRPM extends NextFTCOpMode {
 
     public TuneDistanceRPM() {
         addComponents(
-                new SubsystemComponent(Shooter.INSTANCE),
+                new SubsystemComponent(Intake.INSTANCE, Shooter.INSTANCE),
                 BulkReadComponent.INSTANCE,
                 BindingsComponent.INSTANCE
         );
@@ -113,7 +112,7 @@ public class TuneDistanceRPM extends NextFTCOpMode {
         }
 
         telemetry.addLine("TuneDistanceRPM Ready");
-        telemetry.addLine("RB = shooter on (distance RPM). X = stop.");
+        telemetry.addLine("LB=intake  RB=shooter  A=shoot  X=stop shooter");
         telemetry.update();
     }
 
@@ -128,29 +127,38 @@ public class TuneDistanceRPM extends NextFTCOpMode {
         );
         driverControlled.schedule();
 
+        // Put intake/shooter servos into known states
+        Intake.INSTANCE.defaultPos.schedule();
+        Shooter.INSTANCE.defaultPos.schedule();
+        Shooter.INSTANCE.kickDefaultPos.schedule();
+
         // Lock hood at start
         if (HOOD_LOCKED) {
             Shooter.INSTANCE.moveServo(HOOD_LOCK_POS).schedule();
         }
 
-        // Shooter enable/disable
+        // ===== Minimal controls =====
+
+        // LB: Intake sequence press/release
+        Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> IntakeSeqCmd.create().schedule());
+        Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> Intake.INSTANCE.zeroPower.schedule());
+
+        // RB: Shooter ON (distance RPM)
         Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> shooterEnabled = true);
+
+        // X: Shooter OFF
         Gamepads.gamepad1().x().whenBecomesTrue(() -> {
             shooterEnabled = false;
             Shooter.INSTANCE.stopShooter();
         });
 
-        // Quick tuning bumps (optional)
-        Gamepads.gamepad1().dpadLeft().whenBecomesTrue(() -> RPM_A -= RPM_A_STEP);
-        Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> RPM_A += RPM_A_STEP);
-
-        Gamepads.gamepad1().dpadDown().whenBecomesTrue(() -> RPM_B -= RPM_B_STEP);
-        Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> RPM_B += RPM_B_STEP);
+        // A: Shoot
+        Gamepads.gamepad1().a().whenBecomesTrue(() -> ShootBallCmd.create().schedule());
     }
 
     @Override
     public void onUpdate() {
-        // Re-lock hood continuously if you want it absolutely fixed (optional)
+        // Keep hood locked (optional but keeps it from drifting)
         if (HOOD_LOCKED) {
             Shooter.INSTANCE.moveServo(HOOD_LOCK_POS).schedule();
         }
@@ -200,13 +208,15 @@ public class TuneDistanceRPM extends NextFTCOpMode {
         if (shooterEnabled && targetRpm > 0) {
             Shooter.INSTANCE.setTargetRPM(targetRpm);
         } else if (!shooterEnabled) {
-            // do nothing; X button stops shooter
+            // do nothing; X stops shooter
         }
 
         // Telemetry
         double currentRpm = Shooter.INSTANCE.getRPM();
 
-        telemetry.addLine("==== Distance → RPM Tuning ====");
+        telemetry.addLine("==== Distance → RPM Tuning (Minimal) ====");
+        telemetry.addData("Controls", "LB=intake  RB=shooter  A=shoot  X=stop shooter");
+
         telemetry.addData("Shooter Enabled (RB)", shooterEnabled ? "YES" : "NO");
         telemetry.addData("Chosen Tag ID", chosenTagId);
 
@@ -222,7 +232,7 @@ public class TuneDistanceRPM extends NextFTCOpMode {
         telemetry.addData("Hood Pos", String.format("%.2f", HOOD_LOCK_POS));
 
         telemetry.addLine();
-        telemetry.addLine("Tune order: fix Distance → tune RPM_A midrange → tune RPM_B longrange → only then adjust RPM_C");
+        telemetry.addLine("Tune: DISTANCE_SCALE first → RPM_A midrange → RPM_B longrange → RPM_C only if needed");
         telemetry.update();
     }
 
