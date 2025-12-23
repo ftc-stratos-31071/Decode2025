@@ -31,7 +31,7 @@ public class ShootBallCmd {
                 Intake.INSTANCE.moveServoPos,
                 new Delay(IntakeConstants.sequenceDelay),
                 Intake.INSTANCE.defaultPos,
-                Intake.INSTANCE.shoot,
+                Intake.INSTANCE.shootEnd,
                 Shooter.INSTANCE.kick,
                 new Delay(IntakeConstants.sequenceDelay),
                 Shooter.INSTANCE.kickDefaultPos,

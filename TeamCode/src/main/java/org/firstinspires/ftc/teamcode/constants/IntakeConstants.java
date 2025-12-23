@@ -14,7 +14,7 @@ public class IntakeConstants {
     public static double servoPos = 0.68; //Lock position
     public static double reverseTime = 0.05;
     public static double shootTime = 0.3;
-    public static double shootTimeEnd = 0.2;
-    public static double shootDelay = 0.4;
+    public static double shootTimeEnd = 0.5;
+    public static double shootDelay = 0.2;
     public static double sequenceDelay = 0.4;
 }

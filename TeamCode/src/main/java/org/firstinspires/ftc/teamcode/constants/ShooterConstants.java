@@ -8,7 +8,7 @@ public class ShooterConstants {
     public static double servoPos = 0.6;
     public static double defaultPos = 1.0;
     public static double kickDefaultPos = 0.0;
-    public static double kickerPos = 0.5;
+    public static double kickerPos = 0.425;
 
     // Motor power (for open-loop control)
     public static double motorPower = 0.8;

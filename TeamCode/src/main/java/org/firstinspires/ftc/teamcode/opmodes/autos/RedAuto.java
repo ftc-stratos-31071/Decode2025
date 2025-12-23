@@ -38,18 +38,18 @@ public class RedAuto extends NextFTCOpMode {
     );
 
 
-    private static final Vector2d SCORE_PRELOAD_POS = new Vector2d(-16.0, 13.0);
+    private static final Vector2d SCORE_PRELOAD_POS = new Vector2d(-18.0, 16.0);
 
 
     private static final Vector2d PICKUP_1_POS = new Vector2d(-14.0, 48.0);
     private static final double PICKUP_1_TANGENT = Math.toRadians(-270);
 
 
-    private static final Pose2d SHOOT_POSE = new Pose2d(-18.0, 8.0, Math.toRadians(-225));
+    private static final Pose2d SHOOT_POSE = new Pose2d(-18.0, 10.0, Math.toRadians(-225));
     private static final double SHOOT_TANGENT = Math.toRadians(-90);
 
 
-    private static final Vector2d PICKUP_2_POS = new Vector2d(12.0, 50.0);
+    private static final Vector2d PICKUP_2_POS = new Vector2d(12.0, 52.0);
     private static final double PICKUP_2_TANGENT = Math.toRadians(-270);
 
 
@@ -59,7 +59,7 @@ public class RedAuto extends NextFTCOpMode {
     // =============================
     // Auto behavior config
     // =============================
-    public static double AUTO_TARGET_RPM = 3250.0;     // shooter runs ALL the time (after START)
+    public static double AUTO_TARGET_RPM = 3275.0;     // shooter runs ALL the time (after START)
     public static double AUTO_HOOD_POS = 0.2;          // hood position set on START
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 

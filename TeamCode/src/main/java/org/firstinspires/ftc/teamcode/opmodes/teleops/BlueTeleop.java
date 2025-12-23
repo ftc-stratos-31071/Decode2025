@@ -58,11 +58,11 @@ public class BlueTeleop extends NextFTCOpMode {
     public static double TURRET_LIMIT_DEG = 90.0;  // Max turret rotation
     public static double DEADBAND = 3.0;  // Increased from 2.0 - larger tolerance to prevent jitter
     public static boolean AUTO_TRACK_ENABLED = true;  // Enable/disable tracking
-    public static double NO_TARGET_TIMEOUT_SEC = 2.0;  // Time before returning to center when no target detected
-    public static double MAX_HOOD_HEIGHT = 0.1;  // Maximum hood servo position
+    public static double NO_TARGET_TIMEOUT_SEC = 0.5;  // Time before returning to center when no target detected
+    public static double MAX_HOOD_HEIGHT = 0.2;  // Maximum hood servo position
 
     // PIDF-based shooter control - adjustable target RPM
-    public static double TARGET_RPM = 3600.0;  // Target RPM for PIDF control
+    public static double TARGET_RPM = 3500.0;  // Target RPM for PIDF control
     public static double RPM_INCREMENT = 100.0;  // How much to adjust RPM per button press
     public static double MIN_TARGET_RPM = 1000.0;
     public static double MAX_TARGET_RPM = 6000.0;
@@ -149,7 +149,7 @@ public class BlueTeleop extends NextFTCOpMode {
     public void onStartButtonPressed() {
         // Reset servos and turret to default positions when START is pressed
         Intake.INSTANCE.defaultPos.schedule();
-        Shooter.INSTANCE.moveServo(0.1).schedule();
+        Shooter.INSTANCE.moveServo(0.2).schedule();
         Shooter.INSTANCE.kickDefaultPos.schedule();
         Turret.INSTANCE.turret.zeroed();
 
@@ -208,6 +208,7 @@ public class BlueTeleop extends NextFTCOpMode {
         // B Button - Intake OUTTAKE (reverse direction)
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
             Intake.INSTANCE.moveIntake(-IntakeConstants.intakePowerSlow).schedule();
+            Intake.INSTANCE.defaultPos.schedule();
         });
         Gamepads.gamepad1().b().whenBecomesFalse(() -> {
             Intake.INSTANCE.zeroPower.schedule();

@@ -25,8 +25,8 @@ import dev.nextftc.core.components.SubsystemComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
 
-@Autonomous(name = "BlueAuto", preselectTeleOp = "BlueTeleOp")
-public class BlueAuto extends NextFTCOpMode {
+@Autonomous(name = "SixBallAutoRed", preselectTeleOp = "BlueTeleOp")
+public class SixBallAutoRed extends NextFTCOpMode {
 
     // =============================
     // Trajectory points (from MeepMeep)
@@ -80,7 +80,7 @@ public class BlueAuto extends NextFTCOpMode {
     private boolean hasSeenTarget = false;
     private long lastTargetSeenTimeMs = 0;
 
-    public BlueAuto() {
+    public SixBallAutoRed() {
         addComponents(
                 new SubsystemComponent(Intake.INSTANCE, Shooter.INSTANCE, Turret.INSTANCE),
                 BulkReadComponent.INSTANCE,
@@ -145,16 +145,16 @@ public class BlueAuto extends NextFTCOpMode {
                 .stopAndAdd(ShootBallCmd.create())
 
                 // --- pickup artifacts line 2 ---
-                .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
-                .setReversed(false)
-                .splineTo(PICKUP_2_POS, PICKUP_2_TANGENT)
-                .stopAndAdd(Intake.INSTANCE.zeroPower)
-
-                // --- return to shoot + shoot ---
-                .setReversed(true)
-                .splineToLinearHeading(SHOOT_POSE, SHOOT_TANGENT)
-                .waitSeconds(1.0)
-                .stopAndAdd(ShootBallCmd.create())
+//                .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
+//                .setReversed(false)
+//                .splineTo(PICKUP_2_POS, PICKUP_2_TANGENT)
+//                .stopAndAdd(Intake.INSTANCE.zeroPower)
+//
+//                // --- return to shoot + shoot ---
+//                .setReversed(true)
+//                .splineToLinearHeading(SHOOT_POSE, SHOOT_TANGENT)
+//                .waitSeconds(1.0)
+//                .stopAndAdd(ShootBallCmd.create())
 
                 //strafe out of launch zone
                 .strafeToLinearHeading(PARK_POS, Math.toRadians(180.0))
