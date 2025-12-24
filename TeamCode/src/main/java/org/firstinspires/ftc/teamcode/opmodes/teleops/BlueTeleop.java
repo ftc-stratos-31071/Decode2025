@@ -13,6 +13,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
+import org.firstinspires.ftc.teamcode.commands.ShootBallEnd;
+import org.firstinspires.ftc.teamcode.commands.ShootBallOne;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
@@ -22,6 +24,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 import dev.nextftc.core.commands.Command;
@@ -198,8 +201,16 @@ public class BlueTeleop extends NextFTCOpMode {
             }
         });
 
+        AtomicInteger aPressCounter = new AtomicInteger(0);
+        Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
+            int count = aPressCounter.incrementAndGet();
+            if (count % 3 == 0) {
+                ShootBallEnd.create().schedule();
+            } else {
+                ShootBallOne.create().schedule();
+            }
+        });
 
-        // A Button - Shoot ball (kick)
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
             ShootBallCmd.create().schedule();
         });
