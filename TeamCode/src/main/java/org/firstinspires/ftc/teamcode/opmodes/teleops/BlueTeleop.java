@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
+import org.firstinspires.ftc.teamcode.commands.KickCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallEnd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallOne;
@@ -201,19 +202,17 @@ public class BlueTeleop extends NextFTCOpMode {
             }
         });
 
-        AtomicInteger aPressCounter = new AtomicInteger(0);
         Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
-            int count = aPressCounter.incrementAndGet();
-            if (count % 3 == 0) {
-                ShootBallEnd.create().schedule();
-            } else {
-                ShootBallOne.create().schedule();
-            }
+            KickCmd.create().schedule();
         });
 
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
             ShootBallCmd.create().schedule();
         });
+
+//        Gamepads.gamepad1().a().whenBecomesTrue(() -> {
+//            RapidFireCmd.create().schedule();
+//        });
 
 
         // B Button - Intake OUTTAKE (reverse direction)

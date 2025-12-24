@@ -10,11 +10,12 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
-public class ShootBallOne {
+public class KickCmd {
     public static Command create() {
         return new SequentialGroup(
-                Intake.INSTANCE.defaultPos,
-                Intake.INSTANCE.shoot
+                Shooter.INSTANCE.kick,
+                new Delay(IntakeConstants.sequenceDelay2),
+                Shooter.INSTANCE.kickDefaultPos
         );
     }
 }

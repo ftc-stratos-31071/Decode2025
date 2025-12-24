@@ -11,6 +11,7 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
+import org.firstinspires.ftc.teamcode.commands.StopDriveCmd;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.roadrunner.AutoMecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
@@ -129,12 +130,14 @@ public class BlueAuto extends NextFTCOpMode {
                 .strafeTo(SCORE_PRELOAD_POS)
 
                 // Shoot preload
+                .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(ShootBallCmd.create())
 
                 // --- pickup artifacts line 1 ---
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
                 .setReversed(false)
                 .splineTo(PICKUP_1_POS, PICKUP_1_TANGENT)
+                .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.zeroPower)
 
                 // --- back to shoot position ---
@@ -142,22 +145,26 @@ public class BlueAuto extends NextFTCOpMode {
                 .splineToLinearHeading(SHOOT_POSE, SHOOT_TANGENT)
 
                 // shoot
+                .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(ShootBallCmd.create())
 
                 // --- pickup artifacts line 2 ---
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
                 .setReversed(false)
                 .splineTo(PICKUP_2_POS, PICKUP_2_TANGENT)
+                .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.zeroPower)
 
                 // --- return to shoot + shoot ---
                 .setReversed(true)
                 .splineToLinearHeading(SHOOT_POSE, SHOOT_TANGENT)
                 .waitSeconds(1.0)
+                .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(ShootBallCmd.create())
 
                 //strafe out of launch zone
                 .strafeToLinearHeading(PARK_POS, Math.toRadians(180.0))
+                .stopAndAdd(StopDriveCmd.create(drive))
 
                 .build();
 
