@@ -19,51 +19,25 @@ public class MeepMeepTesting {
         Pose2d startPose = new Pose2d(
                 -52.5,                 // x
                 -51.5,                  // y
-                Math.toRadians(-124)  // heading
+                Math.toRadians(225.0)  // heading
         );
 
         myBot.runAction(
                 myBot.getDrive()
                         .actionBuilder(startPose)
 
-                        // --- score preload ---
                         .setReversed(true)
-                        .strafeTo(new Vector2d(-14.0, -13.0))
-
-//                        // --- pick up artifacts line 1 ---
+                        .strafeTo(new Vector2d(-12.0, -12.0))
                         .setReversed(false)
-                        .splineTo(
-                                new Vector2d(-12.0, -54.0),
-                                Math.toRadians(270)  // radians
-                        )
-//
-//                        // --- back to shoot position ---
+                        .splineToLinearHeading(new Pose2d(12.0, -40.0, Math.toRadians(270.0)), Math.toRadians(260.0))
                         .setReversed(true)
-//                        .splineTo(new Vector2d(-14.0, -13),
-//                                Math.toRadians(45) )
-                        .splineToLinearHeading(new Pose2d(-14.0, -13.0, Math.toRadians(225)),
-                                Math.toRadians(90) )
-//
-//                        // --- pick up line 2---
+                        .splineToSplineHeading(new Pose2d(-12.0, -12.0, Math.toRadians(225.0)), -Math.toRadians(225.0))
                         .setReversed(false)
-                        .splineTo(
-                                new Vector2d(12, -48.0),
-                                Math.toRadians(270)  // radians
-                        )
-//
-                        // --- return to score ---
+                        .splineToLinearHeading(new Pose2d(-12.0, -40.0, Math.toRadians(270.0)), Math.toRadians(260.0))
                         .setReversed(true)
-                        .splineToLinearHeading(new Pose2d(-14.0, -13.0, Math.toRadians(225)),
-                                Math.toRadians(90) )
-//                        )
-
-
-//
-//
-//                        // --- Path7: Pedro BezierLine, reversed ---
-//                        .setReversed(true)
-//                        .strafeTo(new Vector2d(-13.5, 13.0))
-
+                        .splineToSplineHeading(new Pose2d(-12.0, -12.0, Math.toRadians(225.0)), -Math.toRadians(225.0))
+                        .setReversed(false)
+                        .splineToLinearHeading(new Pose2d(-12.0, -36.0, Math.toRadians(180.0)), Math.toRadians(180.0))
                         .build()
         );
 

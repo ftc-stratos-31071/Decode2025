@@ -177,8 +177,11 @@ public class Intake implements Subsystem {
 
     public Command waitForBall(final LaserRangefinder cSensor) {
         return new Command() {
+            private double startTimeSec = 0.0;
+
             @Override
             public void start() {
+                startTimeSec = System.currentTimeMillis() / 1000.0;
                 intake.setPower(IntakeConstants.intakePower);
             }
 
@@ -190,7 +193,9 @@ public class Intake implements Subsystem {
             @Override
             public boolean isDone() {
                 double d = cSensor.getDistance(DistanceUnit.MM);
-                return d >= 35 && d <= 45;
+                boolean detected = d >= 35 && d <= 45;
+                boolean timedOut = System.currentTimeMillis() / 1000.0 - startTimeSec >= 1.0;
+                return detected || timedOut;
             }
 
             @Override
