@@ -8,6 +8,8 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.lynx.LynxI2cDeviceSynch;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
@@ -72,6 +74,8 @@ public class BlueAuto extends NextFTCOpMode {
     private AutoMecanumDrive drive;
     private Command autoCommand;
 
+    private LaserRangefinder lrf;
+
     // =============================
     // Limelight + turret tracking state
     // =============================
@@ -92,6 +96,8 @@ public class BlueAuto extends NextFTCOpMode {
     @Override
     public void onInit() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        lrf = new LaserRangefinder(hardwareMap.get(RevColorSensorV3.class, "Color"));
+        lrf.i2c.setBusSpeed(LynxI2cDeviceSynch.BusSpeed.FAST_400K);
 
         // Build drive + command on init, but DO NOT move mechanisms yet.
         drive = new AutoMecanumDrive(hardwareMap, START_POSE);
@@ -131,7 +137,7 @@ public class BlueAuto extends NextFTCOpMode {
 
                 // Shoot preload
                 .stopAndAdd(StopDriveCmd.create(drive))
-                .stopAndAdd(ShootBallCmd.create())
+                .stopAndAdd(ShootBallCmd.create(lrf))
 
                 // --- pickup artifacts line 1 ---
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
@@ -146,7 +152,7 @@ public class BlueAuto extends NextFTCOpMode {
 
                 // shoot
                 .stopAndAdd(StopDriveCmd.create(drive))
-                .stopAndAdd(ShootBallCmd.create())
+                .stopAndAdd(ShootBallCmd.create(lrf))
 
                 // --- pickup artifacts line 2 ---
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
@@ -160,7 +166,7 @@ public class BlueAuto extends NextFTCOpMode {
                 .splineToLinearHeading(SHOOT_POSE, SHOOT_TANGENT)
                 .waitSeconds(1.0)
                 .stopAndAdd(StopDriveCmd.create(drive))
-                .stopAndAdd(ShootBallCmd.create())
+                .stopAndAdd(ShootBallCmd.create(lrf))
 
                 //strafe out of launch zone
                 .strafeToLinearHeading(PARK_POS, Math.toRadians(180.0))

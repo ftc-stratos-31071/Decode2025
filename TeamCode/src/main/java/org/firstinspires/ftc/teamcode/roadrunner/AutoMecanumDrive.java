@@ -77,13 +77,13 @@ public final class AutoMecanumDrive extends NextFTCMecanumDrive {
 
         // drive model parameters
         public double inPerTick = 0.00197807632078;
-        public double lateralInPerTick = 0.0014224211304947937;
-        public double trackWidthTicks = 5258.3991084719755;
+        public double lateralInPerTick = 0.0014376625047237046;
+        public double trackWidthTicks = 5504.399189405474;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.7390028093811307;
-        public double kV = 0.00026232271296396337;
-        public double kA = 0.0001;
+        public double kS = 1.5813262576398142;
+        public double kV = 0.00025750587673733995;
+        public double kA = 0.000125;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
@@ -95,9 +95,9 @@ public final class AutoMecanumDrive extends NextFTCMecanumDrive {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 1.0;
-        public double lateralGain = 1.0;
-        public double headingGain = 2.0; // shared with turn
+        public double axialGain = 7.0;
+        public double lateralGain = 5.0;
+        public double headingGain = 10.0; // shared with turn
 
         public double axialVelGain = 0.0;
         public double lateralVelGain = 0.0;

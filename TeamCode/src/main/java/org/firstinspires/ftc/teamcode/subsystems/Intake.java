@@ -1,8 +1,11 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
+import org.firstinspires.ftc.teamcode.opmodes.autos.LaserRangefinder;
 
 import dev.nextftc.core.commands.Command;
 import dev.nextftc.core.subsystems.Subsystem;
@@ -12,20 +15,18 @@ import dev.nextftc.hardware.powerable.SetPower;
 
 @Config
 public class Intake implements Subsystem {
+
     public static final Intake INSTANCE = new Intake();
 
     private Intake() {}
 
-    // Control Hub Motor Port 0
     private final MotorEx intake = new MotorEx("IntakeMotor").brakeMode().reversed();
-    // Expansion Hub Servo Port 0
     private final ServoEx servo = new ServoEx("DoorServo");
 
-    public Command moveIntake(double shooterPower) {
-        return new SetPower(intake, shooterPower);
+    public Command moveIntake(double power) {
+        return new SetPower(intake, power);
     }
 
-    // Dynamic servo commands - read values from IntakeConstants each time
     public final Command moveServoPos = new Command() {
         @Override
         public void start() {
@@ -34,7 +35,7 @@ public class Intake implements Subsystem {
 
         @Override
         public boolean isDone() {
-            return true;  // Completes immediately after setting position
+            return true;
         }
     }.requires(this);
 
@@ -46,11 +47,10 @@ public class Intake implements Subsystem {
 
         @Override
         public boolean isDone() {
-            return true;  // Completes immediately after setting position
+            return true;
         }
     }.requires(this);
 
-    // Dynamic motor commands - read values from IntakeConstants each time
     public final Command turnOn = new Command() {
         @Override
         public void update() {
@@ -59,12 +59,7 @@ public class Intake implements Subsystem {
 
         @Override
         public boolean isDone() {
-            return false;  // Runs continuously until interrupted
-        }
-
-        @Override
-        public void stop(boolean interrupted) {
-            // Don't stop motor here - let other commands control it
+            return false;
         }
     }.requires(this);
 
@@ -79,19 +74,17 @@ public class Intake implements Subsystem {
 
         @Override
         public void update() {
-            // Ensure power remains set while running
             intake.setPower(-IntakeConstants.intakePowerSlow);
         }
 
         @Override
         public boolean isDone() {
-            // Run for 0.1 seconds
-            return System.currentTimeMillis() / 1000.0 - shootStartTimeSec2 >= IntakeConstants.reverseTime;
+            return System.currentTimeMillis() / 1000.0 - shootStartTimeSec2
+                    >= IntakeConstants.reverseTime;
         }
 
         @Override
         public void stop(boolean interrupted) {
-            // Stop the motor when command finishes or is interrupted
             intake.setPower(IntakeConstants.zeroPower);
         }
     }.requires(this);
@@ -104,11 +97,10 @@ public class Intake implements Subsystem {
 
         @Override
         public boolean isDone() {
-            return true;  // Completes immediately after setting power
+            return true;
         }
     }.requires(this);
 
-    // Shoot for 0.3 seconds
     private double shootStartTimeSec = 0.0;
 
     public final Command shoot = new Command() {
@@ -120,18 +112,17 @@ public class Intake implements Subsystem {
 
         @Override
         public void update() {
-            // Ensure power remains set while running
             intake.setPower(IntakeConstants.shootPower);
         }
 
         @Override
         public boolean isDone() {
-            return System.currentTimeMillis() / 1000.0 - shootStartTimeSec >= IntakeConstants.shootTime;
+            return System.currentTimeMillis() / 1000.0 - shootStartTimeSec
+                    >= IntakeConstants.shootTime;
         }
 
         @Override
         public void stop(boolean interrupted) {
-            // Stop the motor when command finishes or is interrupted
             intake.setPower(IntakeConstants.zeroPower);
         }
     }.requires(this);
@@ -145,18 +136,17 @@ public class Intake implements Subsystem {
 
         @Override
         public void update() {
-            // Ensure power remains set while running
             intake.setPower(IntakeConstants.shootPower);
         }
 
         @Override
         public boolean isDone() {
-            return System.currentTimeMillis() / 1000.0 - shootStartTimeSec >= IntakeConstants.shootTimeEnd;
+            return System.currentTimeMillis() / 1000.0 - shootStartTimeSec
+                    >= IntakeConstants.shootTimeEnd;
         }
 
         @Override
         public void stop(boolean interrupted) {
-            // Stop the motor when command finishes or is interrupted
             intake.setPower(IntakeConstants.zeroPower);
         }
     }.requires(this);
@@ -170,19 +160,43 @@ public class Intake implements Subsystem {
 
         @Override
         public void update() {
-            // Ensure power remains set while running
             intake.setPower(IntakeConstants.shootPower);
         }
 
         @Override
         public boolean isDone() {
-            return System.currentTimeMillis() / 1000.0 - shootStartTimeSec >= IntakeConstants.shootTimeFirst;
+            return System.currentTimeMillis() / 1000.0 - shootStartTimeSec
+                    >= IntakeConstants.shootTimeFirst;
         }
 
         @Override
         public void stop(boolean interrupted) {
-            // Stop the motor when command finishes or is interrupted
             intake.setPower(IntakeConstants.zeroPower);
         }
     }.requires(this);
+
+    public Command waitForBall(final LaserRangefinder cSensor) {
+        return new Command() {
+            @Override
+            public void start() {
+                intake.setPower(IntakeConstants.intakePower);
+            }
+
+            @Override
+            public void update() {
+                intake.setPower(IntakeConstants.intakePower);
+            }
+
+            @Override
+            public boolean isDone() {
+                double d = cSensor.getDistance(DistanceUnit.MM);
+                return d >= 35 && d <= 45;
+            }
+
+            @Override
+            public void stop(boolean interrupted) {
+                intake.setPower(IntakeConstants.zeroPower);
+            }
+        }.requires(this);
+    }
 }

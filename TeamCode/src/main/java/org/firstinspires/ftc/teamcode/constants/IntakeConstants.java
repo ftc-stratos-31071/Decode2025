@@ -17,5 +17,5 @@ public class IntakeConstants {
     public static double shootTime = 0.15;
     public static double shootTimeEnd = 1.0;
     public static double sequenceDelay2 = 0.5;
-    public static double sequenceDelay = 0.5;
+    public static double sequenceDelay = 0.25;
 }

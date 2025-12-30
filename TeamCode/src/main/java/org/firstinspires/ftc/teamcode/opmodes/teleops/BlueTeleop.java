@@ -1,6 +1,4 @@
-// java
 package org.firstinspires.ftc.teamcode.opmodes.teleops;
-
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -8,25 +6,23 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.lynx.LynxI2cDeviceSynch;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.KickCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
-import org.firstinspires.ftc.teamcode.commands.ShootBallEnd;
-import org.firstinspires.ftc.teamcode.commands.ShootBallOne;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
+import org.firstinspires.ftc.teamcode.opmodes.autos.LaserRangefinder;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
-
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
 
 import dev.nextftc.core.commands.Command;
 import dev.nextftc.core.components.BindingsComponent;
@@ -37,22 +33,6 @@ import dev.nextftc.ftc.components.BulkReadComponent;
 import dev.nextftc.hardware.driving.MecanumDriverControlled;
 import dev.nextftc.hardware.impl.MotorEx;
 
-
-/**
- * Main TeleOp with AUTOMATIC TURRET TRACKING!
- *
- * Driver controls the robot movement normally, but the turret automatically
- * tracks the CLOSEST AprilTag detected by the Limelight.
- *
- * Features:
- * - Full mecanum drive control
- * - Automatic turret tracking (tracks ANY AprilTag)
- * - Selects closest tag when multiple are visible,
- * - All normal shooter/intake controls
- * - Real-time telemetry on dashboard
- * - Camera stream visible on FTC Dashboard
- * - Toggle tracking on/off with X button
- */
 @Config
 @TeleOp(name = "BlueTeleOp")
 public class BlueTeleop extends NextFTCOpMode {
@@ -75,6 +55,7 @@ public class BlueTeleop extends NextFTCOpMode {
     // Estimated RPM per unit power at full power (adjust if your shooter differs)
     private static final double TARGET_RPM_PER_POWER = 6000.0;
 
+    private LaserRangefinder lrf;
 
     public BlueTeleop() {
         addComponents(
@@ -110,13 +91,12 @@ public class BlueTeleop extends NextFTCOpMode {
 
     @Override
     public void onInit() {
-        // Setup dashboard and camera stream
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         Shooter.INSTANCE.stopShooter();
+        lrf = new LaserRangefinder(hardwareMap.get(RevColorSensorV3.class, "Color"));
+        lrf.i2c.setBusSpeed(LynxI2cDeviceSynch.BusSpeed.FAST_400K);
 
-        // DON'T schedule any commands during init - wait for start button
-        // Just reset state variables
         motorTargetX = 0.0;
         smoothedTx = 0.0;
         hasSeenTarget = false;
@@ -126,14 +106,12 @@ public class BlueTeleop extends NextFTCOpMode {
         servoPos = ShooterConstants.defaultPos;
         targetRpm = TARGET_RPM;
 
-        // Initialize Limelight with camera streaming
         try {
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
             limelight.setPollRateHz(100);
             limelight.start();
             limelight.pipelineSwitch(0);
 
-            // Stream camera to dashboard
             dashboard.startCameraStream(limelight, 0);
 
             telemetry.addData("Limelight", "✓ Connected");
@@ -207,13 +185,8 @@ public class BlueTeleop extends NextFTCOpMode {
         });
 
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
-            ShootBallCmd.create().schedule();
+            ShootBallCmd.create(lrf).schedule();
         });
-
-//        Gamepads.gamepad1().a().whenBecomesTrue(() -> {
-//            RapidFireCmd.create().schedule();
-//        });
-
 
         // B Button - Intake OUTTAKE (reverse direction)
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
@@ -448,6 +421,9 @@ public class BlueTeleop extends NextFTCOpMode {
         telemetry.addData("B Button", "Outtake (Reverse Intake)");
         telemetry.addData("DPad Up/Down", "Adjust Hood Position");
         telemetry.addData("DPad Left/Right", "Adjust Target RPM");
+
+        //COLOR SENSOR TELEMETRY
+        telemetry.addData("Distance", lrf.getDistance(DistanceUnit.MM));
 
 
         telemetry.update();
