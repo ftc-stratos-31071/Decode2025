@@ -11,11 +11,11 @@ public class IntakeConstants {
     public static double shootPower = 1.0;
     public static double zeroPower = 0.0;
     public static double defaultPos = 0.525;
-    public static double servoPos = 0.66; //Lock position
-    public static double reverseTime = 0.05;
+    public static double servoPos = 0.585; //Lock position
+    public static double reverseTime = 0.15;
     public static double shootTimeFirst = 0.4;
     public static double shootTime = 0.15;
     public static double shootTimeEnd = 1.0;
-    public static double sequenceDelay2 = 0.5;
+    public static double sequenceDelay2 = 0.25;
     public static double sequenceDelay = 0.25;
 }

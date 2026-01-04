@@ -54,7 +54,7 @@ public class AutoTest extends NextFTCOpMode {
     public static double TURRET_LIMIT_DEG = 90.0;
     public static double DEADBAND = 3.0;
     public static boolean AUTO_TRACK_ENABLED = true;
-    public static double NO_TARGET_TIMEOUT_SEC = 2.0;
+    public static double NO_TARGET_TIMEOUT_SEC = 0.5;
 
     // =============================
     // NextFTC + RR objects
@@ -132,9 +132,9 @@ public class AutoTest extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
                 .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-12.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
+                .splineToSplineHeading(new Pose2d(-16.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
-                .waitSeconds(1.0)
+//                .waitSeconds(1.0)
                 .stopAndAdd(ShootBallCmd.create(lrf))
 
                 .stopAndAdd(Intake.INSTANCE.moveServoPos())
@@ -145,9 +145,9 @@ public class AutoTest extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
                 .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-12.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
+                .splineToSplineHeading(new Pose2d(-16.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
-                .waitSeconds(1.0)
+//                .waitSeconds(1.0)
                 .stopAndAdd(ShootBallCmd.create(lrf))
 
                 .setReversed(false)

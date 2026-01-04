@@ -14,6 +14,7 @@ public class KickCmd {
     public static Command create() {
         return new SequentialGroup(
                 Intake.INSTANCE.defaultPos(),
+                new Delay(IntakeConstants.sequenceDelay),
                 Shooter.INSTANCE.kick,
                 new Delay(IntakeConstants.sequenceDelay2),
                 Shooter.INSTANCE.kickDefaultPos

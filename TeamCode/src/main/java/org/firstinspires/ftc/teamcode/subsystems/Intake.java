@@ -178,8 +178,41 @@ public class Intake implements Subsystem {
                 double d = sensor.getDistance(DistanceUnit.MM);
 
                 boolean valid = !Double.isNaN(d) && d > 0 && d < 200;
-                boolean detected = valid && d >= 35 && d <= 45;
+                boolean detected = valid && d >= 20;
                 boolean timedOut = System.currentTimeMillis() / 1000.0 - startTime >= 1.0;
+
+                return detected || timedOut;
+            }
+
+            @Override
+            public void stop(boolean interrupted) {
+                intake.setPower(IntakeConstants.zeroPower);
+            }
+        }.requires(this);
+    }
+
+    public Command waitForBallLong(final LaserRangefinder sensor) {
+        return new Command() {
+            private double startTime;
+
+            @Override
+            public void start() {
+                startTime = System.currentTimeMillis() / 1000.0;
+                intake.setPower(IntakeConstants.intakePower);
+            }
+
+            @Override
+            public void update() {
+                intake.setPower(IntakeConstants.intakePower);
+            }
+
+            @Override
+            public boolean isDone() {
+                double d = sensor.getDistance(DistanceUnit.MM);
+
+                boolean valid = !Double.isNaN(d) && d > 0 && d < 200;
+                boolean detected = valid && d >= 20;
+                boolean timedOut = System.currentTimeMillis() / 1000.0 - startTime >= 2.0;
 
                 return detected || timedOut;
             }

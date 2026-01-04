@@ -14,7 +14,9 @@ public class ShootBallOne {
     public static Command create() {
         return new SequentialGroup(
                 Intake.INSTANCE.defaultPos(),
-                Intake.INSTANCE.shoot(IntakeConstants.shootTime)
+                Shooter.INSTANCE.kick,
+                Intake.INSTANCE.shoot(IntakeConstants.shootTime),
+                Shooter.INSTANCE.kickDefaultPos
         );
     }
 }

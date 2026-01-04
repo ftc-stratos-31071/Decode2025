@@ -13,6 +13,7 @@ public class IntakeSeqCmd {
     public static Command create() {
         return new SequentialGroup(
                 Intake.INSTANCE.moveServoPos(),
+                Shooter.INSTANCE.kickDefaultPos,
                 new ForcedParallelCommand(
                         Intake.INSTANCE.turnOn()
                 )

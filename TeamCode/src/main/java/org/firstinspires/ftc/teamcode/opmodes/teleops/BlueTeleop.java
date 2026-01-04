@@ -51,7 +51,6 @@ public class BlueTeleop extends NextFTCOpMode {
     public static double MIN_TARGET_RPM = 1000.0;
     public static double MAX_TARGET_RPM = 6000.0;
 
-
     // Estimated RPM per unit power at full power (adjust if your shooter differs)
     private static final double TARGET_RPM_PER_POWER = 6000.0;
 
@@ -96,6 +95,8 @@ public class BlueTeleop extends NextFTCOpMode {
         Shooter.INSTANCE.stopShooter();
         lrf = new LaserRangefinder(hardwareMap.get(RevColorSensorV3.class, "Color"));
         lrf.i2c.setBusSpeed(LynxI2cDeviceSynch.BusSpeed.FAST_400K);
+        lrf.setDistanceMode(LaserRangefinder.DistanceMode.SHORT);
+        lrf.setTiming(10,0);
 
         motorTargetX = 0.0;
         smoothedTx = 0.0;
@@ -147,7 +148,6 @@ public class BlueTeleop extends NextFTCOpMode {
         );
         driverControlled.schedule();
 
-
         // Left Bumper - Intake sequence (press to start, release to stop)
         Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> {
             IntakeSeqCmd.create().schedule();
@@ -192,6 +192,7 @@ public class BlueTeleop extends NextFTCOpMode {
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
             Intake.INSTANCE.moveIntake(-IntakeConstants.intakePowerSlow).schedule();
             Intake.INSTANCE.defaultPos().schedule();
+            Shooter.INSTANCE.kickDefaultPos.schedule();
         });
         Gamepads.gamepad1().b().whenBecomesFalse(() -> {
             Intake.INSTANCE.zeroPower().schedule();
