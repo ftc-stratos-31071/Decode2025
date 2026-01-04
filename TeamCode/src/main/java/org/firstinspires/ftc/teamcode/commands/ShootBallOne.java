@@ -13,8 +13,8 @@ import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 public class ShootBallOne {
     public static Command create() {
         return new SequentialGroup(
-                Intake.INSTANCE.defaultPos,
-                Intake.INSTANCE.shoot
+                Intake.INSTANCE.defaultPos(),
+                Intake.INSTANCE.shoot(IntakeConstants.shootTime)
         );
     }
 }

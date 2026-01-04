@@ -37,11 +37,11 @@ public class RobotResetCmd {
         // 2) Use existing Commands you already have for the rest
         return new SequentialGroup(
                 // Stop things first (safe)
-                Intake.INSTANCE.zeroPower,
+                Intake.INSTANCE.zeroPower(),
                 Shooter.INSTANCE.zeroPower,
 
                 // Servos to known positions (matches TeleOp)
-                Intake.INSTANCE.defaultPos,
+                Intake.INSTANCE.defaultPos(),
                 Shooter.INSTANCE.moveServo(0.1),       // hood
                 Shooter.INSTANCE.kickDefaultPos,       // kicker
 

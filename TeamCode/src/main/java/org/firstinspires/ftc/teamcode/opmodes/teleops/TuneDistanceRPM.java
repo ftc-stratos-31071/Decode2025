@@ -128,7 +128,7 @@ public class TuneDistanceRPM extends NextFTCOpMode {
         driverControlled.schedule();
 
         // Put intake/shooter servos into known states
-        Intake.INSTANCE.defaultPos.schedule();
+        Intake.INSTANCE.defaultPos().schedule();
         Shooter.INSTANCE.defaultPos.schedule();
         Shooter.INSTANCE.kickDefaultPos.schedule();
 
@@ -141,7 +141,7 @@ public class TuneDistanceRPM extends NextFTCOpMode {
 
         // LB: Intake sequence press/release
         Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> IntakeSeqCmd.create().schedule());
-        Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> Intake.INSTANCE.zeroPower.schedule());
+        Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> Intake.INSTANCE.zeroPower().schedule());
 
         // RB: Shooter ON (distance RPM)
         Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> shooterEnabled = true);

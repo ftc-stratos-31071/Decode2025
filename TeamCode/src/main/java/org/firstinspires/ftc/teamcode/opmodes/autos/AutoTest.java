@@ -29,7 +29,7 @@ import dev.nextftc.core.components.SubsystemComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
 
-@Autonomous(name = "AutoTest", preselectTeleOp = "BlueTeleOp")
+@Autonomous(name = "AutoTest")
 public class AutoTest extends NextFTCOpMode {
 
     // =============================
@@ -37,14 +37,14 @@ public class AutoTest extends NextFTCOpMode {
     // =============================
     private static final Pose2d START_POSE = new Pose2d(
             -52.5,                 // x
-            -51.5,                  // y
-            Math.toRadians(225.0)  // heading
+            51.5,                  // y
+            Math.toRadians(-230.0)  // heading
     );
 
     // =============================
     // Auto behavior config
     // =============================
-    public static double AUTO_TARGET_RPM = 3275.0;     // shooter runs ALL the time (after START)
+    public static double AUTO_TARGET_RPM = 3500.0;     // shooter runs ALL the time (after START)
     public static double AUTO_HOOD_POS = 0.2;          // hood position set on START
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 
@@ -98,7 +98,7 @@ public class AutoTest extends NextFTCOpMode {
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
             limelight.setPollRateHz(100);
             limelight.start();
-            limelight.pipelineSwitch(0);
+            limelight.pipelineSwitch(1);
 
             if (STREAM_LIMELIGHT_TO_DASH) {
                 FtcDashboard.getInstance().startCameraStream(limelight, 0);
@@ -119,33 +119,39 @@ public class AutoTest extends NextFTCOpMode {
         // Build autonomous command (same path + stopAndAdd actions)
         autoCommand = drive.commandBuilder(START_POSE)
                 .setReversed(true)
-                .strafeTo(new Vector2d(-12.0, -12.0))
+                .strafeTo(new Vector2d(-12.0, 12.0))
 
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(ShootBallCmd.create(lrf))
 
-                .stopAndAdd(IntakeSeqCmd.create())
+                .stopAndAdd(Intake.INSTANCE.moveServoPos())
+                .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
                 .setReversed(false)
-                .splineToLinearHeading(new Pose2d(12.0, -40.0, Math.toRadians(270.0)), Math.toRadians(260.0))
-                .stopAndAdd(Intake.INSTANCE.zeroPower)
+                .splineToLinearHeading(new Pose2d(8.0, 40.0, Math.toRadians(-270.0)), Math.toRadians(-260.0))
+                .strafeTo(new Vector2d(8.0, 56.0))
+                .stopAndAdd(Intake.INSTANCE.zeroPower())
 
                 .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-12.0, -12.0, Math.toRadians(225.0)), -Math.toRadians(225.0))
+                .splineToSplineHeading(new Pose2d(-12.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
+                .waitSeconds(1.0)
                 .stopAndAdd(ShootBallCmd.create(lrf))
 
-                .stopAndAdd(IntakeSeqCmd.create())
+                .stopAndAdd(Intake.INSTANCE.moveServoPos())
+                .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
                 .setReversed(false)
-                .splineToLinearHeading(new Pose2d(-12.0, -40.0, Math.toRadians(270.0)), Math.toRadians(260.0))
-                .stopAndAdd(Intake.INSTANCE.zeroPower)
+                .splineToLinearHeading(new Pose2d(-16.0, 40.0, Math.toRadians(-270.0)), Math.toRadians(-260.0))
+                .strafeTo(new Vector2d(-16.0, 56.0))
+                .stopAndAdd(Intake.INSTANCE.zeroPower())
 
                 .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-12.0, -12.0, Math.toRadians(225.0)), -Math.toRadians(225.0))
+                .splineToSplineHeading(new Pose2d(-12.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
+                .waitSeconds(1.0)
                 .stopAndAdd(ShootBallCmd.create(lrf))
 
                 .setReversed(false)
-                .splineToLinearHeading(new Pose2d(-12.0, -36.0, Math.toRadians(180.0)), Math.toRadians(180.0))
+                .strafeTo(new Vector2d(-12.0, 40.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .build();
 
@@ -168,7 +174,7 @@ public class AutoTest extends NextFTCOpMode {
     @Override
     public void onStartButtonPressed() {
         // Once START is pressed, NOW set your start positions like TeleOp
-        Intake.INSTANCE.moveServoPos.schedule();
+        Intake.INSTANCE.moveServoPos().schedule();
         Shooter.INSTANCE.moveServo(AUTO_HOOD_POS).schedule();
         Shooter.INSTANCE.kickDefaultPos.schedule();
 
@@ -220,7 +226,7 @@ public class AutoTest extends NextFTCOpMode {
         Shooter.INSTANCE.stopShooter();
 
         // Intake: stop
-        Intake.INSTANCE.zeroPower.schedule();
+        Intake.INSTANCE.zeroPower().schedule();
 
         // Turret: stop and disable manual tracking
         Turret.INSTANCE.disableManualControl();
@@ -240,7 +246,7 @@ public class AutoTest extends NextFTCOpMode {
         Shooter.INSTANCE.stopShooter();
 
         // Intake motor off
-        Intake.INSTANCE.zeroPower.schedule();
+        Intake.INSTANCE.zeroPower().schedule();
 
         // Turret motor off (no tracking while in INIT)
         Turret.INSTANCE.disableManualControl();

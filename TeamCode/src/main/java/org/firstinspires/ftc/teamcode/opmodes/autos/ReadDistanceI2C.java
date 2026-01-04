@@ -36,12 +36,12 @@ public class ReadDistanceI2C extends NextFTCOpMode {
 
     @Override
     public void onStartButtonPressed() {
-        Intake.INSTANCE.defaultPos.schedule();
+        Intake.INSTANCE.defaultPos().schedule();
         Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> {
             IntakeSeqCmd.create().schedule();
         });
         Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> {
-            Intake.INSTANCE.zeroPower.schedule();
+            Intake.INSTANCE.zeroPower().schedule();
         });
     }
 
@@ -53,7 +53,7 @@ public class ReadDistanceI2C extends NextFTCOpMode {
         telemetry.update();
 
         if (distance >= 30 && distance <= 40) {
-            Intake.INSTANCE.zeroPower.schedule();
+            Intake.INSTANCE.zeroPower().schedule();
         }
     }
 }

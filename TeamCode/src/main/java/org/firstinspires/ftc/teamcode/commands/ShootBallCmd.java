@@ -13,12 +13,12 @@ public class ShootBallCmd {
         return new SequentialGroup(
                 ShootBallOne.create(),
                 new Delay(IntakeConstants.sequenceDelay),
-                Intake.INSTANCE.moveServoPos,
+                Intake.INSTANCE.moveServoPos(),
                 Intake.INSTANCE.waitForBall(cSensor),
                 new Delay(IntakeConstants.sequenceDelay),
                 ShootBallOne.create(),
                 new Delay(IntakeConstants.sequenceDelay),
-                Intake.INSTANCE.moveServoPos,
+                Intake.INSTANCE.moveServoPos(),
                 Intake.INSTANCE.waitForBall(cSensor),
                 new Delay(IntakeConstants.sequenceDelay),
                 ShootBallOne.create()

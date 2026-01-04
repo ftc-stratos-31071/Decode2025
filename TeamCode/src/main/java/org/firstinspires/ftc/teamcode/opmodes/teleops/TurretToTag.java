@@ -85,7 +85,7 @@ public class TurretToTag extends NextFTCOpMode {
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
-        Intake.INSTANCE.defaultPos.schedule();
+        Intake.INSTANCE.defaultPos().schedule();
         Shooter.INSTANCE.defaultPos.schedule();
 
         // IMPORTANT: Zero the turret and set initial target to 0
@@ -152,8 +152,8 @@ public class TurretToTag extends NextFTCOpMode {
         });
 
         // Manual intake
-        Gamepads.gamepad1().a().whenBecomesTrue(Intake.INSTANCE.turnOn);
-        Gamepads.gamepad1().a().whenBecomesFalse(Intake.INSTANCE.zeroPower);
+        Gamepads.gamepad1().a().whenBecomesTrue(Intake.INSTANCE.turnOn());
+        Gamepads.gamepad1().a().whenBecomesFalse(Intake.INSTANCE.zeroPower());
 
         // Shooter off
         Gamepads.gamepad1().b().whenBecomesTrue(Shooter.INSTANCE.zeroPower);

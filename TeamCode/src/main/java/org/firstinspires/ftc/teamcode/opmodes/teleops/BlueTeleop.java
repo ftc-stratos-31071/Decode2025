@@ -130,7 +130,7 @@ public class BlueTeleop extends NextFTCOpMode {
     @Override
     public void onStartButtonPressed() {
         // Reset servos and turret to default positions when START is pressed
-        Intake.INSTANCE.defaultPos.schedule();
+        Intake.INSTANCE.defaultPos().schedule();
         Shooter.INSTANCE.moveServo(0.2).schedule();
         Shooter.INSTANCE.kickDefaultPos.schedule();
         Turret.INSTANCE.turret.zeroed();
@@ -153,7 +153,7 @@ public class BlueTeleop extends NextFTCOpMode {
             IntakeSeqCmd.create().schedule();
         });
         Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> {
-            Intake.INSTANCE.zeroPower.schedule();
+            Intake.INSTANCE.zeroPower().schedule();
         });
 
         final AtomicBoolean shooterToggle = new AtomicBoolean(false);
@@ -191,10 +191,10 @@ public class BlueTeleop extends NextFTCOpMode {
         // B Button - Intake OUTTAKE (reverse direction)
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
             Intake.INSTANCE.moveIntake(-IntakeConstants.intakePowerSlow).schedule();
-            Intake.INSTANCE.defaultPos.schedule();
+            Intake.INSTANCE.defaultPos().schedule();
         });
         Gamepads.gamepad1().b().whenBecomesFalse(() -> {
-            Intake.INSTANCE.zeroPower.schedule();
+            Intake.INSTANCE.zeroPower().schedule();
         });
 
         final AtomicBoolean xRpmToggle = new AtomicBoolean(false);

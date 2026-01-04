@@ -11,12 +11,12 @@ import dev.nextftc.hardware.impl.MotorEx;
 import dev.nextftc.hardware.controllable.RunToPosition;
 
 @Config
-public class Turret implements Subsystem {
-    public static final Turret INSTANCE = new Turret();
-    private Turret() {}
+public class Turret2 implements Subsystem {
+    public static final Turret2 INSTANCE = new Turret2();
+    private Turret2() {}
 
     // Control Hub Motor Port 1
-    public final MotorEx turret = new MotorEx("TurretMotor").reversed(); //remove reverse for pinpoint
+    public final MotorEx turret = new MotorEx("TurretMotor");
 
     private final ControlSystem turretController = ControlSystem.builder()
             .posPid(TurretConstants.kP, TurretConstants.kI, TurretConstants.kD)

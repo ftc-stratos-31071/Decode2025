@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 public class KickCmd {
     public static Command create() {
         return new SequentialGroup(
+                Intake.INSTANCE.defaultPos(),
                 Shooter.INSTANCE.kick,
                 new Delay(IntakeConstants.sequenceDelay2),
                 Shooter.INSTANCE.kickDefaultPos

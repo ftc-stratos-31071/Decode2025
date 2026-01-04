@@ -12,9 +12,9 @@ public class IntakeSeqCmd {
 
     public static Command create() {
         return new SequentialGroup(
-                Intake.INSTANCE.moveServoPos,
+                Intake.INSTANCE.moveServoPos(),
                 new ForcedParallelCommand(
-                        Intake.INSTANCE.turnOn
+                        Intake.INSTANCE.turnOn()
                 )
         );
     }
