@@ -11,14 +11,28 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 public class ShootBallCmd {
     public static Command create(final LaserRangefinder cSensor) {
         return new SequentialGroup(
+//                KickCmd.create(),
+//                new Delay(IntakeConstants.sequenceDelay),
+//                Intake.INSTANCE.moveServoPos(),
+//                Intake.INSTANCE.waitForBall(cSensor),
+//                new Delay(IntakeConstants.sequenceDelay),
+//                ShootBallOne.create(),
+//                new Delay(IntakeConstants.sequenceDelay),
+//                Intake.INSTANCE.moveServoPos(),
+//                Intake.INSTANCE.waitForBall(cSensor),
+//                new Delay(IntakeConstants.sequenceDelay),
+//                ShootBallOne.create()
+
+
+//                [edited]
                 KickCmd.create(),
-                new Delay(IntakeConstants.sequenceDelay),
-                Intake.INSTANCE.moveServoPos(),
+//                new Delay(IntakeConstants.sequenceDelay),
+//                Intake.INSTANCE.moveServoPos(),
                 Intake.INSTANCE.waitForBall(cSensor),
                 new Delay(IntakeConstants.sequenceDelay),
                 ShootBallOne.create(),
                 new Delay(IntakeConstants.sequenceDelay),
-                Intake.INSTANCE.moveServoPos(),
+//                Intake.INSTANCE.moveServoPos(),
                 Intake.INSTANCE.waitForBall(cSensor),
                 new Delay(IntakeConstants.sequenceDelay),
                 ShootBallOne.create()

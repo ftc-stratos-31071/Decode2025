@@ -14,6 +14,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.KickCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
+import org.firstinspires.ftc.teamcode.commands.ShootBallCont;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.opmodes.autos.LaserRangefinder;
@@ -185,7 +186,7 @@ public class BlueTeleop extends NextFTCOpMode {
         });
 
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
-            ShootBallCmd.create(lrf).schedule();
+            ShootBallCont.create().schedule(); //changed to cont intake
         });
 
         // B Button - Intake OUTTAKE (reverse direction)

@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
+import org.firstinspires.ftc.teamcode.commands.ShootBallCont;
 import org.firstinspires.ftc.teamcode.commands.StopDriveCmd;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.roadrunner.AutoMecanumDrive;
@@ -29,16 +30,16 @@ import dev.nextftc.core.components.SubsystemComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
 
-@Autonomous(name = "AutoTest")
-public class AutoTest extends NextFTCOpMode {
+@Autonomous(name = "FarRedAuto")
+public class FarRedAuto extends NextFTCOpMode {
 
     // =============================
     // Trajectory points (from MeepMeep)
     // =============================
     private static final Pose2d START_POSE = new Pose2d(
-            -52.5,                 // x
-            51.5,                  // y
-            Math.toRadians(-230.0)  // heading
+            62.5,                  // x
+            13.0,                  // y
+            Math.toRadians(-180.0) // heading
     );
 
     // =============================
@@ -73,7 +74,7 @@ public class AutoTest extends NextFTCOpMode {
     private boolean hasSeenTarget = false;
     private long lastTargetSeenTimeMs = 0;
 
-    public AutoTest() {
+    public FarRedAuto() {
         addComponents(
                 new SubsystemComponent(Intake.INSTANCE, Shooter.INSTANCE, Turret.INSTANCE),
                 BulkReadComponent.INSTANCE,
@@ -118,41 +119,21 @@ public class AutoTest extends NextFTCOpMode {
 
         // Build autonomous command (same path + stopAndAdd actions)
         autoCommand = drive.commandBuilder(START_POSE)
-                .setReversed(true)
-                .strafeTo(new Vector2d(-12.0, 12.0))
-
-                .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(ShootBallCmd.create(lrf))
-
-                .stopAndAdd(Intake.INSTANCE.moveServoPos())
-                .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
-                .setReversed(false)
-                .splineToLinearHeading(new Pose2d(8.0, 40.0, Math.toRadians(-270.0)), Math.toRadians(-260.0))
-                .strafeTo(new Vector2d(8.0, 56.0))
-                .stopAndAdd(Intake.INSTANCE.zeroPower())
-
-                .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-16.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
-                .stopAndAdd(StopDriveCmd.create(drive))
-//                .waitSeconds(1.0)
-                .stopAndAdd(ShootBallCmd.create(lrf))
-
-                .stopAndAdd(Intake.INSTANCE.moveServoPos())
-                .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
-                .setReversed(false)
-                .splineToLinearHeading(new Pose2d(-16.0, 40.0, Math.toRadians(-270.0)), Math.toRadians(-260.0))
-                .strafeTo(new Vector2d(-16.0, 56.0))
-                .stopAndAdd(Intake.INSTANCE.zeroPower())
-
-                .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-16.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
-                .stopAndAdd(StopDriveCmd.create(drive))
-//                .waitSeconds(1.0)
-                .stopAndAdd(ShootBallCmd.create(lrf))
-
-                .setReversed(false)
-                .strafeTo(new Vector2d(-12.0, 40.0))
-                .stopAndAdd(StopDriveCmd.create(drive))
+                .splineToLinearHeading(new Pose2d(36.0, 40.0, Math.toRadians(-270.0)), Math.toRadians(-260.0))
+//                .strafeTo(new Vector2d(36.0, 56.0))
+//                .setReversed(true)
+//                .splineToLinearHeading(new Pose2d(62.5, 13.0, Math.toRadians(-180.0)), Math.toRadians(-30.0))
+//                .waitSeconds(0.5)
+//                .setReversed(false)
+//                .splineToLinearHeading(new Pose2d(12.0, 40.0, Math.toRadians(-270.0)), Math.toRadians(-260.0))
+//                .strafeTo(new Vector2d(12.0, 56.0))
+//                .waitSeconds(0.5)
+//                .setReversed(true)
+//                .splineToLinearHeading(new Pose2d(62.5, 13.0, Math.toRadians(-180.0)), Math.toRadians(-30.0))
+//                .waitSeconds(0.5)
+//                .strafeTo(new Vector2d(62.5, 35.0))
+//                .stopAndAdd(StopDriveCmd.create(drive))
                 .build();
 
         telemetry.addData("Status", "Initialized (HARD STOP applied)");
@@ -180,7 +161,7 @@ public class AutoTest extends NextFTCOpMode {
 
         // Turret: zero + center
         Turret.INSTANCE.turret.zeroed();
-        Turret.INSTANCE.setTargetDegrees(0.0);
+        Turret.INSTANCE.setTargetDegrees(30);
 
         // Start shooter immediately and keep running all auto
         Shooter.INSTANCE.setTargetRPM(AUTO_TARGET_RPM);
@@ -329,3 +310,4 @@ public class AutoTest extends NextFTCOpMode {
         Turret.INSTANCE.setTargetDegrees(motorTargetX);
     }
 }
+
