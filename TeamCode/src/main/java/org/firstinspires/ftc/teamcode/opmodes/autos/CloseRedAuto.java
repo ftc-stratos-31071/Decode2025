@@ -44,7 +44,7 @@ public class CloseRedAuto extends NextFTCOpMode {
     // =============================
     // Auto behavior config
     // =============================
-    public static double AUTO_TARGET_RPM = 3400.0;     // shooter runs ALL the time (after START)
+    public static double AUTO_TARGET_RPM = 3600.0;     // shooter runs ALL the time (after START)
     public static double AUTO_HOOD_POS = 0.8;          // hood position set on START
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 
@@ -127,7 +127,7 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
-                .splineToLinearHeading(new Pose2d(-16.0, 40.0, Math.toRadians(-270.0)), Math.toRadians(-300.0))
+                .splineToLinearHeading(new Pose2d(-16.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-300.0))
                 .strafeTo(new Vector2d(-16.0, 64.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
