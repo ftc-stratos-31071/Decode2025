@@ -44,7 +44,6 @@ public class RedTeleop extends NextFTCOpMode {
     public static double DEADBAND = 3.0;  // Increased from 2.0 - larger tolerance to prevent jitter
     public static boolean AUTO_TRACK_ENABLED = true;  // Enable/disable tracking
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;  // Time before returning to center when no target detected
-    public static double MAX_HOOD_HEIGHT = 0.2;  // Maximum hood servo position
 
     // PIDF-based shooter control - adjustable target RPM
     public static double TARGET_RPM = 3500.0;  // Target RPM for PIDF control
@@ -54,8 +53,6 @@ public class RedTeleop extends NextFTCOpMode {
 
     // Estimated RPM per unit power at full power (adjust if your shooter differs)
     private static final double TARGET_RPM_PER_POWER = 6000.0;
-
-    private LaserRangefinder lrf;
 
     public RedTeleop() {
         addComponents(
@@ -91,13 +88,13 @@ public class RedTeleop extends NextFTCOpMode {
 
     @Override
     public void onInit() {
+        Intake.INSTANCE.defaultPos().schedule();
+        Shooter.INSTANCE.moveServo(ShooterConstants.defaultPos).schedule();
+        Shooter.INSTANCE.kickDefaultPos.schedule();
+        Turret.INSTANCE.turret.zeroed();
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         Shooter.INSTANCE.stopShooter();
-        lrf = new LaserRangefinder(hardwareMap.get(RevColorSensorV3.class, "Color"));
-        lrf.i2c.setBusSpeed(LynxI2cDeviceSynch.BusSpeed.FAST_400K);
-        lrf.setDistanceMode(LaserRangefinder.DistanceMode.SHORT);
-        lrf.setTiming(10,0);
 
         motorTargetX = 0.0;
         smoothedTx = 0.0;
@@ -131,13 +128,6 @@ public class RedTeleop extends NextFTCOpMode {
 
     @Override
     public void onStartButtonPressed() {
-        // Reset servos and turret to default positions when START is pressed
-        Intake.INSTANCE.defaultPos().schedule();
-        Shooter.INSTANCE.moveServo(0.2).schedule();
-        Shooter.INSTANCE.kickDefaultPos.schedule();
-        Turret.INSTANCE.turret.zeroed();
-
-        // Driver controls - normal mecanum drive
         Command driverControlled = new MecanumDriverControlled(
                 frontLeftMotor,
                 frontRightMotor,
@@ -181,12 +171,16 @@ public class RedTeleop extends NextFTCOpMode {
             }
         });
 
-        Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
+        Gamepads.gamepad2().dpadUp().whenBecomesTrue(() -> {
             KickCmd.create().schedule();
         });
 
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
-            ShootBallCont.create().schedule(); //changed to cont intake
+            ShootBallCont.create().schedule();
+        });
+
+        Gamepads.gamepad1().a().whenBecomesFalse(() -> {
+            Intake.INSTANCE.zeroPower().schedule();
         });
 
         // B Button - Intake OUTTAKE (reverse direction)
@@ -235,13 +229,13 @@ public class RedTeleop extends NextFTCOpMode {
 
 
         // Servo position adjustment with MAX_HOOD_HEIGHT limit
-        Gamepads.gamepad2().dpadUp().whenBecomesTrue(() -> {
-            servoPos = Math.max(0.0, servoPos - 0.1);
+        Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
+            servoPos = servoPos - 0.1;
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
 
-        Gamepads.gamepad2().dpadDown().whenBecomesTrue(() -> {
-            servoPos = Math.min(MAX_HOOD_HEIGHT, servoPos + 0.1);
+        Gamepads.gamepad1().dpadDown().whenBecomesTrue(() -> {
+            servoPos = servoPos + 0.1;
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
 
@@ -402,7 +396,7 @@ public class RedTeleop extends NextFTCOpMode {
         telemetry.addData("Target RPM", String.format("%.0f", targetRpm));
         telemetry.addData("Current RPM", String.format("%.0f", currentRpm));
         telemetry.addData("Error", String.format("%.0f", targetRpm - currentRpm));
-        telemetry.addData("Hood Position", String.format("%.2f / %.2f (Max)", servoPos, MAX_HOOD_HEIGHT));
+        telemetry.addData("Hood Position", String.format("%.2f", servoPos));
         telemetry.addData("PIDF Status", Shooter.INSTANCE.getTargetRPM() > 0 ? "✓ ACTIVE" : "✗ OFF");
         telemetry.addData("PIDF Enabled", Shooter.INSTANCE.isPidfEnabled() ? "YES" : "NO");
         telemetry.addData("Subsystem Target", String.format("%.0f", Shooter.INSTANCE.getTargetRPM()));
@@ -423,9 +417,6 @@ public class RedTeleop extends NextFTCOpMode {
         telemetry.addData("B Button", "Outtake (Reverse Intake)");
         telemetry.addData("DPad Up/Down", "Adjust Hood Position");
         telemetry.addData("DPad Left/Right", "Adjust Target RPM");
-
-        //COLOR SENSOR TELEMETRY
-        telemetry.addData("Distance", lrf.getDistance(DistanceUnit.MM));
 
 
         telemetry.update();

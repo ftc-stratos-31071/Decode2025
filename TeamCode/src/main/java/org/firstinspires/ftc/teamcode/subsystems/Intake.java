@@ -154,6 +154,33 @@ public class Intake implements Subsystem {
         }.requires(this);
     }
 
+    public Command shootCont(double timeSec) {
+        return new Command() {
+            private double startTime;
+
+            @Override
+            public void start() {
+                startTime = System.currentTimeMillis() / 1000.0;
+                intake.setPower(IntakeConstants.shootPower);
+            }
+
+            @Override
+            public void update() {
+                intake.setPower(IntakeConstants.shootPower);
+            }
+
+            @Override
+            public boolean isDone() {
+                return System.currentTimeMillis() / 1000.0 - startTime >= timeSec;
+            }
+
+            @Override
+            public void stop(boolean interrupted) {
+                intake.setPower(IntakeConstants.zeroPower);
+            }
+        }.requires(this);
+    }
+
     /* =========================
        BALL DETECTION (SAFE)
        ========================= */
