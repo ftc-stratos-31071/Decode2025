@@ -35,6 +35,34 @@ public class Turret implements Subsystem {
         manualControl = true;
     }
 
+    public Command setTargetDegreesCmd(double degrees) {
+        return new Command() {
+            @Override
+            public void start() {
+                setTargetDegrees(degrees);
+            }
+
+            @Override
+            public boolean isDone() {
+                return true;
+            }
+        }.requires(this);
+    }
+
+    public double getTargetDegrees() {
+        double clicksPerDegree = 1360.0 / 360.0;
+        return targetClicks / clicksPerDegree;
+    }
+
+    public double getCurrentDegrees() {
+        double clicksPerDegree = 1360.0 / 360.0;
+        return turret.getCurrentPosition() / clicksPerDegree;
+    }
+
+    public boolean atTargetDegrees(double tolDeg) {
+        return Math.abs(getTargetDegrees() - getCurrentDegrees()) <= tolDeg;
+    }
+
     /**
      * Disable manual control mode. Call this when you want to use command-based control.
      * Commands will automatically disable manual control when they run.

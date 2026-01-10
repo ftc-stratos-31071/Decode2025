@@ -20,6 +20,6 @@ public class ShooterOnCmd {
      * Create shooter command using default target RPM from ShooterConstants
      */
     public static Command create() {
-        return create(ShooterConstants.defaultTargetRPM);
+        return create(ShooterConstants.closeTargetRPM);
     }
 }

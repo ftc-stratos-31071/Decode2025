@@ -10,7 +10,6 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.teamcode.commands.AutoSlowDriveForwardTimeoutCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyAutoCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyAutoTimeoutCmd;
 import org.firstinspires.ftc.teamcode.commands.StopDriveCmd;
@@ -30,16 +29,16 @@ import dev.nextftc.core.components.SubsystemComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
 
-@Autonomous(name = "FarRedAuto", preselectTeleOp = "RedTeleop")
-public class FarRedAuto extends NextFTCOpMode {
+@Autonomous(name = "FarBlueAuto", preselectTeleOp = "BlueTeleop")
+public class FarBlueAuto extends NextFTCOpMode {
 
     // =============================
     // Trajectory points (FROM FarRedAuto)
     // =============================
     private static final Pose2d START_POSE = new Pose2d(
             62.5,                  // x
-            13.0,                  // y
-            Math.toRadians(-180.0) // heading
+            -13.0,                  // y
+            Math.toRadians(180.0) // heading
     );
 
     // =============================
@@ -47,7 +46,7 @@ public class FarRedAuto extends NextFTCOpMode {
     // =============================
     public static double AUTO_TARGET_RPM = ShooterConstants.farTargetRPM;
     public static double AUTO_HOOD_POS = 0.2;
-    public static double AUTO_TURRET_DEG = 21.5;
+    public static double AUTO_TURRET_DEG = 20.0;
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 
     // Turret auto-tracking
@@ -68,7 +67,7 @@ public class FarRedAuto extends NextFTCOpMode {
     private boolean hasSeenTarget = false;
     private long lastTargetSeenTimeMs = 0;
 
-    public FarRedAuto() {
+    public FarBlueAuto() {
         addComponents(
                 new SubsystemComponent(Intake.INSTANCE, Shooter.INSTANCE, Turret.INSTANCE),
                 BulkReadComponent.INSTANCE,
@@ -118,25 +117,21 @@ public class FarRedAuto extends NextFTCOpMode {
         // PATH (FROM FarRedAuto)
         // =============================
         autoCommand = drive.commandBuilder(START_POSE)
-                .strafeTo(new Vector2d(62.0, 13.0))
+                .strafeTo(new Vector2d(62.0, -13.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Turret.INSTANCE.setTargetDegreesCmd(30.0))
-                .stopAndAdd(WaitCmd.create(2.0))
-                .stopAndAdd(ShootBallSteadyAutoTimeoutCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm, 2.5))
+                .stopAndAdd(WaitCmd.create(3))
+                .stopAndAdd(ShootBallSteadyAutoTimeoutCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm, 2.0))
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
                 .stopAndAdd(Intake.INSTANCE.moveServoPos())
-                .strafeToSplineHeading(new Vector2d(51.0, 70.5), Math.toRadians(-270.0))
-                .stopAndAdd(WaitCmd.create(0.5))
-                .turnTo(Math.toRadians(-295.0))
-                .stopAndAdd(AutoSlowDriveForwardTimeoutCmd.create(drive, 0.2, 3))
-                .stopAndAdd(WaitCmd.create(1))
+                .strafeToSplineHeading(new Vector2d(58.5, -70.0), Math.toRadians(260.0))
+                .strafeTo(new Vector2d(58.5, -71.0))
+                .stopAndAdd(WaitCmd.create(2))
                 .stopAndAdd(StopDriveCmd.create(drive))
-                .strafeToLinearHeading(new Vector2d(61.5, 10.5), Math.toRadians(-180.0))
+                .strafeToLinearHeading(new Vector2d(62.5, -13.0), Math.toRadians(180.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
-                .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.zeroPower))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
-                .stopAndAdd(ShootBallSteadyAutoTimeoutCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm, 2.5))
-                .stopAndAdd(StopDriveCmd.create(drive))
+                .stopAndAdd(ShootBallSteadyAutoTimeoutCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm, 2.0))
                 .build();
 
         telemetry.addData("Status", "Initialized (HARD STOP applied)");
@@ -165,7 +160,7 @@ public class FarRedAuto extends NextFTCOpMode {
         lastTargetSeenTimeMs = System.currentTimeMillis();
 
         // Run auto path if desired
-         autoCommand.schedule();
+        autoCommand.schedule();
     }
 
     @Override

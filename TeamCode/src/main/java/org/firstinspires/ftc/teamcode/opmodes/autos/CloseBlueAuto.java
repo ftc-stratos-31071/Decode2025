@@ -27,16 +27,16 @@ import dev.nextftc.core.components.SubsystemComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
 
-@Autonomous(name = "CloseRedAuto", preselectTeleOp = "RedTeleop")
-public class CloseRedAuto extends NextFTCOpMode {
+@Autonomous(name = "CloseBlueAuto", preselectTeleOp = "BlueTeleop")
+public class CloseBlueAuto extends NextFTCOpMode {
 
     // =============================
     // Trajectory points (from MeepMeep)
     // =============================
     private static final Pose2d START_POSE = new Pose2d(
-            -52.5,                 // x
-            51.5,                  // y
-            Math.toRadians(-230.0)  // heading
+            -52.5,                 // x stays same
+            -51.5,                 // y flipped
+            Math.toRadians(230.0)  // heading flipped
     );
 
     // =============================
@@ -68,7 +68,7 @@ public class CloseRedAuto extends NextFTCOpMode {
     private boolean hasSeenTarget = false;
     private long lastTargetSeenTimeMs = 0;
 
-    public CloseRedAuto() {
+    public CloseBlueAuto() {
         addComponents(
                 new SubsystemComponent(Intake.INSTANCE, Shooter.INSTANCE, Turret.INSTANCE),
                 BulkReadComponent.INSTANCE,
@@ -115,7 +115,7 @@ public class CloseRedAuto extends NextFTCOpMode {
         // Build autonomous command (same path + stopAndAdd actions)
         autoCommand = drive.commandBuilder(START_POSE)
                 .setReversed(true)
-                .strafeTo(new Vector2d(-24.0, 24.0))
+                .strafeTo(new Vector2d(-24.0, -24.0))
 
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
@@ -125,13 +125,16 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
-                .splineToLinearHeading(new Pose2d(-16.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-300.0))
-                .strafeTo(new Vector2d(-16.0, 60.0))
+                .splineToLinearHeading(
+                        new Pose2d(-16.0, -30.0, Math.toRadians(270.0)),
+                        Math.toRadians(300.0)
+                )
+                .strafeTo(new Vector2d(-16.0, -60.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
-                .strafeToSplineHeading(new Vector2d(-3.0, 57.0), Math.toRadians(-180.0))
+                .strafeToSplineHeading(new Vector2d(-3.0, -57.0), Math.toRadians(180.0))
 
                 .setReversed(true)
-                .strafeToLinearHeading(new Vector2d(-16.0, 12.0), Math.toRadians(-225.0))
+                .strafeToLinearHeading(new Vector2d(-16.0, -12.0), Math.toRadians(225.0))
 
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
@@ -140,12 +143,18 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
-                .splineToSplineHeading(new Pose2d(8.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-360.0))
-                .strafeTo(new Vector2d(8.0, 60.0))
+                .splineToSplineHeading(
+                        new Pose2d(8.0, -30.0, Math.toRadians(270.0)),
+                        Math.toRadians(360.0)
+                )
+                .strafeTo(new Vector2d(8.0, -60.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
                 .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-16.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-240.0))
+                .splineToSplineHeading(
+                        new Pose2d(-16.0, -12.0, Math.toRadians(225.0)),
+                        Math.toRadians(-240.0)
+                )
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
                 .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
@@ -153,18 +162,24 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
-                .splineToSplineHeading(new Pose2d(32.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-360.0))
-                .strafeTo(new Vector2d(32.0, 60.0))
+                .splineToSplineHeading(
+                        new Pose2d(32.0, -30.0, Math.toRadians(270.0)),
+                        Math.toRadians(360.0)
+                )
+                .strafeTo(new Vector2d(32.0, -60.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
                 .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-16.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
+                .splineToSplineHeading(
+                        new Pose2d(-16.0, -12.0, Math.toRadians(225.0)),
+                        Math.toRadians(-225.0)
+                )
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
                 .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
 
                 .setReversed(false)
-                .strafeTo(new Vector2d(-12.0, 40.0))
+                .strafeTo(new Vector2d(-12.0, -40.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .build();
 

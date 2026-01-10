@@ -19,7 +19,6 @@ import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import dev.nextftc.core.commands.Command;
 import dev.nextftc.core.components.BindingsComponent;
@@ -42,7 +41,7 @@ public class BlueTeleop extends NextFTCOpMode {
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;  // Time before returning to center when no target detected
 
     // PIDF-based shooter control - adjustable target RPM
-    public static double TARGET_RPM = ShooterConstants.defaultTargetRPM;  // Target RPM for PIDF control
+    public static double TARGET_RPM = ShooterConstants.closeTargetRPM;  // Target RPM for PIDF control
     public static double RPM_INCREMENT = 100.0;  // How much to adjust RPM per button press
     public static double MIN_TARGET_RPM = 1000.0;
     public static double MAX_TARGET_RPM = 6000.0;
