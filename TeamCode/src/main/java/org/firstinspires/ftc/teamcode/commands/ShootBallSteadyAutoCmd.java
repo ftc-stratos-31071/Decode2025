@@ -6,21 +6,17 @@ import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
-/**
- * Strategy A (Gated Feed Only):
- * Does NOT control the shooter motors.
- * Only feeds when the shooter is within tolerance of its target RPM.
- *
- * Use with your existing shooter toggle (right bumper).
- */
-public class ShootBallSteadyCmd {
+public class ShootBallSteadyAutoCmd {
 
-    /**
-     * @param feedPower Intake power while feeding (usually IntakeConstants.shootPower)
-     * @param tolRpm Allowed RPM error before feeding is enabled (start ~120)
-     */
     public static Command create(double feedPower, double tolRpm) {
         return new Command() {
+
+            private double startTime;
+
+            @Override
+            public void start() {
+                startTime = System.currentTimeMillis() / 1000.0;
+            }
 
             @Override
             public void update() {
@@ -33,7 +29,8 @@ public class ShootBallSteadyCmd {
 
             @Override
             public boolean isDone() {
-                return false; // run until interrupted (button released)
+                double currentTime = System.currentTimeMillis() / 1000.0;
+                return (currentTime - startTime) >= IntakeConstants.shootTimeCont; // stop after 1 second
             }
 
             @Override
@@ -43,9 +40,8 @@ public class ShootBallSteadyCmd {
         }.requires(Intake.INSTANCE);
     }
 
-    /** Default: shootPower + a reasonable starter tolerance */
+    /** Default: shootPower + reasonable tolerance */
     public static Command create() {
         return create(IntakeConstants.shootPower, 50);
     }
 }
-

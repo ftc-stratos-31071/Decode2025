@@ -6,24 +6,20 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
-import com.qualcomm.hardware.lynx.LynxI2cDeviceSynch;
-import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.KickCmd;
-import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
-import org.firstinspires.ftc.teamcode.commands.ShootBallCont;
+import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyCmd;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
-import org.firstinspires.ftc.teamcode.opmodes.autos.LaserRangefinder;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import dev.nextftc.core.commands.Command;
 import dev.nextftc.core.components.BindingsComponent;
@@ -46,7 +42,7 @@ public class RedTeleop extends NextFTCOpMode {
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;  // Time before returning to center when no target detected
 
     // PIDF-based shooter control - adjustable target RPM
-    public static double TARGET_RPM = 3500.0;  // Target RPM for PIDF control
+    public static double TARGET_RPM = ShooterConstants.defaultTargetRPM;  // Target RPM for PIDF control
     public static double RPM_INCREMENT = 100.0;  // How much to adjust RPM per button press
     public static double MIN_TARGET_RPM = 1000.0;
     public static double MAX_TARGET_RPM = 6000.0;
@@ -84,6 +80,9 @@ public class RedTeleop extends NextFTCOpMode {
     boolean hasRumbled = false;
     private long shooterStartTime = 0;
     private boolean shooterTiming = false;
+    private boolean slowMode = false;
+    private double driveScale = 1.0;
+
 
 
     @Override
@@ -128,16 +127,25 @@ public class RedTeleop extends NextFTCOpMode {
 
     @Override
     public void onStartButtonPressed() {
+        var forward = Gamepads.gamepad1().leftStickY().map(v -> v * driveScale);
+        var strafe  = Gamepads.gamepad1().leftStickX().negate().map(v -> v * driveScale);
+        var rotate  = Gamepads.gamepad1().rightStickX().negate().map(v -> v * driveScale);
+
         Command driverControlled = new MecanumDriverControlled(
                 frontLeftMotor,
                 frontRightMotor,
                 backLeftMotor,
                 backRightMotor,
-                Gamepads.gamepad1().leftStickY(),
-                Gamepads.gamepad1().leftStickX().negate(),
-                Gamepads.gamepad1().rightStickX().negate()
+                forward,
+                strafe,
+                rotate
         );
         driverControlled.schedule();
+
+        Gamepads.gamepad1().leftStickButton().whenBecomesTrue(() -> {
+            slowMode = !slowMode;
+            driveScale = slowMode ? 0.25 : 1.0;
+        });
 
         // Left Bumper - Intake sequence (press to start, release to stop)
         Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> {
@@ -171,12 +179,13 @@ public class RedTeleop extends NextFTCOpMode {
             }
         });
 
-        Gamepads.gamepad2().dpadUp().whenBecomesTrue(() -> {
+        Gamepads.gamepad2().a().whenBecomesTrue(() -> {
             KickCmd.create().schedule();
         });
 
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
-            ShootBallCont.create().schedule();
+            Intake.INSTANCE.defaultPos().schedule();
+            ShootBallSteadyCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm).schedule();
         });
 
         Gamepads.gamepad1().a().whenBecomesFalse(() -> {
@@ -211,7 +220,7 @@ public class RedTeleop extends NextFTCOpMode {
         });
 
         // Shooter RPM adjustment
-        Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
+        Gamepads.gamepad2().dpadRight().whenBecomesTrue(() -> {
             targetRpm = Math.min(MAX_TARGET_RPM, targetRpm + RPM_INCREMENT);
             hasRumbled = false;
             if (Shooter.INSTANCE.getTargetRPM() > 0) {
@@ -219,7 +228,7 @@ public class RedTeleop extends NextFTCOpMode {
             }
         });
 
-        Gamepads.gamepad1().dpadLeft().whenBecomesTrue(() -> {
+        Gamepads.gamepad2().dpadLeft().whenBecomesTrue(() -> {
             targetRpm = Math.max(MIN_TARGET_RPM, targetRpm - RPM_INCREMENT);
             hasRumbled = false;
             if (Shooter.INSTANCE.getTargetRPM() > 0) {
@@ -229,12 +238,12 @@ public class RedTeleop extends NextFTCOpMode {
 
 
         // Servo position adjustment with MAX_HOOD_HEIGHT limit
-        Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
+        Gamepads.gamepad2().dpadUp().whenBecomesTrue(() -> {
             servoPos = servoPos - 0.1;
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });
 
-        Gamepads.gamepad1().dpadDown().whenBecomesTrue(() -> {
+        Gamepads.gamepad2().dpadDown().whenBecomesTrue(() -> {
             servoPos = servoPos + 0.1;
             Shooter.INSTANCE.moveServo(servoPos).schedule();
         });

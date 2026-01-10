@@ -20,8 +20,8 @@ public class ShooterConstants {
 
     // ===== PIDF GAINS - TUNABLE VIA FTC DASHBOARD =====
     // See tuning guide above for how to adjust these values
-    public static double kF = 0.00017;
-    public static double kP = 0.00008;
+    public static double kF = 0.000155;
+    public static double kP = 0.01;
 
     //not implemented in error either so if you do this implement there as well
     public static double kI = 0.0;
@@ -32,5 +32,6 @@ public class ShooterConstants {
     public static double MAX_POWER = 1.0;
 
     // Default target RPM for PIDF control
-    public static double defaultTargetRPM = 3500.0;
+    public static double defaultTargetRPM = 2700.0;
+    public static double tolRpm = 50.0;
 }

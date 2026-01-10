@@ -25,14 +25,6 @@ public class Turret implements Subsystem {
     private double targetClicks = 0.0;
     private boolean manualControl = false;
 
-    public Command runTurret(double degrees) {
-        double clicksPerDegree = 1360.0 / 360.0;
-        double clicks = clicksPerDegree * degrees;
-
-        // RunToPosition uses the control system to move to the target position
-        return new RunToPosition(turretController, clicks).requires(this);
-    }
-
     /**
      * Set the target position for the turret in degrees.
      * This does NOT schedule a command - use this for continuous control in TeleOp.

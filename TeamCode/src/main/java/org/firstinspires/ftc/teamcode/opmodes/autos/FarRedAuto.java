@@ -45,7 +45,7 @@ public class FarRedAuto extends NextFTCOpMode {
     // =============================
     // Auto behavior config
     // =============================
-    public static double AUTO_TARGET_RPM = 3500.0;     // shooter runs ALL the time (after START)
+    public static double AUTO_TARGET_RPM = 4000.0;     // shooter runs ALL the time (after START)
     public static double AUTO_HOOD_POS = 0.2;          // hood position set on START
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 
@@ -94,6 +94,13 @@ public class FarRedAuto extends NextFTCOpMode {
         // HARD STOP EVERYTHING immediately on init (prevents leftover state from a prior OpMode)
         hardStopAll();
 
+        Intake.INSTANCE.moveServoPos().schedule();
+        Shooter.INSTANCE.moveServo(AUTO_HOOD_POS).schedule();
+        Shooter.INSTANCE.kickDefaultPos.schedule();
+
+        Turret.INSTANCE.turret.zeroed();
+        Turret.INSTANCE.setTargetDegrees(30);
+
         // ===== init Limelight (camera can run on init without moving hardware) =====
         try {
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -119,7 +126,7 @@ public class FarRedAuto extends NextFTCOpMode {
 
         // Build autonomous command (same path + stopAndAdd actions)
         autoCommand = drive.commandBuilder(START_POSE)
-                .stopAndAdd(ShootBallCmd.create(lrf))
+                .stopAndAdd(ShootBallCont.create())
                 .splineToLinearHeading(new Pose2d(36.0, 40.0, Math.toRadians(-270.0)), Math.toRadians(-260.0))
 //                .strafeTo(new Vector2d(36.0, 56.0))
 //                .setReversed(true)
@@ -154,15 +161,6 @@ public class FarRedAuto extends NextFTCOpMode {
 
     @Override
     public void onStartButtonPressed() {
-        // Once START is pressed, NOW set your start positions like TeleOp
-        Intake.INSTANCE.moveServoPos().schedule();
-        Shooter.INSTANCE.moveServo(AUTO_HOOD_POS).schedule();
-        Shooter.INSTANCE.kickDefaultPos.schedule();
-
-        // Turret: zero + center
-        Turret.INSTANCE.turret.zeroed();
-        Turret.INSTANCE.setTargetDegrees(30);
-
         // Start shooter immediately and keep running all auto
         Shooter.INSTANCE.setTargetRPM(AUTO_TARGET_RPM);
 

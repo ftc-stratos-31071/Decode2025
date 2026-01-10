@@ -13,6 +13,7 @@ import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.commands.ShootBallCont;
+import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyAutoCmd;
 import org.firstinspires.ftc.teamcode.commands.StopDriveCmd;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
@@ -44,8 +45,8 @@ public class CloseRedAuto extends NextFTCOpMode {
     // =============================
     // Auto behavior config
     // =============================
-    public static double AUTO_TARGET_RPM = 3500.0;     // shooter runs ALL the time (after START)
-    public static double AUTO_HOOD_POS = 0.8;          // hood position set on START
+    public static double AUTO_TARGET_RPM = ShooterConstants.defaultTargetRPM;     // shooter runs ALL the time (after START)
+    public static double AUTO_HOOD_POS = 0.775;          // hood position set on START
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 
     // Turret auto-tracking
@@ -121,53 +122,49 @@ public class CloseRedAuto extends NextFTCOpMode {
 
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
-                .stopAndAdd(Intake.INSTANCE.shootCont(IntakeConstants.shootTimeCont))
+                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
                 .stopAndAdd(Intake.INSTANCE.moveServoPos())
                 .stopAndAdd(Shooter.INSTANCE.moveServo(ShooterConstants.defaultPos))
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
                 .splineToLinearHeading(new Pose2d(-16.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-300.0))
-                .strafeTo(new Vector2d(-16.0, 64.0))
+                .strafeTo(new Vector2d(-16.0, 60.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
+                .strafeToSplineHeading(new Vector2d(-3.0, 57.0), Math.toRadians(-180.0))
 
                 .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-16.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-270.0))
+                .strafeToLinearHeading(new Vector2d(-16.0, 12.0), Math.toRadians(-225.0))
 
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
-                .stopAndAdd(Intake.INSTANCE.shootCont(IntakeConstants.shootTimeCont))
+                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
                 .stopAndAdd(Intake.INSTANCE.moveServoPos())
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
-                .splineToLinearHeading(new Pose2d(8.0, 40.0, Math.toRadians(-270.0)), Math.toRadians(-270.0))
-                .strafeTo(new Vector2d(8.0, 64.0))
+                .splineToLinearHeading(new Pose2d(8.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-270.0))
+                .strafeTo(new Vector2d(8.0, 60.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
-
-                .setReversed(true)
-                .strafeTo(new Vector2d(4.0, 55.0))
-                .setReversed(false)
-                .strafeTo(new Vector2d(4.0, 60.0))
 
                 .setReversed(true)
                 .splineToSplineHeading(new Pose2d(-16.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-240.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
-                .stopAndAdd(Intake.INSTANCE.shootCont(IntakeConstants.shootTimeCont))
+                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
                 .stopAndAdd(Intake.INSTANCE.moveServoPos())
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
-                .splineToLinearHeading(new Pose2d(32.0, 40.0, Math.toRadians(-270.0)), Math.toRadians(-270.0))
-                .strafeTo(new Vector2d(32.0, 64.0))
+                .splineToLinearHeading(new Pose2d(32.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-270.0))
+                .strafeTo(new Vector2d(32.0, 60.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
                 .setReversed(true)
                 .splineToSplineHeading(new Pose2d(-16.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
-                .stopAndAdd(Intake.INSTANCE.shootCont(IntakeConstants.shootTimeCont))
+                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
 
                 .setReversed(false)
                 .strafeTo(new Vector2d(-12.0, 40.0))
@@ -210,6 +207,7 @@ public class CloseRedAuto extends NextFTCOpMode {
 
         // Run auto
         autoCommand.schedule();
+        Turret.INSTANCE.setTargetDegrees(0.0);
     }
 
     @Override
@@ -226,7 +224,6 @@ public class CloseRedAuto extends NextFTCOpMode {
     @Override
     public void onStop() {
         // HARD STOP at end of OpMode too
-        Turret.INSTANCE.setTargetDegrees(0.0);
         hardStopAll();
 
         try {

@@ -267,16 +267,11 @@ public class Shooter implements Subsystem {
     /** Get current shooter RPM - uses MotorEx velocity */
     public double getRPM() {
         // Get velocity from both motors
-        double velocityRight = Math.abs(motor1.getVelocity());
-        double velocityLeft = Math.abs(motor2.getVelocity());
-
-
-        // Average of both motor velocities
-        double ticksPerSecond = (velocityRight + velocityLeft) / 2.0;
+        double ticksPerSecond = Math.abs(motor1.getVelocity());
 
 
         // Convert to RPM: (ticks/sec) / (ticks/rev) * 60 *
-        return (ticksPerSecond / 112.0) * 60.0;
+        return (ticksPerSecond / 28.0) * 60.0;
     }
 
 
