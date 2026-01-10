@@ -20,10 +20,12 @@ public class ShooterConstants {
 
     // ===== PIDF GAINS - TUNABLE VIA FTC DASHBOARD =====
     // See tuning guide above for how to adjust these values
-    public static double kP = 0.0135;      // Proportional gain
-    public static double kI = 0.0;         // Integral gain (usually keep at 0)
-    public static double kD = 0.0;         // Derivative gain
-    public static double kF = 0.000155;    // Feedforward gain (1/6000 for 6000 RPM max)
+    public static double kF = 0.00017;
+    public static double kP = 0.00008;
+
+    //not implemented in error either so if you do this implement there as well
+    public static double kI = 0.0;
+    public static double kD = 0.0;
 
     // PIDF output limits
     public static double MIN_POWER = 0.0;
