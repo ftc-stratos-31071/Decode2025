@@ -143,7 +143,7 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
-                .splineToLinearHeading(new Pose2d(8.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-270.0))
+                .splineToSplineHeading(new Pose2d(8.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-360.0))
                 .strafeTo(new Vector2d(8.0, 60.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
@@ -156,7 +156,7 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
-                .splineToLinearHeading(new Pose2d(32.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-270.0))
+                .splineToSplineHeading(new Pose2d(32.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-360.0))
                 .strafeTo(new Vector2d(32.0, 60.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
