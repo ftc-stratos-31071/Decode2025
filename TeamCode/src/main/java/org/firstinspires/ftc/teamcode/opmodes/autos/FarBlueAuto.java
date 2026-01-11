@@ -10,6 +10,7 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.teamcode.commands.AutoSlowDriveForwardTimeoutCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyAutoCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyAutoTimeoutCmd;
 import org.firstinspires.ftc.teamcode.commands.StopDriveCmd;
@@ -33,12 +34,12 @@ import dev.nextftc.ftc.components.BulkReadComponent;
 public class FarBlueAuto extends NextFTCOpMode {
 
     // =============================
-    // Trajectory points (FROM FarRedAuto)
+    // Trajectory points (FROM FarBlueAuto)
     // =============================
     private static final Pose2d START_POSE = new Pose2d(
             62.5,                  // x
-            -13.0,                  // y
-            Math.toRadians(180.0) // heading
+            -13.0,                 // y (MIRRORED)
+            Math.toRadians(180.0)  // heading (MIRRORED)
     );
 
     // =============================
@@ -46,7 +47,7 @@ public class FarBlueAuto extends NextFTCOpMode {
     // =============================
     public static double AUTO_TARGET_RPM = ShooterConstants.farTargetRPM;
     public static double AUTO_HOOD_POS = 0.2;
-    public static double AUTO_TURRET_DEG = 20.0;
+    public static double AUTO_TURRET_DEG = -21.5; // MIRRORED
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 
     // Turret auto-tracking
@@ -85,7 +86,7 @@ public class FarBlueAuto extends NextFTCOpMode {
 //        hardStopAll();
         hardStopMotorsOnly();
 
-        // Keep your existing mechanism init (you can tweak these)
+        // Keep your existing mechanism init
         Intake.INSTANCE.moveServoPos().schedule();
         Shooter.INSTANCE.moveServo(AUTO_HOOD_POS).schedule();
         Shooter.INSTANCE.kickDefaultPos.schedule();
@@ -95,7 +96,7 @@ public class FarBlueAuto extends NextFTCOpMode {
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
             limelight.setPollRateHz(100);
             limelight.start();
-            limelight.pipelineSwitch(1);
+            limelight.pipelineSwitch(0);
 
             if (STREAM_LIMELIGHT_TO_DASH) {
                 FtcDashboard.getInstance().startCameraStream(limelight, 0);
@@ -114,24 +115,48 @@ public class FarBlueAuto extends NextFTCOpMode {
         lastTargetSeenTimeMs = System.currentTimeMillis();
 
         // =============================
-        // PATH (FROM FarRedAuto)
+        // PATH (FROM FarBlueAuto)
         // =============================
         autoCommand = drive.commandBuilder(START_POSE)
                 .strafeTo(new Vector2d(62.0, -13.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
-                .stopAndAdd(Turret.INSTANCE.setTargetDegreesCmd(30.0))
-                .stopAndAdd(WaitCmd.create(3))
-                .stopAndAdd(ShootBallSteadyAutoTimeoutCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm, 2.0))
+                .stopAndAdd(Turret.INSTANCE.setTargetDegreesCmd(-30.0))
+                .stopAndAdd(WaitCmd.create(2.0))
+                .stopAndAdd(ShootBallSteadyAutoTimeoutCmd.create(
+                        IntakeConstants.shootPower,
+                        ShooterConstants.tolRpm,
+                        2.5))
+
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
                 .stopAndAdd(Intake.INSTANCE.moveServoPos())
-                .strafeToSplineHeading(new Vector2d(58.5, -70.0), Math.toRadians(260.0))
-                .strafeTo(new Vector2d(58.5, -71.0))
-                .stopAndAdd(WaitCmd.create(2))
+
+                .strafeToSplineHeading(
+                        new Vector2d(65.0, -65.5),
+                        Math.toRadians(270.0))
+
+                .stopAndAdd(WaitCmd.create(0.5))
+                .turnTo(Math.toRadians(295.0))
+
+                .stopAndAdd(AutoSlowDriveForwardTimeoutCmd.create(drive, 0.2, 3))
+                .stopAndAdd(WaitCmd.create(1))
                 .stopAndAdd(StopDriveCmd.create(drive))
-                .strafeToLinearHeading(new Vector2d(62.5, -13.0), Math.toRadians(180.0))
+
+                .strafeToLinearHeading(
+                        new Vector2d(61.5, -10.5),
+                        Math.toRadians(180.0))
+
                 .stopAndAdd(StopDriveCmd.create(drive))
+                .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.zeroPower))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
-                .stopAndAdd(ShootBallSteadyAutoTimeoutCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm, 2.0))
+
+                .stopAndAdd(ShootBallSteadyAutoTimeoutCmd.create(
+                        IntakeConstants.shootPower,
+                        ShooterConstants.tolRpm,
+                        2.5))
+
+                .stopAndAdd(StopDriveCmd.create(drive))
+                .strafeTo(new Vector2d(61.5, -45.0))
+                .stopAndAdd(StopDriveCmd.create(drive))
                 .build();
 
         telemetry.addData("Status", "Initialized (HARD STOP applied)");
@@ -149,18 +174,15 @@ public class FarBlueAuto extends NextFTCOpMode {
     @Override
     public void onStartButtonPressed() {
         Intake.INSTANCE.defaultPos().schedule();
-        // Start shooter immediately and keep running all auto
         Shooter.INSTANCE.setTargetRPM(AUTO_TARGET_RPM);
 
-        motorTargetX = AUTO_TURRET_DEG;              // IMPORTANT: set the tracking target state too
-
-        // Tracking state (do NOT reset motorTargetX to 0)
+        motorTargetX = AUTO_TURRET_DEG;
         smoothedTx = 0.0;
         hasSeenTarget = false;
         lastTargetSeenTimeMs = System.currentTimeMillis();
 
-        // Run auto path if desired
         autoCommand.schedule();
+        Turret.INSTANCE.setTargetDegrees(0.0);
     }
 
     @Override
@@ -202,9 +224,6 @@ public class FarBlueAuto extends NextFTCOpMode {
         Shooter.INSTANCE.stopShooter();
         Intake.INSTANCE.zeroPower().schedule();
 
-//        Turret.INSTANCE.disableManualControl();
-//        Turret.INSTANCE.turret.setPower(0.0);
-
         if (drive != null) {
             drive.setDrivePowers(new PoseVelocity2d(new Vector2d(0.0, 0.0), 0.0));
         }
@@ -229,17 +248,13 @@ public class FarBlueAuto extends NextFTCOpMode {
             List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
 
             if (fiducials != null && !fiducials.isEmpty()) {
-                // We have at least one tag -> track
                 sawTagThisLoop = true;
                 hasSeenTarget = true;
                 lastTargetSeenTimeMs = System.currentTimeMillis();
 
                 double tx = result.getTx();
-
-                // Exponential smoothing
                 smoothedTx = SMOOTHING * smoothedTx + (1.0 - SMOOTHING) * tx;
 
-                // Adjust only if outside deadband
                 if (Math.abs(smoothedTx) > DEADBAND) {
                     double adjustment = smoothedTx * TRACKING_GAIN;
                     if (Math.abs(smoothedTx) < 10.0) adjustment *= 0.5;
@@ -254,19 +269,16 @@ public class FarBlueAuto extends NextFTCOpMode {
             }
         }
 
-        // If we did NOT see a tag, HOLD the current motorTargetX (e.g., 30 degrees).
         if (!sawTagThisLoop) {
             telemetry.addData("Tag", "NO (holding)");
 
-            // Optional timeout behavior: stop considering ourselves "tracking" after a while,
-            // but DO NOT snap back to 0 degrees.
-            if (System.currentTimeMillis() - lastTargetSeenTimeMs > (long) (NO_TARGET_TIMEOUT_SEC * 1000.0)) {
+            if (System.currentTimeMillis() - lastTargetSeenTimeMs >
+                    (long) (NO_TARGET_TIMEOUT_SEC * 1000.0)) {
                 hasSeenTarget = false;
                 smoothedTx = 0.0;
             }
         }
 
-        // Always apply the current target
         Turret.INSTANCE.setTargetDegrees(motorTargetX);
     }
 }

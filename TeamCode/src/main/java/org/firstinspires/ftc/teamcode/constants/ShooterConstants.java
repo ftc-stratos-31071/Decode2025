@@ -6,7 +6,7 @@ import com.acmerobotics.dashboard.config.Config;
 public class ShooterConstants {
     // Servo positions
     public static double servoPos = 0.6;
-    public static double defaultPos = 0.2;
+    public static double defaultPos = 0.25;
     public static double kickDefaultPos = 0.0;
     public static double kickerPos = 0.425;
 

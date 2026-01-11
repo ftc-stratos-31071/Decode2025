@@ -43,7 +43,7 @@ public class CloseRedAuto extends NextFTCOpMode {
     // Auto behavior config
     // =============================
     public static double AUTO_TARGET_RPM = ShooterConstants.closeTargetRPM;     // shooter runs ALL the time (after START)
-    public static double AUTO_HOOD_POS = 0.775;          // hood position set on START
+    public static double AUTO_HOOD_POS = ShooterConstants.defaultPos;          // hood position set on START
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 
     // Turret auto-tracking
@@ -115,13 +115,12 @@ public class CloseRedAuto extends NextFTCOpMode {
         // Build autonomous command (same path + stopAndAdd actions)
         autoCommand = drive.commandBuilder(START_POSE)
                 .setReversed(true)
-                .strafeTo(new Vector2d(-24.0, 24.0))
+                .strafeTo(new Vector2d(-20.0, 16.0))
 
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
                 .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
                 .stopAndAdd(Intake.INSTANCE.moveServoPos())
-                .stopAndAdd(Shooter.INSTANCE.moveServo(ShooterConstants.defaultPos))
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
@@ -131,7 +130,7 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .strafeToSplineHeading(new Vector2d(-3.0, 57.0), Math.toRadians(-180.0))
 
                 .setReversed(true)
-                .strafeToLinearHeading(new Vector2d(-16.0, 12.0), Math.toRadians(-225.0))
+                .strafeToLinearHeading(new Vector2d(-20.0, 16.0), Math.toRadians(-225.0))
 
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
@@ -145,7 +144,7 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
                 .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-16.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-240.0))
+                .splineToSplineHeading(new Pose2d(-20.0, 16.0, Math.toRadians(-225.0)), -Math.toRadians(-240.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
                 .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
@@ -158,7 +157,7 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
                 .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-16.0, 12.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
+                .splineToSplineHeading(new Pose2d(-20.0, 16.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
                 .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))

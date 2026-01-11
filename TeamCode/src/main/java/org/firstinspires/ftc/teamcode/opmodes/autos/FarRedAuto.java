@@ -137,6 +137,8 @@ public class FarRedAuto extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
                 .stopAndAdd(ShootBallSteadyAutoTimeoutCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm, 2.5))
                 .stopAndAdd(StopDriveCmd.create(drive))
+                .strafeTo(new Vector2d(61.5, 45.0))
+                .stopAndAdd(StopDriveCmd.create(drive))
                 .build();
 
         telemetry.addData("Status", "Initialized (HARD STOP applied)");
@@ -166,6 +168,7 @@ public class FarRedAuto extends NextFTCOpMode {
 
         // Run auto path if desired
          autoCommand.schedule();
+        Turret.INSTANCE.setTargetDegrees(0.0);
     }
 
     @Override
