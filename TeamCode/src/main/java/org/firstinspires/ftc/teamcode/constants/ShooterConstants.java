@@ -6,7 +6,7 @@ import com.acmerobotics.dashboard.config.Config;
 public class ShooterConstants {
     // Servo positions
     public static double servoPos = 0.6;
-    public static double defaultPos = 0.25;
+    public static double defaultPos = 0.225;
     public static double kickDefaultPos = 0.0;
     public static double kickerPos = 0.425;
 
@@ -35,4 +35,5 @@ public class ShooterConstants {
     public static double closeTargetRPM = 2700.0;
     public static double farTargetRPM = 3450.0;
     public static double tolRpm = 50.0;
+    public static double tolRpm2 = 100.0;
 }

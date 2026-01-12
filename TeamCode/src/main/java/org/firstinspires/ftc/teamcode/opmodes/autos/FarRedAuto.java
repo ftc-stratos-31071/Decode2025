@@ -53,7 +53,7 @@ public class FarRedAuto extends NextFTCOpMode {
     // Turret auto-tracking
     public static double TRACKING_GAIN = 0.08;
     public static double SMOOTHING = 0.7;
-    public static double TURRET_LIMIT_DEG = 90.0;
+    public static double TURRET_LIMIT_DEG = 45.0;
     public static double DEADBAND = 3.0;
     public static boolean AUTO_TRACK_ENABLED = true;
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;

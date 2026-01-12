@@ -35,7 +35,7 @@ public class RedTeleop extends NextFTCOpMode {
     // Tunable via FTC Dashboard
     public static double TRACKING_GAIN = 0.08;  // Reduced from 0.15 - much smoother
     public static double SMOOTHING = 0.7;  // Exponential smoothing (0.0-1.0, lower = smoother)
-    public static double TURRET_LIMIT_DEG = 90.0;  // Max turret rotation
+    public static double TURRET_LIMIT_DEG = 45.0;  // Max turret rotation
     public static double DEADBAND = 3.0;  // Increased from 2.0 - larger tolerance to prevent jitter
     public static boolean AUTO_TRACK_ENABLED = true;  // Enable/disable tracking
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;  // Time before returning to center when no target detected
@@ -92,7 +92,7 @@ public class RedTeleop extends NextFTCOpMode {
     @Override
     public void onInit() {
         Intake.INSTANCE.defaultPos().schedule();
-        Shooter.INSTANCE.moveServo(ShooterConstants.defaultPos).schedule();
+        Shooter.INSTANCE.moveServo(servoPos).schedule();
         Shooter.INSTANCE.kickDefaultPos.schedule();
         Turret.INSTANCE.turret.zeroed();
         FtcDashboard dashboard = FtcDashboard.getInstance();

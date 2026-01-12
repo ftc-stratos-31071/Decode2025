@@ -27,7 +27,7 @@ import dev.nextftc.core.components.SubsystemComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
 
-@Autonomous(name = "CloseBlueAuto", preselectTeleOp = "RedTeleop")
+@Autonomous(name = "CloseBlueAuto", preselectTeleOp = "BlueTeleop")
 public class CloseBlueAuto extends NextFTCOpMode {
 
     // =============================
@@ -35,33 +35,28 @@ public class CloseBlueAuto extends NextFTCOpMode {
     // =============================
     private static final Pose2d START_POSE = new Pose2d(
             -52.5,                 // x
-            -51.5,                  // y
-            Math.toRadians(230.0)  // heading
+            -51.5,                 // y (MIRRORED)
+            Math.toRadians(230.0)  // heading (MIRRORED)
     );
 
     // =============================
     // Auto behavior config
     // =============================
-    public static double AUTO_TARGET_RPM = ShooterConstants.closeTargetRPM;     // shooter runs ALL the time (after START)
-    public static double AUTO_HOOD_POS = ShooterConstants.defaultPos;          // hood position set on START
+    public static double AUTO_TARGET_RPM = 2750;
+    public static double AUTO_HOOD_POS = 0.225;
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 
     // Turret auto-tracking
     public static double TRACKING_GAIN = 0.08;
     public static double SMOOTHING = 0.7;
-    public static double TURRET_LIMIT_DEG = 90.0;
+    public static double TURRET_LIMIT_DEG = 45.0;
     public static double DEADBAND = 3.0;
     public static boolean AUTO_TRACK_ENABLED = true;
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;
 
-    // =============================
-    // NextFTC + RR objects
-    // =============================
     private AutoMecanumDrive drive;
     private Command autoCommand;
-    // =============================
-    // Limelight + turret tracking state
-    // =============================
+
     private Limelight3A limelight;
     private double motorTargetX = 0.0;
     private double smoothedTx = 0.0;
@@ -80,16 +75,12 @@ public class CloseBlueAuto extends NextFTCOpMode {
     public void onInit() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        // Build drive + command on init, but DO NOT move mechanisms yet.
         drive = new AutoMecanumDrive(hardwareMap, START_POSE);
-
-        // HARD STOP EVERYTHING immediately on init (prevents leftover state from a prior OpMode)
         hardStopAll();
 
         Shooter.INSTANCE.moveServo(AUTO_HOOD_POS).schedule();
         Shooter.INSTANCE.kickDefaultPos.schedule();
 
-        // ===== init Limelight (camera can run on init without moving hardware) =====
         try {
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
             limelight.setPollRateHz(100);
@@ -106,61 +97,74 @@ public class CloseBlueAuto extends NextFTCOpMode {
             telemetry.addData("Limelight", "✗ ERROR: " + e.getMessage());
         }
 
-        // Reset tracking state (we will start tracking AFTER START)
         motorTargetX = 0.0;
         smoothedTx = 0.0;
         hasSeenTarget = false;
         lastTargetSeenTimeMs = System.currentTimeMillis();
 
-        // Build autonomous command (same path + stopAndAdd actions)
         autoCommand = drive.commandBuilder(START_POSE)
                 .setReversed(true)
                 .strafeTo(new Vector2d(-20.0, -16.0))
 
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
-                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
+                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm2))
                 .stopAndAdd(Intake.INSTANCE.moveServoPos())
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
-                .splineToLinearHeading(new Pose2d(-16.0, -30.0, Math.toRadians(270.0)), Math.toRadians(300.0))
-                .strafeTo(new Vector2d(-16.0, -60.0))
+                .splineToLinearHeading(
+                        new Pose2d(-16.0, -24.0, Math.toRadians(270.0)),
+                        -Math.toRadians(360.0))
+
+                .strafeTo(new Vector2d(-16.0, -56.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
-                .strafeToSplineHeading(new Vector2d(-3.0, -57.0), Math.toRadians(180.0))
+//                .strafeToSplineHeading(new Vector2d(-10.0, -66.0), Math.toRadians(180.0))
 
                 .setReversed(true)
                 .strafeToLinearHeading(new Vector2d(-20.0, -16.0), Math.toRadians(225.0))
 
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
-                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
+                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm2))
                 .stopAndAdd(Intake.INSTANCE.moveServoPos())
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
-                .splineToSplineHeading(new Pose2d(8.0, -30.0, Math.toRadians(270.0)), Math.toRadians(360.0))
-                .strafeTo(new Vector2d(8.0, -60.0))
+                .splineToSplineHeading(
+                        new Pose2d(10.0, -20.0, Math.toRadians(270.0)),
+                        -Math.toRadians(360.0))
+
+                .strafeTo(new Vector2d(10.0, -56.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
                 .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-20.0, -16.0, Math.toRadians(225.0)), -Math.toRadians(240.0))
+                .splineToSplineHeading(
+                        new Pose2d(-20.0, -16.0, Math.toRadians(225.0)),
+                        -Math.toRadians(240.0))
+
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
-                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
+                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm2))
                 .stopAndAdd(Intake.INSTANCE.moveServoPos())
                 .stopAndAdd(Intake.INSTANCE.moveIntake(IntakeConstants.intakePower))
 
                 .setReversed(false)
-                .splineToSplineHeading(new Pose2d(32.0, -30.0, Math.toRadians(270.0)), Math.toRadians(360.0))
-                .strafeTo(new Vector2d(32.0, -60.0))
+                .splineToSplineHeading(
+                        new Pose2d(34.0, -24.0, Math.toRadians(270.0)),
+                        -Math.toRadians(360.0))
+
+                .strafeTo(new Vector2d(34.0, -56.0))
                 .stopAndAdd(Intake.INSTANCE.zeroPower())
 
                 .setReversed(true)
-                .splineToSplineHeading(new Pose2d(-20.0, -16.0, Math.toRadians(225.0)), -Math.toRadians(225.0))
+                .splineToSplineHeading(
+                        new Pose2d(-22.0, -18.0, Math.toRadians(225.0)),
+                        -Math.toRadians(225.0))
+
                 .stopAndAdd(StopDriveCmd.create(drive))
                 .stopAndAdd(Intake.INSTANCE.defaultPos())
-                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm))
+                .stopAndAdd(ShootBallSteadyAutoCmd.create(IntakeConstants.shootPower, ShooterConstants.tolRpm2))
 
                 .setReversed(false)
                 .strafeTo(new Vector2d(-12.0, -40.0))
@@ -172,43 +176,33 @@ public class CloseBlueAuto extends NextFTCOpMode {
         telemetry.update();
     }
 
-    /**
-     * Runs every loop while sitting on INIT (before START).
-     * This is the best place to prevent “glitch running” from old commands/state.
-     */
     @Override
     public void onWaitForStart() {
-        hardStopMotorsOnly(); // keep everything OFF while waiting
+        hardStopMotorsOnly();
         telemetry.addData("Safety", "Holding all motors at 0 during INIT");
         telemetry.update();
     }
 
     @Override
     public void onStartButtonPressed() {
-        // Once START is pressed, NOW set your start positions like TeleOp
         Intake.INSTANCE.moveServoPos().schedule();
 
-        // Turret: zero + center
         Turret.INSTANCE.turret.zeroed();
         Turret.INSTANCE.setTargetDegrees(0.0);
 
-        // Start shooter immediately and keep running all auto
         Shooter.INSTANCE.setTargetRPM(AUTO_TARGET_RPM);
 
-        // Reset tracking state and begin tracking after start
         motorTargetX = 0.0;
         smoothedTx = 0.0;
         hasSeenTarget = false;
         lastTargetSeenTimeMs = System.currentTimeMillis();
 
-        // Run auto
         autoCommand.schedule();
         Turret.INSTANCE.setTargetDegrees(0.0);
     }
 
     @Override
     public void onUpdate() {
-        // Always track during the match
         updateTurretTracking();
 
         telemetry.addData("Shooter Target RPM", Shooter.INSTANCE.getTargetRPM());
@@ -219,59 +213,38 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
     @Override
     public void onStop() {
-        // HARD STOP at end of OpMode too
         hardStopAll();
-
         try {
             if (limelight != null) limelight.stop();
         } catch (Exception ignored) { }
     }
 
-    // ==========================================================
-    // SAFETY STOP HELPERS
-    // ==========================================================
-
-    /** Stop motors AND reset control loops. Safe to call repeatedly. */
     private void hardStopAll() {
-        // Shooter: hard stop (sets power 0 directly + disables PIDF)
         Shooter.INSTANCE.stopShooter();
-
-        // Intake: stop
         Intake.INSTANCE.zeroPower().schedule();
 
-        // Turret: stop and disable manual tracking
         Turret.INSTANCE.disableManualControl();
         Turret.INSTANCE.turret.setPower(0.0);
         motorTargetX = 0.0;
         smoothedTx = 0.0;
 
-        // Drive: stop
         if (drive != null) {
             drive.setDrivePowers(new PoseVelocity2d(new Vector2d(0.0, 0.0), 0.0));
         }
     }
 
-    /** Keep motors off during INIT without constantly resetting servo positions. */
     private void hardStopMotorsOnly() {
-        // Shooter motors off + PIDF disabled
         Shooter.INSTANCE.stopShooter();
-
-        // Intake motor off
         Intake.INSTANCE.zeroPower().schedule();
 
-        // Turret motor off (no tracking while in INIT)
         Turret.INSTANCE.disableManualControl();
         Turret.INSTANCE.turret.setPower(0.0);
 
-        // Drive motors off
         if (drive != null) {
             drive.setDrivePowers(new PoseVelocity2d(new Vector2d(0.0, 0.0), 0.0));
         }
     }
 
-    // ==========================================================
-    // Limelight -> turret tracking (active AFTER START)
-    // ==========================================================
     private void updateTurretTracking() {
         LLResult result = null;
         if (limelight != null) {
@@ -331,7 +304,8 @@ public class CloseBlueAuto extends NextFTCOpMode {
             }
         }
 
-        if (System.currentTimeMillis() - lastTargetSeenTimeMs > (long) (NO_TARGET_TIMEOUT_SEC * 1000.0)) {
+        if (System.currentTimeMillis() - lastTargetSeenTimeMs >
+                (long) (NO_TARGET_TIMEOUT_SEC * 1000.0)) {
             motorTargetX = 0.0;
             smoothedTx = 0.0;
             hasSeenTarget = false;

@@ -43,13 +43,13 @@ public class CloseRedAuto extends NextFTCOpMode {
     // Auto behavior config
     // =============================
     public static double AUTO_TARGET_RPM = ShooterConstants.closeTargetRPM;     // shooter runs ALL the time (after START)
-    public static double AUTO_HOOD_POS = ShooterConstants.defaultPos;          // hood position set on START
+    public static double AUTO_HOOD_POS = 0.225;          // hood position set on START
     public static boolean STREAM_LIMELIGHT_TO_DASH = true;
 
     // Turret auto-tracking
     public static double TRACKING_GAIN = 0.08;
     public static double SMOOTHING = 0.7;
-    public static double TURRET_LIMIT_DEG = 90.0;
+    public static double TURRET_LIMIT_DEG = 45.0;
     public static double DEADBAND = 3.0;
     public static boolean AUTO_TRACK_ENABLED = true;
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;

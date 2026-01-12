@@ -53,7 +53,7 @@ public class FarBlueAuto extends NextFTCOpMode {
     // Turret auto-tracking
     public static double TRACKING_GAIN = 0.08;
     public static double SMOOTHING = 0.7;
-    public static double TURRET_LIMIT_DEG = 90.0;
+    public static double TURRET_LIMIT_DEG = 45.0;
     public static double DEADBAND = 3.0;
     public static boolean AUTO_TRACK_ENABLED = true;
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;
@@ -131,7 +131,7 @@ public class FarBlueAuto extends NextFTCOpMode {
                 .stopAndAdd(Intake.INSTANCE.moveServoPos())
 
                 .strafeToSplineHeading(
-                        new Vector2d(65.0, -65.5),
+                        new Vector2d(65.0, -55.5),
                         Math.toRadians(270.0))
 
                 .stopAndAdd(WaitCmd.create(0.5))
