@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
@@ -30,6 +31,7 @@ import dev.nextftc.hardware.driving.MecanumDriverControlled;
 import dev.nextftc.hardware.impl.MotorEx;
 
 @Config
+@Disabled
 @TeleOp(name = "RedTeleop")
 public class RedTeleop extends NextFTCOpMode {
     // Tunable via FTC Dashboard
@@ -165,7 +167,7 @@ public class RedTeleop extends NextFTCOpMode {
             IntakeSeqCmd.create().schedule();
         });
         Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> {
-            Intake.INSTANCE.zeroPower().schedule();
+            Intake.INSTANCE.zeroPowerIntake().schedule();
         });
 
         final AtomicBoolean shooterToggle = new AtomicBoolean(false);
@@ -202,7 +204,7 @@ public class RedTeleop extends NextFTCOpMode {
         });
 
         Gamepads.gamepad1().a().whenBecomesFalse(() -> {
-            Intake.INSTANCE.zeroPower().schedule();
+            Intake.INSTANCE.zeroPowerIntake().schedule();
         });
 
         // B Button - Intake OUTTAKE (reverse direction)
@@ -212,7 +214,7 @@ public class RedTeleop extends NextFTCOpMode {
             Shooter.INSTANCE.kickDefaultPos.schedule();
         });
         Gamepads.gamepad1().b().whenBecomesFalse(() -> {
-            Intake.INSTANCE.zeroPower().schedule();
+            Intake.INSTANCE.zeroPowerIntake().schedule();
         });
 
         final AtomicBoolean xRpmToggle = new AtomicBoolean(false);

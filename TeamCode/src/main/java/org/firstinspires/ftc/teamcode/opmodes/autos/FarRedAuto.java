@@ -9,9 +9,9 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.commands.AutoSlowDriveForwardTimeoutCmd;
-import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyAutoCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyAutoTimeoutCmd;
 import org.firstinspires.ftc.teamcode.commands.StopDriveCmd;
 import org.firstinspires.ftc.teamcode.commands.WaitCmd;
@@ -30,6 +30,7 @@ import dev.nextftc.core.components.SubsystemComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
 
+@Disabled
 @Autonomous(name = "FarRedAuto", preselectTeleOp = "RedTeleop")
 public class FarRedAuto extends NextFTCOpMode {
 
@@ -194,7 +195,7 @@ public class FarRedAuto extends NextFTCOpMode {
     // ==========================================================
     private void hardStopAll() {
         Shooter.INSTANCE.stopShooter();
-        Intake.INSTANCE.zeroPower().schedule();
+        Intake.INSTANCE.zeroPowerIntake().schedule();
 
         Turret.INSTANCE.disableManualControl();
         Turret.INSTANCE.turret.setPower(0.0);
@@ -208,7 +209,7 @@ public class FarRedAuto extends NextFTCOpMode {
 
     private void hardStopMotorsOnly() {
         Shooter.INSTANCE.stopShooter();
-        Intake.INSTANCE.zeroPower().schedule();
+        Intake.INSTANCE.zeroPowerIntake().schedule();
 
 //        Turret.INSTANCE.disableManualControl();
 //        Turret.INSTANCE.turret.setPower(0.0);

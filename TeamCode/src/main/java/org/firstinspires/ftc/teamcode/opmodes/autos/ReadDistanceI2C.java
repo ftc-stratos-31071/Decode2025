@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes.autos;
 
 import com.qualcomm.hardware.lynx.LynxI2cDeviceSynch;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import dev.nextftc.core.components.BindingsComponent;
@@ -15,6 +15,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 
+@Disabled
 @TeleOp(name = "ReadDistanceI2C", group = "Testing")
 public class ReadDistanceI2C extends NextFTCOpMode {
 
@@ -41,7 +42,7 @@ public class ReadDistanceI2C extends NextFTCOpMode {
             IntakeSeqCmd.create().schedule();
         });
         Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> {
-            Intake.INSTANCE.zeroPower().schedule();
+            Intake.INSTANCE.zeroPowerIntake().schedule();
         });
     }
 
@@ -53,7 +54,7 @@ public class ReadDistanceI2C extends NextFTCOpMode {
         telemetry.update();
 
         if (distance >= 30 && distance <= 40) {
-            Intake.INSTANCE.zeroPower().schedule();
+            Intake.INSTANCE.zeroPowerIntake().schedule();
         }
     }
 }

@@ -25,17 +25,17 @@ public class ShootBallCmd {
 
 
 //                [edited]
-                KickCmd.create(),
+//                KickCmd.create(),
 //                new Delay(IntakeConstants.sequenceDelay),
 //                Intake.INSTANCE.moveServoPos(),
-                Intake.INSTANCE.waitForBall(cSensor),
-                new Delay(IntakeConstants.sequenceDelay),
-                ShootBallOne.create(),
-                new Delay(IntakeConstants.sequenceDelay),
+//                Intake.INSTANCE.waitForBall(cSensor),
+//                new Delay(IntakeConstants.sequenceDelay),
+//                ShootBallOne.create(),
+//                new Delay(IntakeConstants.sequenceDelay),
 //                Intake.INSTANCE.moveServoPos(),
-                Intake.INSTANCE.waitForBall(cSensor),
-                new Delay(IntakeConstants.sequenceDelay),
-                ShootBallOne.create()
+//                Intake.INSTANCE.waitForBall(cSensor),
+//                new Delay(IntakeConstants.sequenceDelay),
+//                ShootBallOne.create()
         );
     }
 }

@@ -9,6 +9,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyAutoCmd;
 import org.firstinspires.ftc.teamcode.commands.StopDriveCmd;
@@ -27,6 +28,7 @@ import dev.nextftc.core.components.SubsystemComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
 
+@Disabled
 @Autonomous(name = "CloseRedAuto", preselectTeleOp = "RedTeleop")
 public class CloseRedAuto extends NextFTCOpMode {
 
@@ -126,7 +128,7 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .setReversed(false)
                 .splineToLinearHeading(new Pose2d(-16.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-300.0))
                 .strafeTo(new Vector2d(-16.0, 60.0))
-                .stopAndAdd(Intake.INSTANCE.zeroPower())
+                .stopAndAdd(Intake.INSTANCE.zeroPowerIntake())
                 .strafeToSplineHeading(new Vector2d(-3.0, 57.0), Math.toRadians(-180.0))
 
                 .setReversed(true)
@@ -141,7 +143,7 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .setReversed(false)
                 .splineToSplineHeading(new Pose2d(8.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-360.0))
                 .strafeTo(new Vector2d(8.0, 60.0))
-                .stopAndAdd(Intake.INSTANCE.zeroPower())
+                .stopAndAdd(Intake.INSTANCE.zeroPowerIntake())
 
                 .setReversed(true)
                 .splineToSplineHeading(new Pose2d(-20.0, 16.0, Math.toRadians(-225.0)), -Math.toRadians(-240.0))
@@ -154,7 +156,7 @@ public class CloseRedAuto extends NextFTCOpMode {
                 .setReversed(false)
                 .splineToSplineHeading(new Pose2d(32.0, 30.0, Math.toRadians(-270.0)), Math.toRadians(-360.0))
                 .strafeTo(new Vector2d(32.0, 60.0))
-                .stopAndAdd(Intake.INSTANCE.zeroPower())
+                .stopAndAdd(Intake.INSTANCE.zeroPowerIntake())
 
                 .setReversed(true)
                 .splineToSplineHeading(new Pose2d(-20.0, 16.0, Math.toRadians(-225.0)), -Math.toRadians(-225.0))
@@ -237,7 +239,7 @@ public class CloseRedAuto extends NextFTCOpMode {
         Shooter.INSTANCE.stopShooter();
 
         // Intake: stop
-        Intake.INSTANCE.zeroPower().schedule();
+        Intake.INSTANCE.zeroPowerIntake().schedule();
 
         // Turret: stop and disable manual tracking
         Turret.INSTANCE.disableManualControl();
@@ -257,7 +259,7 @@ public class CloseRedAuto extends NextFTCOpMode {
         Shooter.INSTANCE.stopShooter();
 
         // Intake motor off
-        Intake.INSTANCE.zeroPower().schedule();
+        Intake.INSTANCE.zeroPowerIntake().schedule();
 
         // Turret motor off (no tracking while in INIT)
         Turret.INSTANCE.disableManualControl();

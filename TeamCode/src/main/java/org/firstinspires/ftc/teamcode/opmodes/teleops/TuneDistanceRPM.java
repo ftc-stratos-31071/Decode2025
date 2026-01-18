@@ -6,10 +6,8 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
-import org.firstinspires.ftc.teamcode.commands.ShootBallCmd;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
@@ -141,7 +139,7 @@ public class TuneDistanceRPM extends NextFTCOpMode {
 
         // LB: Intake sequence press/release
         Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> IntakeSeqCmd.create().schedule());
-        Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> Intake.INSTANCE.zeroPower().schedule());
+        Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> Intake.INSTANCE.zeroPowerIntake().schedule());
 
         // RB: Shooter ON (distance RPM)
         Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> shooterEnabled = true);

@@ -6,7 +6,6 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.ShooterOffCmd;
@@ -153,7 +152,7 @@ public class TurretToTag extends NextFTCOpMode {
 
         // Manual intake
         Gamepads.gamepad1().a().whenBecomesTrue(Intake.INSTANCE.turnOn());
-        Gamepads.gamepad1().a().whenBecomesFalse(Intake.INSTANCE.zeroPower());
+        Gamepads.gamepad1().a().whenBecomesFalse(Intake.INSTANCE.zeroPowerIntake());
 
         // Shooter off
         Gamepads.gamepad1().b().whenBecomesTrue(Shooter.INSTANCE.zeroPower);
