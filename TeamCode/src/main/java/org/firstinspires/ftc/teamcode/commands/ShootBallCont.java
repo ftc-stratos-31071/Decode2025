@@ -14,7 +14,6 @@ public class ShootBallCont {
     public static Command create() {
         return new SequentialGroup(
                 Intake.INSTANCE.defaultPos(),
-                Shooter.INSTANCE.kickDefaultPos,
                 new ForcedParallelCommand(
                         Intake.INSTANCE.moveIntake(IntakeConstants.shootPower)
                 )

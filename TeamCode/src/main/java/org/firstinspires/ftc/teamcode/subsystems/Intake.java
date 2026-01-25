@@ -16,7 +16,7 @@ public class Intake implements Subsystem {
 
     private Intake() {}
 
-    private final MotorEx intake = new MotorEx("IntakeMotor").brakeMode();
+    private final MotorEx intake = new MotorEx("IntakeMotor").brakeMode().reversed();
     private final MotorEx transfer = new MotorEx("TransferMotor").brakeMode();
     private final ServoEx servo = new ServoEx("DoorServo");
 

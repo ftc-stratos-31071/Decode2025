@@ -4,10 +4,18 @@ import com.acmerobotics.dashboard.config.Config;
 
 @Config
 public class TurretConstants {
-    // FIXED: Increased PID values for proper encoder tick control
-    // Previous values were tuned for degrees, but motor uses encoder ticks (1440 per rotation)
-    public static double kP = 0.012;  // Increased from 0.00305 for better response
-    public static double kI = 0.0;    // Keep at 0 to start
-    public static double kD = 0.001; // Small D term to reduce oscillation
-    public static double pos = 0.0;
+
+    public static double kP = 0.012;
+    public static double kI = 0.0;
+    public static double kD = 0.0008;
+
+    public static double MAX_POWER = 0.5;
+
+    public static double MIN_DEG = -180.0;
+    public static double MAX_DEG = 180.0;
+
+    // Encoder zero offsets (calibrate on robot)
+    public static double LEFT_OFFSET_DEG = 0.0;
+    public static double RIGHT_OFFSET_DEG = 0.0;
 }
+

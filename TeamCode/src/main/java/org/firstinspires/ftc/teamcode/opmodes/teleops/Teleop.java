@@ -3,7 +3,9 @@ package org.firstinspires.ftc.teamcode.opmodes.teleops;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
+import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
 import dev.nextftc.core.commands.Command;
 import dev.nextftc.core.components.BindingsComponent;
@@ -19,24 +21,26 @@ public class Teleop extends NextFTCOpMode {
 
     public Teleop() {
         addComponents(
-                new SubsystemComponent(Intake.INSTANCE),
+                new SubsystemComponent(Intake.INSTANCE, Shooter.INSTANCE),
                 BulkReadComponent.INSTANCE,
                 BindingsComponent.INSTANCE
         );
     }
 
-    private final MotorEx frontLeftMotor = new MotorEx("frontLeftMotor").brakeMode();
+    private final MotorEx frontLeftMotor = new MotorEx("frontLeftMotor").brakeMode().reversed();
     private final MotorEx frontRightMotor = new MotorEx("frontRightMotor").brakeMode();
-    private final MotorEx backLeftMotor = new MotorEx("backLeftMotor").brakeMode().reversed();
+    private final MotorEx backLeftMotor = new MotorEx("backLeftMotor").brakeMode();
     private final MotorEx backRightMotor = new MotorEx("backRightMotor").brakeMode().reversed();
     private boolean slowMode = false;
     private double driveScale = 1.0;
 
+    private boolean shooterOn = false;
+
     @Override
     public void onStartButtonPressed() {
-        var forward = Gamepads.gamepad1().leftStickY().map(v -> v * driveScale);
-        var strafe  = Gamepads.gamepad1().leftStickX().negate().map(v -> v * driveScale);
-        var rotate  = Gamepads.gamepad1().rightStickX().negate().map(v -> v * driveScale);
+        var rotate = Gamepads.gamepad1().leftStickY().negate().map(v -> v * driveScale); //needs to be fixed
+        var strafe  = Gamepads.gamepad1().leftStickX().map(v -> v * driveScale);
+        var forward  = Gamepads.gamepad1().rightStickX().map(v -> v * driveScale); //needs to be fixed
 
         Command driverControlled = new MecanumDriverControlled(
                 frontLeftMotor,
@@ -62,16 +66,6 @@ public class Teleop extends NextFTCOpMode {
             Intake.INSTANCE.zeroPowerIntake().schedule();
         });
 
-        Gamepads.gamepad1().a().whenBecomesTrue(() -> {
-            Intake.INSTANCE.moveIntake(IntakeConstants.intakePower).schedule();
-            Intake.INSTANCE.moveTransfer(IntakeConstants.shootPower).schedule();
-        });
-
-        Gamepads.gamepad1().a().whenBecomesFalse(() -> {
-            Intake.INSTANCE.zeroPowerIntake().schedule();
-            Intake.INSTANCE.zeroPowerTransfer().schedule();
-        });
-
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
             Intake.INSTANCE.moveIntake(-IntakeConstants.intakePowerSlow).schedule();
             Intake.INSTANCE.moveTransfer(-IntakeConstants.intakePowerSlow).schedule();
@@ -82,12 +76,32 @@ public class Teleop extends NextFTCOpMode {
             Intake.INSTANCE.zeroPowerTransfer().schedule();
         });
 
-        Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
+        Gamepads.gamepad1().a().whenBecomesTrue(() -> {
             Intake.INSTANCE.moveTransfer(IntakeConstants.shootPower).schedule();
         });
 
-        Gamepads.gamepad1().rightBumper().whenBecomesFalse(() -> {
+        Gamepads.gamepad1().a().whenBecomesFalse(() -> {
             Intake.INSTANCE.zeroPowerTransfer().schedule();
+        });
+
+        Gamepads.gamepad1().y().whenBecomesTrue(() -> {
+            Intake.INSTANCE.moveIntake(IntakeConstants.intakePower).schedule();
+            Intake.INSTANCE.moveTransfer(IntakeConstants.shootPower).schedule();
+        });
+
+        Gamepads.gamepad1().y().whenBecomesFalse(() -> {
+            Intake.INSTANCE.zeroPowerIntake().schedule();
+            Intake.INSTANCE.zeroPowerTransfer().schedule();
+        });
+
+        Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
+            shooterOn = !shooterOn;
+
+            if (shooterOn) {
+                Shooter.INSTANCE.runRPM(ShooterConstants.closeTargetRPM).schedule();
+            } else {
+                Shooter.INSTANCE.stop();
+            }
         });
     }
 }
