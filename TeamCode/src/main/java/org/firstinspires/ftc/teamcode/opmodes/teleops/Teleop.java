@@ -15,6 +15,7 @@ import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
 import dev.nextftc.hardware.driving.MecanumDriverControlled;
 import dev.nextftc.hardware.impl.MotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "Teleop")
 public class Teleop extends NextFTCOpMode {
@@ -36,11 +37,15 @@ public class Teleop extends NextFTCOpMode {
 
     private boolean shooterOn = false;
 
+    private Servo shooterServo;
+
     @Override
     public void onStartButtonPressed() {
         var rotate = Gamepads.gamepad1().leftStickY().negate().map(v -> v * driveScale); //needs to be fixed
         var strafe  = Gamepads.gamepad1().leftStickX().map(v -> v * driveScale);
         var forward  = Gamepads.gamepad1().rightStickX().map(v -> v * driveScale); //needs to be fixed
+        shooterServo = hardwareMap.get(Servo.class, "hoodServo");
+        shooterServo.setPosition(ShooterConstants.servoPos);
 
         Command driverControlled = new MecanumDriverControlled(
                 frontLeftMotor,
@@ -102,6 +107,16 @@ public class Teleop extends NextFTCOpMode {
             } else {
                 Shooter.INSTANCE.stop();
             }
+        });
+        Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
+            ShooterConstants.servoPos = ShooterConstants.servoPos + 0.1;
+            shooterServo.setPosition(ShooterConstants.servoPos);
+        });
+
+
+        Gamepads.gamepad1().dpadDown().whenBecomesTrue(() -> {
+            ShooterConstants.servoPos = ShooterConstants.servoPos - 0.1;
+            shooterServo.setPosition(ShooterConstants.servoPos);
         });
     }
 }
