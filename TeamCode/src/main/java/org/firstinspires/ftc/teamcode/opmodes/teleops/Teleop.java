@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes.teleops;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyCmd;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
@@ -29,23 +30,27 @@ public class Teleop extends NextFTCOpMode {
     }
 
     private final MotorEx frontLeftMotor = new MotorEx("frontLeftMotor").brakeMode().reversed();
-    private final MotorEx frontRightMotor = new MotorEx("frontRightMotor").brakeMode();
+    private final MotorEx frontRightMotor = new MotorEx("frontRightMotor").brakeMode().reversed();
     private final MotorEx backLeftMotor = new MotorEx("backLeftMotor").brakeMode();
-    private final MotorEx backRightMotor = new MotorEx("backRightMotor").brakeMode().reversed();
+    private final MotorEx backRightMotor = new MotorEx("backRightMotor").brakeMode();
     private boolean slowMode = false;
     private double driveScale = 1.0;
-
     private boolean shooterOn = false;
+    private double hoodPos = ShooterConstants.defaultPos;
+    private double targetRpm = ShooterConstants.closeTargetRPM;
 
-    private Servo shooterServo;
+    @Override
+    public void onInit() {
+        Shooter.INSTANCE.setHood(hoodPos).schedule();
+        Shooter.INSTANCE.setTargetRPM(0.0);
+        Shooter.INSTANCE.runRPM(0.0).schedule();
+    }
 
     @Override
     public void onStartButtonPressed() {
-        var rotate = Gamepads.gamepad1().leftStickY().negate().map(v -> v * driveScale); //needs to be fixed
+        var forward = Gamepads.gamepad1().leftStickY().negate().map(v -> v * driveScale); //needs to be fixed
         var strafe  = Gamepads.gamepad1().leftStickX().map(v -> v * driveScale);
-        var forward  = Gamepads.gamepad1().rightStickX().map(v -> v * driveScale); //needs to be fixed
-        shooterServo = hardwareMap.get(Servo.class, "hoodServo");
-        shooterServo.setPosition(ShooterConstants.servoPos);
+        var rotate  = Gamepads.gamepad1().rightStickX().map(v -> v * driveScale); //needs to be fixed
 
         Command driverControlled = new MecanumDriverControlled(
                 frontLeftMotor,
@@ -82,10 +87,11 @@ public class Teleop extends NextFTCOpMode {
         });
 
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
-            Intake.INSTANCE.moveTransfer(IntakeConstants.shootPower).schedule();
+            ShootBallSteadyCmd.create().schedule();
         });
 
         Gamepads.gamepad1().a().whenBecomesFalse(() -> {
+            Intake.INSTANCE.zeroPowerIntake().schedule();
             Intake.INSTANCE.zeroPowerTransfer().schedule();
         });
 
@@ -109,14 +115,41 @@ public class Teleop extends NextFTCOpMode {
             }
         });
         Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
-            ShooterConstants.servoPos = ShooterConstants.servoPos + 0.1;
-            shooterServo.setPosition(ShooterConstants.servoPos);
+            hoodPos = Math.max(ShooterConstants.servoPos, hoodPos - 0.1);
+            Shooter.INSTANCE.setHood(hoodPos).schedule();
         });
-
 
         Gamepads.gamepad1().dpadDown().whenBecomesTrue(() -> {
-            ShooterConstants.servoPos = ShooterConstants.servoPos - 0.1;
-            shooterServo.setPosition(ShooterConstants.servoPos);
+            hoodPos = Math.min(ShooterConstants.defaultPos, hoodPos + 0.1);
+            Shooter.INSTANCE.setHood(hoodPos).schedule();
         });
+
+        Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
+            targetRpm = targetRpm + 100;
+            if (Shooter.INSTANCE.getRPM() > 0) {
+                Shooter.INSTANCE.setTargetRPM(targetRpm);
+            }
+        });
+
+        Gamepads.gamepad1().dpadLeft().whenBecomesTrue(() -> {
+            targetRpm = targetRpm - 100;
+            if (Shooter.INSTANCE.getRPM() > 0) {
+                Shooter.INSTANCE.setTargetRPM(targetRpm);
+            }
+        });
+    }
+
+    @Override
+    public void onUpdate() {
+        telemetry.addData("Target RPM", targetRpm);
+
+        double rightRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.rightMotor.getVelocity()));
+        double leftRPM  = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.leftMotor.getVelocity()));
+        double currentRPM = (rightRPM + leftRPM) / 2.0;
+        telemetry.addData("Current RPM", currentRPM);
+
+        telemetry.addData("Hood Position", hoodPos);
+
+        telemetry.update();
     }
 }

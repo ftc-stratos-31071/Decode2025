@@ -18,8 +18,8 @@ public class Shooter implements Subsystem {
 
     /* ================= HARDWARE ================= */
 
-    private final MotorEx rightMotor = new MotorEx("ShooterRight").brakeMode().reversed();
-    private final MotorEx leftMotor  = new MotorEx("ShooterLeft").brakeMode();
+    public final MotorEx rightMotor = new MotorEx("ShooterRight").brakeMode().reversed();
+    public final MotorEx leftMotor  = new MotorEx("ShooterLeft").brakeMode();
 
     private final ServoEx hoodServo = new ServoEx("HoodServo");
 
@@ -69,7 +69,7 @@ public class Shooter implements Subsystem {
 
     /* ================= VELOCITY ================= */
 
-    private double ticksPerSecondToRPM(double ticksPerSecond) {
+    public double ticksPerSecondToRPM(double ticksPerSecond) {
         return (ticksPerSecond / ShooterConstants.TICKS_PER_REV) * 60.0;
     }
 

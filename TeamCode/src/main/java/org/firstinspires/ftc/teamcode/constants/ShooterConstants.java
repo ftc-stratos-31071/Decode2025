@@ -5,12 +5,12 @@ import com.acmerobotics.dashboard.config.Config;
 @Config
 public class ShooterConstants {
     // Servo positions
-    public static double servoPos = 0.6;
-    public static double defaultPos = 0.225;
+    public static double servoPos = 0.5;
+    public static double defaultPos = 1.0;
 
     public static double zeroPower = 0.0;
-    public static double kF = 0.000185;
-    public static double kP = 0.001;
+    public static double kF = 0.000195;
+    public static double kP = 0.01;
     public static double kI = 0.0;
     public static double kD = 0.0;
 

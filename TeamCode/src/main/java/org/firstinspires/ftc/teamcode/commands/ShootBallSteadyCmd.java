@@ -26,8 +26,10 @@ public class ShootBallSteadyCmd {
             public void update() {
                 if (Shooter.INSTANCE.atSpeed(tolRpm)) {
                     Intake.INSTANCE.setIntakePower(feedPower);
+                    Intake.INSTANCE.setTransferPower(feedPower);
                 } else {
                     Intake.INSTANCE.setIntakePower(0.0);
+                    Intake.INSTANCE.setTransferPower(0.0);
                 }
             }
 
@@ -39,6 +41,7 @@ public class ShootBallSteadyCmd {
             @Override
             public void stop(boolean interrupted) {
                 Intake.INSTANCE.setIntakePower(0.0);
+                Intake.INSTANCE.setTransferPower(0.0);
             }
         }.requires(Intake.INSTANCE);
     }
