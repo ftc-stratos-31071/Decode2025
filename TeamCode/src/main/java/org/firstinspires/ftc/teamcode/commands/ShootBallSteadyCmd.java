@@ -25,6 +25,7 @@ public class ShootBallSteadyCmd {
             @Override
             public void update() {
                 if (Shooter.INSTANCE.atSpeed(tolRpm)) {
+                    Intake.INSTANCE.defaultPos();
                     Intake.INSTANCE.setIntakePower(feedPower);
                     Intake.INSTANCE.setTransferPower(feedPower);
                 } else {

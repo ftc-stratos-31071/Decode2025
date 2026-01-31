@@ -32,6 +32,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
     private PathChain path3;
     private PathChain path4;
     private PathChain path5;
+    private PathChain path6;
 
     public CloseBlueAuto() {
         addComponents(
@@ -47,30 +48,38 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
     public void buildPaths() {
 
-        path1 = follower.pathBuilder()
-                .addPath(new BezierCurve(
-                        new Pose(19.500, 123.500),
-                        new Pose(89.000, 60.000),
-                        new Pose(40.000, 59.500)
-                ))
-                .setLinearHeadingInterpolation(
-                        Math.toRadians(142.5),
-                        Math.toRadians(180)
-                )
+        path1 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(19.500, 123.500),
+
+                                new Pose(60.500, 82.500)
+                        )
+                ).setTangentHeadingInterpolation()
+                .setReversed()
+                .build();
+
+        path2 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(60.500, 82.500),
+                                new Pose(56.500, 63.000),
+                                new Pose(40.000, 61.500)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(142.5), Math.toRadians(180))
+
                 .build();
 
 
-        path2 = follower.pathBuilder().addPath(
+        path3 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(40.000, 59.500),
-                                new Pose(10.000, 59.500)
+                                new Pose(40.000, 61.500),
+                                new Pose(10.000, 61.500)
                         )
                 ).setTangentHeadingInterpolation()
                 .build();
 
-        path3 = follower.pathBuilder()
+        path4 = follower.pathBuilder()
                 .addPath(new BezierLine(
-                        new Pose(10.000, 59.500),
+                        new Pose(10.000, 61.500),
                         new Pose(60.500, 82.500)
                 ))
                 .setLinearHeadingInterpolation(
@@ -79,7 +88,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 )
                 .build();
 
-        path4 = follower.pathBuilder().addPath(
+        path5 = follower.pathBuilder().addPath(
                         new BezierCurve(
                                 new Pose(60.500, 82.500),
                                 new Pose(33.000, 63.000),
@@ -89,7 +98,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
                 .build();
 
-        path5 = follower.pathBuilder().addPath(
+        path6 = follower.pathBuilder().addPath(
                         new BezierCurve(
                                 new Pose(15.500, 64.500),
                                 new Pose(13.000, 59.000),
@@ -112,18 +121,22 @@ public class CloseBlueAuto extends NextFTCOpMode {
     public void onStartButtonPressed() {
         new SequentialGroup(
                 new FollowPath(path1),
-                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
+                WaitCmd.create(0.5),
                 new FollowPath(path2),
-                Intake.INSTANCE.moveIntake(0.0),
+                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
                 new FollowPath(path3),
+                Intake.INSTANCE.moveIntake(0.0),
+                new FollowPath(path4),
                 Intake.INSTANCE.moveIntake(-IntakeConstants.intakePower),
                 Intake.INSTANCE.moveTransfer(-IntakeConstants.intakePower),
                 WaitCmd.create(0.5),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                new FollowPath(path4),
-                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
                 new FollowPath(path5),
+                new ParallelGroup(
+                        Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
+                        new FollowPath(path6)
+                ),
                 WaitCmd.create(2.0),
                 Intake.INSTANCE.moveIntake(0.0)
         ).invoke();

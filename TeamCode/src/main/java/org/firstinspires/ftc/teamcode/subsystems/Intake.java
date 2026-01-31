@@ -125,7 +125,7 @@ public class Intake implements Subsystem {
         }.requires(this);
     }
 
-    public Command shoot(double timeSec) {
+    public Command transfer(double timeSec) {
         return new Command() {
             private double startTime;
 

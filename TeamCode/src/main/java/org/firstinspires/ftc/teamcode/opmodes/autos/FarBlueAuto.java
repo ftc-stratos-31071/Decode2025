@@ -9,7 +9,9 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.ams.AMSColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import dev.nextftc.core.commands.groups.ParallelRaceGroup;
 import dev.nextftc.core.commands.groups.SequentialGroup;
+import dev.nextftc.core.commands.utility.InstantCommand;
 import dev.nextftc.extensions.pedro.FollowPath;
 import dev.nextftc.extensions.pedro.PedroComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
@@ -18,6 +20,7 @@ import dev.nextftc.core.components.BindingsComponent;
 import dev.nextftc.core.components.SubsystemComponent;
 
 import org.firstinspires.ftc.teamcode.commands.WaitCmd;
+import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.PedroConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
@@ -76,7 +79,7 @@ public class FarBlueAuto extends NextFTCOpMode {
                 .addPath(new BezierCurve(
                         new Pose(10.286, 23.500),
                         new Pose(6.500, 5.357),
-                        new Pose(7.580, 8.146)
+                        new Pose(6.99, 9.9)
                 ))
                 .setConstantHeadingInterpolation(
                         Math.toRadians(-95)
@@ -85,7 +88,7 @@ public class FarBlueAuto extends NextFTCOpMode {
 
         path4 = follower.pathBuilder()
                 .addPath(new BezierLine(
-                        new Pose(7.580, 8.146),
+                        new Pose(6.99, 9.9),
                         new Pose(24.429, 16.286)
                 ))
                 .setConstantHeadingInterpolation(
@@ -129,6 +132,11 @@ public class FarBlueAuto extends NextFTCOpMode {
                 new FollowPath(path1),
                 WaitCmd.create(1.4),
                 new FollowPath(path2),
+                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
+                Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
+                WaitCmd.create(2.0),
+                Intake.INSTANCE.moveIntake(0.0),
+                Intake.INSTANCE.moveTransfer(0.0),
                 new FollowPath(path3),
                 new FollowPath(path4),
                 new FollowPath(path5),

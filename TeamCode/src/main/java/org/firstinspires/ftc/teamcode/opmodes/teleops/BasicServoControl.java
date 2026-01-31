@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode.opmodes.teleops;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+@Disabled
 @TeleOp(name="Basic Servo Control", group="Examples")
 public class BasicServoControl extends LinearOpMode {
 
