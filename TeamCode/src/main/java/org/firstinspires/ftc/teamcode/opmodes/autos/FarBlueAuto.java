@@ -22,6 +22,9 @@ import dev.nextftc.core.components.BindingsComponent;
 import dev.nextftc.core.components.SubsystemComponent;
 
 import org.firstinspires.ftc.teamcode.commands.AutoDriveTimeoutCmd;
+import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
+import org.firstinspires.ftc.teamcode.commands.RapidFireCmd;
+import org.firstinspires.ftc.teamcode.commands.RapidFireTimeoutCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyAutoCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyCmd;
 import org.firstinspires.ftc.teamcode.commands.WaitCmd;
@@ -137,7 +140,20 @@ public class FarBlueAuto extends NextFTCOpMode {
 
     @Override
     public void onInit() {
+        // CRITICAL: Reset all subsystem state from previous runs
+        Shooter.INSTANCE.stop();  // Clear PID state and stop motors
+        Intake.INSTANCE.setIntakePower(0.0);  // Stop intake motors
+        Intake.INSTANCE.setTransferPower(0.0);  // Stop transfer motors
+
+        // Reset hood to lower angle for far shots
+        Shooter.INSTANCE.setHood(ShooterConstants.farHoodPos).schedule();  // 0.4
+
+        // Close door on init
+        Intake.INSTANCE.moveServoPos().schedule();
+
+        // Reset turret angle
         Turret.INSTANCE.goToAngle(TurretConstants.BLUE_FAR_ANGLE).schedule();
+
         follower = PedroConstants.createFollower(hardwareMap);
         follower.setStartingPose(
                 new Pose(56.000, 8.000, Math.toRadians(180))
@@ -147,47 +163,80 @@ public class FarBlueAuto extends NextFTCOpMode {
 
     @Override
     public void onStartButtonPressed() {
+        // Ensure shooter is stopped before starting new command
+        Shooter.INSTANCE.stop();
+
+        // Now start fresh shooter command
         Shooter.INSTANCE.runRPM(ShooterConstants.farTargetRPM).schedule();
+
         new SequentialGroup(
-                //AutoDriveTimeoutCmd.create(new FollowPath(path1),1),
-                Intake.INSTANCE.moveServoPos(),
-                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
-                Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
-                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
-                new FollowPath(path2),
-                Intake.INSTANCE.moveServoPos(),
-                ShootBallSteadyAutoCmd.create(),
-                // Starts here
-                Intake.INSTANCE.moveServoPos(),
-                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
-                Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
-                new FollowPath(path3),
-                new FollowPath(path4), //Extra optional layer (Delete if teammate is doing)
-                Intake.INSTANCE.moveServoPos(),
-                ShootBallSteadyAutoCmd.create(),
-                Intake.INSTANCE.moveServoPos(),
-                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
-                Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
-                AutoDriveTimeoutCmd.create(new FollowPath(path5),2),
-                new FollowPath(path6),
-                Intake.INSTANCE.moveServoPos(),
-                ShootBallSteadyAutoCmd.create(),
-                Intake.INSTANCE.moveServoPos(),
-                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
-                Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
-                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
-                new FollowPath(path2),
-                Intake.INSTANCE.moveServoPos(),
-                ShootBallSteadyAutoCmd.create(),
-                Intake.INSTANCE.moveServoPos(),
-                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
-                Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
-                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
-                new FollowPath(path2),
-                Intake.INSTANCE.moveServoPos(),
-                ShootBallSteadyAutoCmd.create(),
-                Intake.INSTANCE.moveServoPos(),
-                new FollowPath(path7)
+                // SHOOT FIRST - preloaded balls
+                Intake.INSTANCE.defaultPos(),  // OPEN door (0.7)
+                RapidFireTimeoutCmd.create(3000) // 1000ms timeout
+
+                // Cycle 1: Drive and collect
+//                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
+//                IntakeSeqCmd.create(),
+//                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
+//                new FollowPath(path2),
+//                Intake.INSTANCE.zeroPowerIntake(),
+//                Intake.INSTANCE.zeroPowerTransfer()
+////
+//                // SHOOT collected balls
+//                Intake.INSTANCE.defaultPos(),  // OPEN door (0.7)
+//                RapidFireTimeoutCmd.create(3000),  // 1000ms timeout
+//
+//                // Cycle 2: Drive and collect
+//                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
+//                IntakeSeqCmd.create(),
+//                new FollowPath(path3),
+//                new FollowPath(path4),
+//                Intake.INSTANCE.zeroPowerIntake(),
+//                Intake.INSTANCE.zeroPowerTransfer(),
+//
+//                // SHOOT
+//                Intake.INSTANCE.defaultPos(),  // OPEN door (0.7)
+//                RapidFireTimeoutCmd.create(3000),  // 1000ms timeout
+//
+//                // Cycle 3: Drive and collect
+//                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
+//                IntakeSeqCmd.create(),
+//                AutoDriveTimeoutCmd.create(new FollowPath(path5),2),
+//                new FollowPath(path6),
+//                Intake.INSTANCE.zeroPowerIntake(),
+//                Intake.INSTANCE.zeroPowerTransfer(),
+//
+//                // SHOOT
+//                Intake.INSTANCE.defaultPos(),  // OPEN door (0.7)
+//                RapidFireTimeoutCmd.create(3000),  // 1000ms timeout
+//
+//                // Cycle 4: Drive and collect
+//                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
+//                IntakeSeqCmd.create(),
+//                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
+//                new FollowPath(path2),
+//                Intake.INSTANCE.zeroPowerIntake(),
+//                Intake.INSTANCE.zeroPowerTransfer(),
+//
+//                // SHOOT
+//                Intake.INSTANCE.defaultPos(),  // OPEN door (0.7)
+//                RapidFireTimeoutCmd.create(3000),  // 1000ms timeout
+//
+//                // Cycle 5: Drive and collect
+//                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
+//                IntakeSeqCmd.create(),
+//                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
+//                new FollowPath(path2),
+//                Intake.INSTANCE.zeroPowerIntake(),
+//                Intake.INSTANCE.zeroPowerTransfer(),
+//
+//                // FINAL SHOOT
+//                Intake.INSTANCE.defaultPos(),  // OPEN door (0.7)
+//                RapidFireTimeoutCmd.create(3000),  // 1000ms timeout
+//
+//                // Final positioning (door can stay open or close - doesn't matter)
+//                new FollowPath(path7)
         ).invoke();
     }
 }
+

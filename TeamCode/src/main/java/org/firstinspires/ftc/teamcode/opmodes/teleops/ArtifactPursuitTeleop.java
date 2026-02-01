@@ -228,7 +228,7 @@ import java.util.stream.Collectors;
  * ══════════════════════════════════════════════════════════════════════════════
  */
 @Config
-@TeleOp(name = "🎯 Artifact Pursuit TeleOp", group = "Vision")
+@TeleOp(name = "Artifact Pursuit TeleOp", group = "Vision")
 public class ArtifactPursuitTeleop extends LinearOpMode {
 
     // ═══════════════════════════════════════════════════════════════════════════
