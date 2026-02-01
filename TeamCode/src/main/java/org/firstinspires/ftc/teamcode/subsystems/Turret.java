@@ -1,116 +1,48 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-
+import org.firstinspires.ftc.teamcode.constants.TurretConstants;
 import dev.nextftc.core.commands.Command;
 import dev.nextftc.core.subsystems.Subsystem;
-import dev.nextftc.ftc.ActiveOpMode;
-import dev.nextftc.hardware.impl.FeedbackCRServoEx;
+import dev.nextftc.hardware.impl.ServoEx;
 
 @Config
 public class Turret implements Subsystem {
 
     public static final Turret INSTANCE = new Turret();
 
-    /* ================= HARDWARE ================= */
+    private Turret() {}
 
-    private final FeedbackCRServoEx pivotServo =
-            new FeedbackCRServoEx(
-                    0.01,
-                    () -> ActiveOpMode.hardwareMap().analogInput.get("pivotAnalog"),
-                    () -> ActiveOpMode.hardwareMap().crservo.get("pivotServo")
-            );
+    private final ServoEx leftServo = new ServoEx("TurretLeft");
+    private final ServoEx rightServo = new ServoEx("TurretRight");
 
-    /* ================= PID CONSTANTS ================= */
+    private double targetTurretDeg = TurretConstants.DEFAULT_TURRET_DEG;
 
-    public static double kP = 4.0;
-    public static double kI = 0.0;
-    public static double kD = 0.2;
+    private static final double SERVO_RANGE_DEG = 355.0;
+    private static final double CENTER_OFFSET_DEG = 50.0;
 
-    public static double MAX_POWER = 1.0;
-    public static double MIN_POWER = -1.0;
+    public void setTurretAngleDeg(double turretDeg) {
+        targetTurretDeg = turretDeg;
 
-    /* ================= PID STATE ================= */
+        double servoAngleDeg = turretDeg + CENTER_OFFSET_DEG;
+        double servoPos = servoAngleDeg / SERVO_RANGE_DEG;
 
-    private double targetAngle = 0.0;
-    private boolean pidEnabled = false;
+        if (servoPos < 0) servoPos = 0;
+        if (servoPos > 1) servoPos = 1;
 
-    private double integral = 0.0;
-    private double lastError = 0.0;
-    private long lastTimeNs = 0;
-
-    /* ================= ANGLE TRACKING ================= */
-
-    private double totalAngle = 0.0;
-    private double previousAngle = 0.0;
-
-    /* ================= DASHBOARD DEBUG ================= */
-
-    public static double DEBUG_wrappedAngle;
-    public static double DEBUG_totalAngle;
-    public static double DEBUG_error;
-    public static double DEBUG_output;
-
-    private Turret() {
-        lastTimeNs = System.nanoTime();
+        leftServo.setPosition(servoPos);
+        rightServo.setPosition(servoPos);
     }
 
-    /* ================= PUBLIC API ================= */
-
-    public void setTargetAngle(double radians) {
-        targetAngle = radians;
-        integral = 0.0;
-        lastError = 0.0;
-        lastTimeNs = System.nanoTime();
-        pidEnabled = true;
+    public double getTargetTurretDeg() {
+        return targetTurretDeg;
     }
 
-    public void stop() {
-        pidEnabled = false;
-        integral = 0.0;
-        lastError = 0.0;
-        pivotServo.setPower(0.0);
-    }
-
-    public boolean atTarget(double toleranceRad) {
-        return Math.abs(targetAngle - totalAngle) <= toleranceRad;
-    }
-
-    public double getTotalAngle() {
-        return totalAngle;
-    }
-
-    public double getWrappedAngle() {
-        return pivotServo.getCurrentPosition();
-    }
-
-    /* ================= COMMANDS ================= */
-
-    public Command goToAngle(double radians) {
+    public Command goToAngle(double turretDeg) {
         return new Command() {
             @Override
             public void start() {
-                setTargetAngle(radians);
-            }
-
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-
-            @Override
-            public void stop(boolean interrupted) {}
-        }.requires(this);
-    }
-
-    public Command openLoop(double power) {
-        return new Command() {
-            @Override
-            public void start() {
-                pidEnabled = false;
-                pivotServo.setPower(power);
+                setTurretAngleDeg(turretDeg);
             }
 
             @Override
@@ -120,56 +52,17 @@ public class Turret implements Subsystem {
         }.requires(this);
     }
 
-    /* ================= MAIN CONTROL LOOP ================= */
+    public Command defaultPosition() {
+        return new Command() {
+            @Override
+            public void start() {
+                setTurretAngleDeg(TurretConstants.DEFAULT_TURRET_DEG);
+            }
 
-    @Override
-    public void periodic() {
-
-        /* ---- Angle Unwrapping ---- */
-
-        double currentAngle = pivotServo.getCurrentPosition();
-        double delta = currentAngle - previousAngle;
-
-        if (delta > Math.PI) delta -= 2 * Math.PI;
-        else if (delta < -Math.PI) delta += 2 * Math.PI;
-
-        totalAngle += delta;
-        previousAngle = currentAngle;
-
-        DEBUG_wrappedAngle = currentAngle;
-        DEBUG_totalAngle = totalAngle;
-
-        /* ---- PID ---- */
-
-        if (!pidEnabled) return;
-
-        long now = System.nanoTime();
-        double dt = (now - lastTimeNs) / 1e9;
-        lastTimeNs = now;
-
-        if (dt <= 0) return;
-
-        double error = targetAngle - totalAngle;
-        integral += error * dt;
-        double derivative = (error - lastError) / dt;
-        lastError = error;
-
-        double output =
-                kP * error +
-                        kI * integral +
-                        kD * derivative;
-
-        output = Math.max(MIN_POWER, Math.min(MAX_POWER, output));
-        pivotServo.setPower(output);
-
-        DEBUG_error = error;
-        DEBUG_output = output;
-
-        TelemetryPacket packet = new TelemetryPacket();
-        packet.put("Target Angle (rad)", targetAngle);
-        packet.put("Total Angle (rad)", totalAngle);
-        packet.put("Error", error);
-        packet.put("Output", output);
-        FtcDashboard.getInstance().sendTelemetryPacket(packet);
+            @Override
+            public boolean isDone() {
+                return true;
+            }
+        }.requires(this);
     }
 }

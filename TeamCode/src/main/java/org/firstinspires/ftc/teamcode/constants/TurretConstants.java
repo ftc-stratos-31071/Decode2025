@@ -5,17 +5,18 @@ import com.acmerobotics.dashboard.config.Config;
 @Config
 public class TurretConstants {
 
-    public static double kP = 0.012;
-    public static double kI = 0.0;
-    public static double kD = 0.0008;
+    public static double TURRET_MIN_DEG = 0.0;
+    public static double TURRET_MAX_DEG = 355.0;
 
-    public static double MAX_POWER = 0.5;
+    public static double SERVO_MAX_DEG = 355.0;
 
-    public static double MIN_DEG = -180.0;
-    public static double MAX_DEG = 180.0;
+    public static double GEAR_RATIO = 1.0;
 
-    // Encoder zero offsets (calibrate on robot)
-    public static double LEFT_OFFSET_DEG = 0.0;
-    public static double RIGHT_OFFSET_DEG = 0.0;
+    public static double LEFT_MIN_POS = 0.0;
+    public static double LEFT_MAX_POS = 1.0;
+
+    public static double RIGHT_MIN_POS = 0.0;
+    public static double RIGHT_MAX_POS = 1.0;
+
+    public static double DEFAULT_TURRET_DEG = 0.0;
 }
-
