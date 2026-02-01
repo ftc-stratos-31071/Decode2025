@@ -132,12 +132,12 @@ public class Intake implements Subsystem {
             @Override
             public void start() {
                 startTime = System.currentTimeMillis() / 1000.0;
-                transfer.setPower(IntakeConstants.shootPower);
+                transfer.setPower(-IntakeConstants.shootPower);
             }
 
             @Override
             public void update() {
-                transfer.setPower(IntakeConstants.shootPower);
+                transfer.setPower(-IntakeConstants.shootPower);
             }
 
             @Override

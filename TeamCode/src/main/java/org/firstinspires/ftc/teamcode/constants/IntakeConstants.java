@@ -10,7 +10,7 @@ public class IntakeConstants {
     
     public static double shootPower = 1.0;
     public static double zeroPower = 0.0;
-    public static double defaultPos = 0.51;
+    public static double defaultPos = 0.7;
     public static double servoPos = 0;
     public static double reverseTime = 0.15;
     public static double shootTimeFirst = 0.4;

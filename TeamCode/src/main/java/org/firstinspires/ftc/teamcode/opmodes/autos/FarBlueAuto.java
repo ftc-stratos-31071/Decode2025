@@ -147,9 +147,10 @@ public class FarBlueAuto extends NextFTCOpMode {
 
     @Override
     public void onStartButtonPressed() {
+        Shooter.INSTANCE.runRPM(ShooterConstants.farTargetRPM).schedule();
         new SequentialGroup(
                 //AutoDriveTimeoutCmd.create(new FollowPath(path1),1),
-                Shooter.INSTANCE.runRPM(ShooterConstants.farTargetRPM),
+//                Shooter.INSTANCE.runRPM(ShooterConstants.farTargetRPM),
                 Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
                 Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
                 AutoDriveTimeoutCmd.create(new FollowPath(path1),2),

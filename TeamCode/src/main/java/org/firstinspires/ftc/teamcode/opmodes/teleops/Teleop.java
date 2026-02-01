@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
-import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyCmd;
+import org.firstinspires.ftc.teamcode.commands.RapidFireCmd;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
@@ -40,6 +40,9 @@ public class Teleop extends NextFTCOpMode {
         );
     }
 
+    public static double TRACKING_GAIN = 0.08;  // Reduced from 0.15 - much smoother
+    public static double SMOOTHING = 0.5;  // Exponential smoothing (0.0-1.0, lower = smoother)
+    public static double DEADBAND = 3.0;  // Increased from 2.0 - larger tolerance to prevent jitter
     public static boolean AUTO_TRACK_ENABLED = true;  // Enable/disable tracking
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;  // Time before returning to center when no target detected
 
@@ -77,6 +80,7 @@ public class Teleop extends NextFTCOpMode {
         Shooter.INSTANCE.runRPM(0.0).schedule();
         Turret.INSTANCE.setTurretAngleDeg(180.0);
         Turret.INSTANCE.goToAngle(180.0).schedule();
+        Intake.INSTANCE.moveServoPos().schedule();
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
@@ -85,8 +89,6 @@ public class Teleop extends NextFTCOpMode {
         smoothedTx = 0.0;
         hasSeenTarget = false;
         lastTargetSeenTime = System.currentTimeMillis();
-
-        Intake.INSTANCE.defaultPos().schedule();
 
         RevColorSensorV3 sensor = hardwareMap.get(RevColorSensorV3.class, "range");
         rangefinder = new LaserRangefinder(sensor);
@@ -115,6 +117,8 @@ public class Teleop extends NextFTCOpMode {
 
     @Override
     public void onStartButtonPressed() {
+        Intake.INSTANCE.moveServoPos().schedule();
+
         var forward = Gamepads.gamepad1().leftStickY().negate().map(v -> v * driveScale);
         var strafe  = Gamepads.gamepad1().leftStickX().map(v -> v * driveScale);
         var rotate  = Gamepads.gamepad1().rightStickX().map(v -> v * driveScale);
@@ -139,6 +143,7 @@ public class Teleop extends NextFTCOpMode {
             intakeActive = true;
             hasRumbled = false;
             ballCount = 0;
+            Intake.INSTANCE.moveServoPos().schedule();
             IntakeSeqCmd.create().schedule();
         });
 
@@ -162,22 +167,11 @@ public class Teleop extends NextFTCOpMode {
 
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
             ballCount = 0;
-            ShootBallSteadyCmd.create().schedule();
+            Intake.INSTANCE.defaultPos().schedule();
+            RapidFireCmd.create().schedule();
         });
 
         Gamepads.gamepad1().a().whenBecomesFalse(() -> {
-            Intake.INSTANCE.zeroPowerIntake().schedule();
-            Intake.INSTANCE.zeroPowerTransfer().schedule();
-        });
-
-        Gamepads.gamepad1().y().whenBecomesTrue(() -> {
-            ballCount = 0;
-            Intake.INSTANCE.defaultPos().schedule();
-            Intake.INSTANCE.moveIntake(IntakeConstants.intakePower).schedule();
-            Intake.INSTANCE.moveTransfer(IntakeConstants.shootPower).schedule();
-        });
-
-        Gamepads.gamepad1().y().whenBecomesFalse(() -> {
             Intake.INSTANCE.zeroPowerIntake().schedule();
             Intake.INSTANCE.zeroPowerTransfer().schedule();
         });
@@ -294,10 +288,28 @@ public class Teleop extends NextFTCOpMode {
                     // Use TX from the result for turret control
                     double tx = result.getTx();
 
-                    // FIXED: Apply exponential smoothing to prevent jitter
-                    smoothedTx = tx;
 
-                    motorTargetX += smoothedTx;
+                    // FIXED: Apply exponential smoothing to prevent jitter
+                    smoothedTx = SMOOTHING * smoothedTx + (1.0 - SMOOTHING) * tx;
+
+
+                    // Apply deadband to prevent jitter when close to aligned
+                    if (Math.abs(smoothedTx) > DEADBAND) {
+                        // FIXED: Use proportional scaling - smaller adjustments when close to target
+                        // This prevents overshooting and oscillation
+                        double adjustment = smoothedTx * TRACKING_GAIN;
+
+
+                        // Scale down adjustment even more when we're getting close
+//                        if (Math.abs(smoothedTx) < 10.0) {
+//                            adjustment *= 0.5;  // Half speed when within 10 degrees
+//                        }
+
+
+                        motorTargetX += adjustment;
+                    }
+                    // If within deadband, keep current target (don't update)
+
 
                     if (SHOW_LIMELIGHT_TELEMETRY) {
                         telemetry.addData("═══ TURRET TRACKING ═══", "");
@@ -308,6 +320,7 @@ public class Teleop extends NextFTCOpMode {
                         telemetry.addData("Turret Angle", String.format("%.2f°", motorTargetX));
                         telemetry.addData("Target Area", String.format("%.2f%%", result.getTa()));
                         telemetry.addData("Tags Visible", fiducials.size());
+                        telemetry.addData("Aligned", Math.abs(smoothedTx) <= DEADBAND ? "✓ YES" : "✗ NO");
                     }
                 }
             } else {
