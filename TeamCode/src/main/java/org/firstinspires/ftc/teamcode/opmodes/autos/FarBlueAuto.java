@@ -129,6 +129,7 @@ public class FarBlueAuto extends NextFTCOpMode {
     @Override
     public void onStartButtonPressed() {
         new SequentialGroup(
+                //AutoDriveTimeoutCmd.create(new FollowPath(path3), 1.0),
                 new FollowPath(path1),
                 WaitCmd.create(1.4),
                 new FollowPath(path2),

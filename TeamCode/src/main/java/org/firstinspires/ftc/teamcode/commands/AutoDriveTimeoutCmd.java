@@ -5,11 +5,12 @@ import dev.nextftc.core.commands.Command;
 /**
  * Wraps any command (usually a drive/trajectory command) and forces it to end after timeoutSec.
  * If the wrapped command finishes first, this finishes immediately.
+ * Works with both Kotlin commands (isDone property) and Java commands (isDone() method).
  */
 public class AutoDriveTimeoutCmd {
 
     /**
-     * @param driveCmd the command you want to run (ex: a RoadRunner trajectory command)
+     * @param driveCmd the command you want to run (ex: a FollowPath or RoadRunner trajectory command)
      * @param timeoutSec max time to allow it to run (seconds)
      */
     public static Command create(Command driveCmd, double timeoutSec) {
@@ -35,10 +36,20 @@ public class AutoDriveTimeoutCmd {
                 double now = System.currentTimeMillis() / 1000.0;
                 timedOut = (now - startTime) >= timeoutSec;
 
+                // Check if wrapped command is done
+                // This works with both Kotlin properties and Java methods
+                boolean cmdDone;
+                try {
+                    cmdDone = driveCmd.isDone();
+                } catch (Exception e) {
+                    // Fallback in case there's an issue
+                    cmdDone = false;
+                }
+
                 // End if either:
                 // 1) the wrapped command ends normally
                 // 2) we timed out
-                return timedOut || driveCmd.isDone();
+                return timedOut || cmdDone;
             }
 
             @Override
