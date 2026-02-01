@@ -40,10 +40,6 @@ public class Teleop extends NextFTCOpMode {
         );
     }
 
-    public static double TRACKING_GAIN = 0.08;  // Reduced from 0.15 - much smoother
-    public static double SMOOTHING = 0.7;  // Exponential smoothing (0.0-1.0, lower = smoother)
-    public static double TURRET_LIMIT_DEG = 45.0;  // Max turret rotation
-    public static double DEADBAND = 3.0;  // Increased from 2.0 - larger tolerance to prevent jitter
     public static boolean AUTO_TRACK_ENABLED = true;  // Enable/disable tracking
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;  // Time before returning to center when no target detected
 
@@ -72,6 +68,7 @@ public class Teleop extends NextFTCOpMode {
     double smoothedTx = 0.0;  // Smoothed TX value to prevent jitter
     boolean hasSeenTarget = false;  // Track if we've ever seen a target
     long lastTargetSeenTime = 0;  // Timestamp of last valid target detection
+    public static boolean SHOW_LIMELIGHT_TELEMETRY = false;
 
     @Override
     public void onInit() {
@@ -84,7 +81,7 @@ public class Teleop extends NextFTCOpMode {
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
-        motorTargetX = 0.0;
+        motorTargetX = 180.0;
         smoothedTx = 0.0;
         hasSeenTarget = false;
         lastTargetSeenTime = System.currentTimeMillis();
@@ -175,7 +172,7 @@ public class Teleop extends NextFTCOpMode {
 
         Gamepads.gamepad1().y().whenBecomesTrue(() -> {
             ballCount = 0;
-            Intake.INSTANCE.defaultPos();
+            Intake.INSTANCE.defaultPos().schedule();
             Intake.INSTANCE.moveIntake(IntakeConstants.intakePower).schedule();
             Intake.INSTANCE.moveTransfer(IntakeConstants.shootPower).schedule();
         });
@@ -259,7 +256,9 @@ public class Teleop extends NextFTCOpMode {
             try {
                 result = limelight.getLatestResult();
             } catch (Exception e) {
+                if (SHOW_LIMELIGHT_TELEMETRY) {
                     telemetry.addData("Limelight Error", e.getMessage());
+                }
             }
         }
 
@@ -295,33 +294,62 @@ public class Teleop extends NextFTCOpMode {
                     // Use TX from the result for turret control
                     double tx = result.getTx();
 
-
                     // FIXED: Apply exponential smoothing to prevent jitter
-                    smoothedTx = SMOOTHING * smoothedTx + (1.0 - SMOOTHING) * tx;
+                    smoothedTx = tx;
 
+                    motorTargetX += smoothedTx;
 
-                    // Apply deadband to prevent jitter when close to aligned
-                    if (Math.abs(smoothedTx) > DEADBAND) {
-                        // FIXED: Use proportional scaling - smaller adjustments when close to target
-                        // This prevents overshooting and oscillation
-                        double adjustment = smoothedTx * TRACKING_GAIN;
-
-
-                        // Scale down adjustment even more when we're getting close
-                        if (Math.abs(smoothedTx) < 10.0) {
-                            adjustment *= 0.5;  // Half speed when within 10 degrees
-                        }
-
-
-                        motorTargetX += adjustment;
-
-
-                        // Clamp to limits
-                        motorTargetX = Math.max(-TURRET_LIMIT_DEG, Math.min(TURRET_LIMIT_DEG, motorTargetX));
+                    if (SHOW_LIMELIGHT_TELEMETRY) {
+                        telemetry.addData("═══ TURRET TRACKING ═══", "");
+                        telemetry.addData("Status", "✓ TRACKING");
+                        telemetry.addData("Tag ID", closestTag.getFiducialId());
+                        telemetry.addData("TX Offset (raw)", String.format("%.2f°", tx));
+                        telemetry.addData("TX Offset (smooth)", String.format("%.2f°", smoothedTx));
+                        telemetry.addData("Turret Angle", String.format("%.2f°", motorTargetX));
+                        telemetry.addData("Target Area", String.format("%.2f%%", result.getTa()));
+                        telemetry.addData("Tags Visible", fiducials.size());
                     }
                 }
+            } else {
+                if (SHOW_LIMELIGHT_TELEMETRY) {
+                    telemetry.addData("═══ TURRET TRACKING ═══", "");
+                    telemetry.addData("Status", "✗ No AprilTags detected");
+                }
+                // Keep last known position if we've seen a target before
+                if (!hasSeenTarget) {
+                    motorTargetX = 180.0;  // Return to center if never seen target
+                    smoothedTx = 0.0;
+                }
+            }
+        } else if (!AUTO_TRACK_ENABLED) {
+            if (SHOW_LIMELIGHT_TELEMETRY) {
+                telemetry.addData("═══ TURRET TRACKING ═══", "");
+                telemetry.addData("Status", "⚠ DISABLED (Press X to enable)");
+                telemetry.addData("Turret Angle", String.format("%.2f°", motorTargetX));
+            }
+            smoothedTx = 0.0;  // Reset smoothing when disabled
+        } else {
+            if (SHOW_LIMELIGHT_TELEMETRY) {
+                telemetry.addData("═══ TURRET TRACKING ═══", "");
+                telemetry.addData("Status", "✗ No valid target");
+                telemetry.addData("Turret Angle", String.format("%.2f°", motorTargetX));
+            }
+            // Keep last position or return to center if never tracked
+            if (!hasSeenTarget) {
+                motorTargetX = 180.0;
+                smoothedTx = 0.0;
             }
         }
+
+
+        // Check for timeout - return turret to center if no target detected for a while
+        if (System.currentTimeMillis() - lastTargetSeenTime > NO_TARGET_TIMEOUT_SEC * 1000) {
+            motorTargetX = 180.0;  // Return to center (front)
+            smoothedTx = 0.0;
+            hasSeenTarget = false;
+        }
+
+        Turret.INSTANCE.goToAngle(motorTargetX).schedule();
 
         telemetry.addData("Range (mm)", distance);
         telemetry.addData("Range Status", rangefinder.getStatus());
@@ -334,7 +362,7 @@ public class Teleop extends NextFTCOpMode {
         double currentRPM = (rightRPM + leftRPM) / 2.0;
         telemetry.addData("Current RPM", currentRPM);
         telemetry.addData("Hood Position", hoodPos);
-        telemetry.addData("Turret Pos", turretPos);
+        telemetry.addData("Turret Target", motorTargetX);
         telemetry.addData("Current Turret Deg", Turret.INSTANCE.getTargetTurretDeg());
 
         telemetry.update();
