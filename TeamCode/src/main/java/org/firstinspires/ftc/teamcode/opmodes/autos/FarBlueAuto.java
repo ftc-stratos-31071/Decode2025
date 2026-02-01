@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.autos;
 
+import static org.firstinspires.ftc.teamcode.subsystems.Shooter.*;
+
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
@@ -20,10 +22,13 @@ import dev.nextftc.core.components.BindingsComponent;
 import dev.nextftc.core.components.SubsystemComponent;
 
 import org.firstinspires.ftc.teamcode.commands.AutoDriveTimeoutCmd;
+import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyAutoCmd;
+import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyCmd;
 import org.firstinspires.ftc.teamcode.commands.WaitCmd;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.PedroConstants;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
+import org.firstinspires.ftc.teamcode.constants.TurretConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
@@ -41,19 +46,19 @@ public class FarBlueAuto extends NextFTCOpMode {
     private PathChain path6;
     private PathChain path7;
 
-    double servoPos = ShooterConstants.defaultPos;
+    private double turretPos = 180.0;
 
     public FarBlueAuto() {
         addComponents(
                 new SubsystemComponent(
                         Intake.INSTANCE,
-                        Shooter.INSTANCE
+                        INSTANCE,
+                        Turret.INSTANCE
                 ),
                 new PedroComponent(PedroConstants::createFollower),
                 BulkReadComponent.INSTANCE,
                 BindingsComponent.INSTANCE
         );
-        servoPos = ShooterConstants.defaultPos;
     }
 
     public void buildPaths() {
@@ -106,14 +111,14 @@ public class FarBlueAuto extends NextFTCOpMode {
         path5 = follower.pathBuilder().addPath(
                         new BezierLine(
                                 new Pose(56, 8),
-                                new Pose(3, 8.192)
+                                new Pose(3, 27)
                         )
                 ).setTangentHeadingInterpolation()
                 .build();
 
         path6 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(3, 8.192),
+                                new Pose(3, 27),
                                 new Pose(56, 8)
                         )
                 ).setTangentHeadingInterpolation()
@@ -132,6 +137,7 @@ public class FarBlueAuto extends NextFTCOpMode {
 
     @Override
     public void onInit() {
+        Turret.INSTANCE.goToAngle(TurretConstants.BLUE_FAR_ANGLE).schedule();
         follower = PedroConstants.createFollower(hardwareMap);
         follower.setStartingPose(
                 new Pose(56.000, 8.000, Math.toRadians(180))
@@ -143,29 +149,33 @@ public class FarBlueAuto extends NextFTCOpMode {
     public void onStartButtonPressed() {
         new SequentialGroup(
                 //AutoDriveTimeoutCmd.create(new FollowPath(path1),1),
-                WaitCmd.create(1.4),
-                servoPos = servoPos + 0.1;
-                Shooter.INSTANCE.moveServo(servoPos).schedule();
+                Shooter.INSTANCE.runRPM(ShooterConstants.farTargetRPM),
                 Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
                 Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
                 AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
                 new FollowPath(path2),
-                Intake.INSTANCE.moveIntake(-IntakeConstants.intakePower),
-                Intake.INSTANCE.moveTransfer(-IntakeConstants.intakePower),
-                WaitCmd.create(1.4),
+                ShootBallSteadyAutoCmd.create(),
+                // Starts here
                 Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
                 Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
                 new FollowPath(path3),
-                new FollowPath(path4),
-                Intake.INSTANCE.moveIntake(-IntakeConstants.intakePower),
-                Intake.INSTANCE.moveTransfer(-IntakeConstants.intakePower),
-                WaitCmd.create(1.4),
+                new FollowPath(path4), //Extra optional layer (Delete if teammate is doing)
+                ShootBallSteadyAutoCmd.create(),
                 Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
                 Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
                 AutoDriveTimeoutCmd.create(new FollowPath(path5),2),
                 new FollowPath(path6),
-                Intake.INSTANCE.moveIntake(-IntakeConstants.intakePower),
-                Intake.INSTANCE.moveTransfer(-IntakeConstants.intakePower),
+                ShootBallSteadyAutoCmd.create(),
+                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
+                Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
+                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
+                new FollowPath(path2),
+                ShootBallSteadyAutoCmd.create(),
+                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
+                Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
+                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
+                new FollowPath(path2),
+                ShootBallSteadyAutoCmd.create(),
                 new FollowPath(path7)
         ).invoke();
     }

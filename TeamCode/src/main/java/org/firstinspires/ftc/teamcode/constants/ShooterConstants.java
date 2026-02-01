@@ -20,7 +20,7 @@ public class ShooterConstants {
 
     // Default target RPM for PIDF control
     public static double closeTargetRPM = 3600.0;
-    public static double farTargetRPM = 4500.0;
+    public static double farTargetRPM = 4900.0;
     public static double tolRpm = 50.0;
     public static double tolRpm2 = 100.0;
     public static double TICKS_PER_REV = 28.0;
