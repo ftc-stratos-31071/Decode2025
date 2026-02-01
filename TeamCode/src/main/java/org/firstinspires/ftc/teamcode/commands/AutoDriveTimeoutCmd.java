@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.commands;
 
+import com.pedropathing.paths.PathChain;
+
 import dev.nextftc.core.commands.Command;
 
 /**
@@ -8,6 +10,9 @@ import dev.nextftc.core.commands.Command;
  * Works with both Kotlin commands (isDone property) and Java commands (isDone() method).
  */
 public class AutoDriveTimeoutCmd {
+
+    public AutoDriveTimeoutCmd(PathChain path1, int i) {
+    }
 
     /**
      * @param driveCmd the command you want to run (ex: a FollowPath or RoadRunner trajectory command)
