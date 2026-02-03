@@ -8,11 +8,16 @@ import com.pedropathing.paths.PathChain;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
+import org.firstinspires.ftc.teamcode.commands.RapidFireCmd;
+import org.firstinspires.ftc.teamcode.commands.RapidFireTimeoutCmd;
 import org.firstinspires.ftc.teamcode.commands.WaitCmd;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.PedroConstants;
+import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.subsystems.Turret;
 
 import dev.nextftc.core.commands.groups.ParallelGroup;
 import dev.nextftc.core.commands.groups.SequentialGroup;
@@ -33,12 +38,17 @@ public class CloseBlueAuto extends NextFTCOpMode {
     private PathChain path4;
     private PathChain path5;
     private PathChain path6;
+    private PathChain path7;
+    private PathChain path8;
+    private PathChain path9;
+    private PathChain path10;
 
     public CloseBlueAuto() {
         addComponents(
                 new SubsystemComponent(
                         Intake.INSTANCE,
-                        Shooter.INSTANCE
+                        Shooter.INSTANCE,
+                        Turret.INSTANCE
                 ),
                 new PedroComponent(PedroConstants::createFollower),
                 BulkReadComponent.INSTANCE,
@@ -52,7 +62,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                         new BezierLine(
                                 new Pose(19.500, 123.500),
 
-                                new Pose(60.500, 82.500)
+                                new Pose(58.000, 84.500)
                         )
                 ).setTangentHeadingInterpolation()
                 .setReversed()
@@ -60,7 +70,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
         path2 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(60.500, 82.500),
+                                new Pose(58.000, 84.500),
                                 new Pose(56.500, 63.000),
                                 new Pose(40.000, 61.500)
                         )
@@ -80,7 +90,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
         path4 = follower.pathBuilder()
                 .addPath(new BezierLine(
                         new Pose(10.000, 61.500),
-                        new Pose(60.500, 82.500)
+                        new Pose(58.000, 84.500)
                 ))
                 .setLinearHeadingInterpolation(
                         Math.toRadians(180),
@@ -90,9 +100,9 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
         path5 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(60.500, 82.500),
+                                new Pose(58.000, 84.500),
                                 new Pose(33.000, 63.000),
-                                new Pose(15.500, 67.000)
+                                new Pose(16.500, 67.000)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(210), Math.toRadians(180))
 
@@ -100,16 +110,58 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
         path6 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(15.500, 64.500),
+                                new Pose(16.500, 67.000),
                                 new Pose(13.000, 59.000),
-                                new Pose(12.000, 59.500)
+                                new Pose(11.000, 58.000)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(150))
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(120))
+                .build();
+
+        path7 = follower.pathBuilder()
+                .addPath(new BezierLine(
+                        new Pose(11.000, 58.000),
+                        new Pose(58.000, 84.500)
+                ))
+                .setLinearHeadingInterpolation(
+                        Math.toRadians(120),
+                        Math.toRadians(210)
+                )
+                .build();
+
+        path8 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(58.000, 84.500),
+                                new Pose(56.500, 87.000),
+                                new Pose(40.000, 85.500)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(210.0), Math.toRadians(180))
+                .build();
+
+        path9 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(40.000, 85.500),
+                                new Pose(10.000, 85.500)
+                        )
+                ).setTangentHeadingInterpolation()
+                .build();
+
+        path10 = follower.pathBuilder()
+                .addPath(new BezierLine(
+                        new Pose(10.000, 85.500),
+                        new Pose(58.000, 109.000)
+                ))
+                .setLinearHeadingInterpolation(
+                        Math.toRadians(180),
+                        Math.toRadians(210)
+                )
                 .build();
     }
 
     @Override
     public void onInit() {
+        Intake.INSTANCE.moveServoPos().schedule();
+        Shooter.INSTANCE.setTargetRPM(0.0);
+        Turret.INSTANCE.setTurretAngleDeg(180.0);
         follower = PedroConstants.createFollower(hardwareMap);
         follower.setStartingPose(
                 new Pose(19.500, 123.500, Math.toRadians(142.5))
@@ -119,26 +171,80 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
     @Override
     public void onStartButtonPressed() {
+        Shooter.INSTANCE.setTargetRPM(3700);
         new SequentialGroup(
                 new FollowPath(path1),
-                WaitCmd.create(0.5),
+                Intake.INSTANCE.defaultPos(),
+                WaitCmd.create(0.25),
+                RapidFireTimeoutCmd.create(1000),
                 new FollowPath(path2),
+                Intake.INSTANCE.moveServoPos(),
                 Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
+                Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
                 new FollowPath(path3),
                 Intake.INSTANCE.moveIntake(0.0),
+                Intake.INSTANCE.moveTransfer(0.0),
                 new FollowPath(path4),
                 Intake.INSTANCE.moveIntake(-IntakeConstants.intakePower),
                 Intake.INSTANCE.moveTransfer(-IntakeConstants.intakePower),
                 WaitCmd.create(0.5),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
+                Intake.INSTANCE.moveServoPos(),
+                IntakeSeqCmd.create(),
                 new FollowPath(path5),
-                new ParallelGroup(
-                        Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
-                        new FollowPath(path6)
-                ),
-                WaitCmd.create(2.0),
-                Intake.INSTANCE.moveIntake(0.0)
+                new FollowPath(path6),
+                WaitCmd.create(1.0),
+//                Intake.INSTANCE.moveIntake(0.0),
+//                Intake.INSTANCE.moveTransfer(0.0),
+                new FollowPath(path7),
+                Intake.INSTANCE.moveIntake(-IntakeConstants.intakePower),
+                Intake.INSTANCE.moveTransfer(-IntakeConstants.intakePower),
+                WaitCmd.create(0.5),
+                Intake.INSTANCE.moveIntake(0.0),
+                Intake.INSTANCE.moveTransfer(0.0),
+                Intake.INSTANCE.moveServoPos(),
+                IntakeSeqCmd.create(),
+                new FollowPath(path5),
+                new FollowPath(path6),
+                WaitCmd.create(1.0),
+//                Intake.INSTANCE.moveIntake(0.0),
+//                Intake.INSTANCE.moveTransfer(0.0),
+                new FollowPath(path7),
+                Intake.INSTANCE.moveIntake(-IntakeConstants.intakePower),
+                Intake.INSTANCE.moveTransfer(-IntakeConstants.intakePower),
+                WaitCmd.create(0.5),
+                Intake.INSTANCE.moveIntake(0.0),
+                Intake.INSTANCE.moveTransfer(0.0),
+                Intake.INSTANCE.moveServoPos(),
+                IntakeSeqCmd.create(),
+                new FollowPath(path5),
+                new FollowPath(path6),
+                WaitCmd.create(1.0),
+//                Intake.INSTANCE.moveIntake(0.0),
+//                Intake.INSTANCE.moveTransfer(0.0),
+                new FollowPath(path7),
+                Intake.INSTANCE.moveIntake(-IntakeConstants.intakePower),
+                Intake.INSTANCE.moveTransfer(-IntakeConstants.intakePower),
+                WaitCmd.create(0.5),
+                Intake.INSTANCE.moveIntake(0.0),
+                Intake.INSTANCE.moveTransfer(0.0),
+                Intake.INSTANCE.moveServoPos(),
+                IntakeSeqCmd.create(),
+                new FollowPath(path8),
+                Intake.INSTANCE.moveServoPos(),
+                Intake.INSTANCE.moveIntake(IntakeConstants.intakePower),
+                Intake.INSTANCE.moveTransfer(IntakeConstants.intakePower),
+                new FollowPath(path9),
+                Intake.INSTANCE.moveIntake(0.0),
+                Intake.INSTANCE.moveTransfer(0.0),
+                new FollowPath(path10),
+                Intake.INSTANCE.moveIntake(-IntakeConstants.intakePower),
+                Intake.INSTANCE.moveTransfer(-IntakeConstants.intakePower),
+                WaitCmd.create(0.5),
+                Intake.INSTANCE.moveIntake(0.0),
+                Intake.INSTANCE.moveTransfer(0.0),
+                Intake.INSTANCE.moveServoPos()
         ).invoke();
     }
 }

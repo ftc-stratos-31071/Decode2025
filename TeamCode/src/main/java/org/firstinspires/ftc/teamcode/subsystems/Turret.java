@@ -19,7 +19,7 @@ public class Turret implements Subsystem {
     private double targetTurretDeg = TurretConstants.DEFAULT_TURRET_DEG;
 
     private static final double SERVO_RANGE_DEG = 355.0;
-    private static final double CENTER_OFFSET_DEG = 80.0;
+    private static final double CENTER_OFFSET_DEG = 70.0;
 
     public void setTurretAngleDeg(double turretDeg) {
         targetTurretDeg = turretDeg;
