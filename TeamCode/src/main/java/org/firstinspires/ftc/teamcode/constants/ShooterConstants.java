@@ -24,4 +24,22 @@ public class ShooterConstants {
     public static double tolRpm = 50.0;
     public static double tolRpm2 = 100.0;
     public static double TICKS_PER_REV = 28.0;
+
+    // ========== BATTERY COMPENSATION ==========
+    // IMPORTANT: Set NOMINAL_VOLTAGE to your battery voltage when you tuned PIDF!
+    // How to find it:
+    //   1. Check Driver Station voltage display (top bar)
+    //   2. Run FTC Dashboard and look at "Battery Voltage" telemetry
+    //   3. Use a voltmeter on your battery
+    //
+    // Example values:
+    //   - Fresh battery: 13.0-13.5V
+    //   - Partially used: 12.0-12.8V
+    //   - Low battery: 11.0-11.5V
+    //
+    // If you're unsure, start with 12.5V (typical practice battery)
+    public static double NOMINAL_VOLTAGE = 13;  // TODO: Set to actual voltage when you tuned PIDF!
+
+    // Toggle compensation on/off (usually leave at true)
+    public static boolean ENABLE_BATTERY_COMPENSATION = true;
 }

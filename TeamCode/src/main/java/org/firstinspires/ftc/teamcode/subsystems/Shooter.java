@@ -3,11 +3,13 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 
 import dev.nextftc.core.commands.Command;
 import dev.nextftc.core.subsystems.Subsystem;
+import dev.nextftc.ftc.ActiveOpMode;
 import dev.nextftc.hardware.impl.MotorEx;
 import dev.nextftc.hardware.impl.ServoEx;
 
@@ -22,6 +24,8 @@ public class Shooter implements Subsystem {
     public final MotorEx leftMotor  = new MotorEx("ShooterLeft").brakeMode();
 
     private final ServoEx hoodServo = new ServoEx("HoodServo");
+
+    private VoltageSensor voltageSensor = null;
 
     /* ================= PIDF STATE ================= */
 
@@ -39,6 +43,8 @@ public class Shooter implements Subsystem {
     public static double DEBUG_output;
     public static double DEBUG_rightRPM;
     public static double DEBUG_leftRPM;
+    public static double DEBUG_voltage;
+    public static double DEBUG_compensation;
 
     private Shooter() {
         lastTimeNs = System.nanoTime();
@@ -160,24 +166,55 @@ public class Shooter implements Subsystem {
                         ShooterConstants.kI * integral +
                         ShooterConstants.kD * derivative;
 
-        output = Math.max(
+        // ========== BATTERY COMPENSATION ==========
+        double compensatedOutput = output;
+        double voltageCompensation = 1.0;
+
+        if (ShooterConstants.ENABLE_BATTERY_COMPENSATION) {
+            // Lazy-load voltage sensor on first use
+            if (voltageSensor == null) {
+                try {
+                    voltageSensor = ActiveOpMode.hardwareMap().voltageSensor.iterator().next();
+                } catch (Exception e) {
+                    // If sensor unavailable, disable compensation
+                    voltageSensor = null;
+                }
+            }
+
+            if (voltageSensor != null) {
+                double currentVoltage = voltageSensor.getVoltage();
+                voltageCompensation = ShooterConstants.NOMINAL_VOLTAGE / currentVoltage;
+                compensatedOutput = output * voltageCompensation;
+
+                DEBUG_voltage = currentVoltage;
+                DEBUG_compensation = voltageCompensation;
+            }
+        }
+        // ==========================================
+
+        compensatedOutput = Math.max(
                 ShooterConstants.MIN_POWER,
-                Math.min(ShooterConstants.MAX_POWER, output)
+                Math.min(ShooterConstants.MAX_POWER, compensatedOutput)
         );
 
-        rightMotor.setPower(output);
-        leftMotor.setPower(output);
+        rightMotor.setPower(compensatedOutput);
+        leftMotor.setPower(compensatedOutput);
 
         DEBUG_currentRPM = currentRPM;
         DEBUG_error = error;
-        DEBUG_output = output;
+        DEBUG_output = compensatedOutput;
         DEBUG_rightRPM = rightRPM;
         DEBUG_leftRPM = leftRPM;
 
         TelemetryPacket packet = new TelemetryPacket();
         packet.put("Target RPM", targetRPM);
         packet.put("Current RPM", currentRPM);
-        packet.put("Output", output);
+        packet.put("Output", compensatedOutput);
+        if (ShooterConstants.ENABLE_BATTERY_COMPENSATION && voltageSensor != null) {
+            packet.put("Battery Voltage", DEBUG_voltage);
+            packet.put("Compensation", String.format("%.2fx", DEBUG_compensation));
+        }
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 }
+
