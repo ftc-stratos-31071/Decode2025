@@ -117,6 +117,7 @@ public class Shooter implements Subsystem {
 
             @Override
             public void stop(boolean interrupted) {
+                // Keep shooter running when command ends
             }
         }.requires(this);
     }

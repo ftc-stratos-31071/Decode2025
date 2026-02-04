@@ -31,16 +31,21 @@ public class TurretOdomAlign extends NextFTCOpMode {
     // Target field angle for turret (45 degrees left of center = 135 degrees)
     private static final double TARGET_FIELD_ANGLE_DEG = 135.0;
 
-    // Turret physical limits (can rotate ±90 degrees from center)
-    private static final double TURRET_MIN_DEG = -90.0;
-    private static final double TURRET_MAX_DEG = 90.0;
+    // Turret physical limits (90 to 270 degrees range)
+    private static final double TURRET_MIN_DEG = 90.0;
+    private static final double TURRET_MAX_DEG = 270.0;
 
     // Robot starting heading (90 degrees as specified)
     private double robotStartHeading = 90.0;
     private boolean hasInitializedHeading = false;
 
     // CRITICAL: Track turret position like Teleop.java does with motorTargetX
-    private double turretTargetAngle = 0.0;
+    private double turretTargetAngle = 180.0;
+
+    // Smoothing and deadband (like BlueTeleop)
+    private double smoothedTurretAngle = 180.0;
+    private static final double TURRET_SMOOTHING = 0.3;  // 0.0 = no smoothing, 1.0 = instant
+    private static final double TURRET_DEADBAND = 2.0;   // degrees - don't update if change is smaller than this
 
     public TurretOdomAlign() {
         addComponents(
@@ -56,8 +61,8 @@ public class TurretOdomAlign extends NextFTCOpMode {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         configurePinpoint();
 
-        // Initialize turret to center (0 degrees)
-        turretTargetAngle = 0.0;
+        // Initialize turret to center (180 degrees)
+        turretTargetAngle = 180.0;
         Turret.INSTANCE.setTurretAngleDeg(turretTargetAngle);
         Turret.INSTANCE.goToAngle(turretTargetAngle).schedule();
 
@@ -126,8 +131,13 @@ public class TurretOdomAlign extends NextFTCOpMode {
         // CRITICAL FIX: Update persistent variable like Teleop.java does
         turretTargetAngle = finalTurretAngle;
 
+        // Smooth turret movement (like BlueTeleop)
+        if (Math.abs(turretTargetAngle - smoothedTurretAngle) > TURRET_DEADBAND) {
+            smoothedTurretAngle += (turretTargetAngle - smoothedTurretAngle) * TURRET_SMOOTHING;
+        }
+
         // Schedule turret command with the persistent variable (like Teleop line 368)
-        Turret.INSTANCE.goToAngle(turretTargetAngle).schedule();
+        Turret.INSTANCE.goToAngle(smoothedTurretAngle).schedule();
 
         // Telemetry
         telemetry.addData("═══ ODOMETRY TURRET ALIGN ═══", "");
@@ -139,6 +149,7 @@ public class TurretOdomAlign extends NextFTCOpMode {
         telemetry.addData("Desired Turret Angle", String.format("%.1f°", desiredTurretAngle));
         telemetry.addData("Final Turret Angle", String.format("%.1f°", finalTurretAngle));
         telemetry.addData("Turret Target Variable", String.format("%.1f°", turretTargetAngle));
+        telemetry.addData("Smoothed Turret Angle", String.format("%.1f°", smoothedTurretAngle));
         telemetry.addData("Actual Turret Position", String.format("%.1f°", Turret.INSTANCE.getTargetTurretDeg()));
         telemetry.addData("", "");
         telemetry.addData("Robot X (inches)", String.format("%.1f", pose.getX(org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH)));
