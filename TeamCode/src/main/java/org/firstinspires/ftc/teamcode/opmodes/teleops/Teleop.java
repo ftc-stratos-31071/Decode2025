@@ -43,7 +43,7 @@ public class Teleop extends NextFTCOpMode {
     public static double TRACKING_GAIN = 0.08;  // Reduced from 0.15 - much smoother
     public static double SMOOTHING = 0.5;  // Exponential smoothing (0.0-1.0, lower = smoother)
     public static double DEADBAND = 3.0;  // Increased from 2.0 - larger tolerance to prevent jitter
-    public static boolean AUTO_TRACK_ENABLED = true;  // Enable/disable tracking
+    public static boolean AUTO_TRACK_ENABLED = false;  // Enable/disable tracking
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;  // Time before returning to center when no target detected
 
     private final MotorEx frontLeftMotor = new MotorEx("frontLeftMotor").brakeMode().reversed();

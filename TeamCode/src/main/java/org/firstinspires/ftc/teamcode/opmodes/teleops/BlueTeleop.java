@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opmodes.teleops;
 import android.util.Size;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -33,10 +34,9 @@ import dev.nextftc.ftc.components.BulkReadComponent;
 import dev.nextftc.hardware.driving.MecanumDriverControlled;
 import dev.nextftc.hardware.impl.MotorEx;
 
+@Config
 @TeleOp(name = "BlueTeleop")
 public class BlueTeleop extends NextFTCOpMode {
-
-    /* ====================== COMPONENT SETUP ====================== */
 
     public BlueTeleop() {
         addComponents(
@@ -46,34 +46,24 @@ public class BlueTeleop extends NextFTCOpMode {
         );
     }
 
-    /* ====================== TRACKING TUNABLES ====================== */
-
     public static double TRACKING_GAIN = 0.08;
-    public static double SMOOTHING = 0.5;
+    public static double SMOOTHING = 0.2;
     public static double DEADBAND = 3.0;
     public static boolean AUTO_TRACK_ENABLED = true;
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;
-    public static boolean SHOW_VISION_TELEMETRY = false;
-
-    /* ====================== DRIVE ====================== */
 
     private final MotorEx frontLeftMotor  = new MotorEx("frontLeftMotor").brakeMode().reversed();
     private final MotorEx frontRightMotor = new MotorEx("frontRightMotor").brakeMode().reversed();
     private final MotorEx backLeftMotor   = new MotorEx("backLeftMotor").brakeMode();
     private final MotorEx backRightMotor  = new MotorEx("backRightMotor").brakeMode();
 
-    /* ====================== SUBSYSTEM STATE ====================== */
-
     private LaserRangefinder rangefinder;
     private int ballCount = 0;
     private boolean ballPresent = false;
     private long lastBallTime = 0;
 
-    private static final double BALL_DISTANCE_MM = 40;
-    private static final long DEBOUNCE_MS = 300;
-
-    private boolean intakeActive = false;
-    private boolean hasRumbled = false;
+    private static final double BALL_DISTANCE_MM = 30;
+    private static final long DEBOUNCE_MS = 400;
 
     private boolean slowMode = false;
     private double driveScale = 1.0;
@@ -83,8 +73,6 @@ public class BlueTeleop extends NextFTCOpMode {
     private double turretPos = 180.0;
     private double targetRpm = ShooterConstants.closeTargetRPM;
 
-    /* ====================== APRILTAG VISION ====================== */
-
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
@@ -92,8 +80,8 @@ public class BlueTeleop extends NextFTCOpMode {
     private double smoothedTx = 0.0;
     private boolean hasSeenTarget = false;
     private long lastTargetSeenTime = 0;
+    private boolean ballCountingEnabled = true;
 
-    /* ====================== INIT ====================== */
 
     @Override
     public void onInit() {
@@ -102,7 +90,7 @@ public class BlueTeleop extends NextFTCOpMode {
         Shooter.INSTANCE.setTargetRPM(0.0);
         Shooter.INSTANCE.runRPM(0.0).schedule();
 
-        Turret.INSTANCE.goToAngle(180.0).schedule();
+        Turret.INSTANCE.setTurretAngleDeg(180.0);
         Intake.INSTANCE.moveServoPos().schedule();
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
@@ -134,12 +122,7 @@ public class BlueTeleop extends NextFTCOpMode {
                 .build();
 
         dashboard.startCameraStream(visionPortal, 30);
-
-        telemetry.addData("Vision", "✓ AprilTag Ready (ONLY ID 20)");
-        telemetry.update();
     }
-
-    /* ====================== START ====================== */
 
     @Override
     public void onStartButtonPressed() {
@@ -166,30 +149,30 @@ public class BlueTeleop extends NextFTCOpMode {
         });
 
         Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> {
-            intakeActive = true;
-            hasRumbled = false;
-            ballCount = 0;
             Intake.INSTANCE.moveServoPos().schedule();
             IntakeSeqCmd.create().schedule();
         });
 
         Gamepads.gamepad1().leftBumper().whenBecomesFalse(() -> {
-            intakeActive = false;
-            ballPresent = false;
             Intake.INSTANCE.zeroPowerIntake().schedule();
             Intake.INSTANCE.zeroPowerTransfer().schedule();
         });
 
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
+            ballCountingEnabled = false;
+
             Intake.INSTANCE.moveIntake(-IntakeConstants.intakePowerSlow).schedule();
             Intake.INSTANCE.moveTransfer(-IntakeConstants.intakePowerSlow).schedule();
             Intake.INSTANCE.defaultPos().schedule();
         });
 
         Gamepads.gamepad1().b().whenBecomesFalse(() -> {
+            ballCountingEnabled = true;
+
             Intake.INSTANCE.zeroPowerIntake().schedule();
             Intake.INSTANCE.zeroPowerTransfer().schedule();
         });
+
 
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
             ballCount = 0;
@@ -247,60 +230,62 @@ public class BlueTeleop extends NextFTCOpMode {
         });
     }
 
-    /* ====================== UPDATE LOOP ====================== */
-
     @Override
     public void onUpdate() {
-
-        /* ---------- Ball Counting ---------- */
 
         double distance = rangefinder.getDistance(DistanceUnit.MM);
         long now = System.currentTimeMillis();
         boolean detected = distance < BALL_DISTANCE_MM;
 
-        if (intakeActive && detected && !ballPresent && now - lastBallTime > DEBOUNCE_MS) {
-            ballCount++;
-            lastBallTime = now;
+        if (ballCountingEnabled) {
+            if (detected && !ballPresent && now - lastBallTime > DEBOUNCE_MS) {
+                ballCount++;
+
+                if (ballCount > 3) {
+                    ballCount = 1;
+                }
+
+                if (ballCount == 3) {
+                    Gamepads.gamepad1().getGamepad().invoke().rumble(500);
+                }
+
+                lastBallTime = now;
+            }
+
+            ballPresent = detected;
         }
 
-        ballPresent = detected;
-
-        if (ballCount >= 3 && !hasRumbled) {
-            Gamepads.gamepad1().getGamepad().invoke().rumble(500);
-            hasRumbled = true;
-        }
-
-        /* ---------- AprilTag Tracking (ID 20 ONLY) ---------- */
         List<AprilTagDetection> detections = aprilTag.getDetections();
-        hasSeenTarget = false;
+        double desiredTx = 0;
 
         if (!detections.isEmpty() && AUTO_TRACK_ENABLED) {
+            // Tag is visible
             for (AprilTagDetection tag : detections) {
                 if (tag.id == 20) {
+                    desiredTx = 180.0 - tag.ftcPose.bearing;
+                    lastTargetSeenTime = System.currentTimeMillis();
                     hasSeenTarget = true;
-                    lastTargetSeenTime = System.currentTimeMillis(); // update last seen time
-
-                    // Compute target turret angle relative to center (180°)
-                    double rawTx = 180.0 + tag.ftcPose.x;
-
-                    // Apply deadband and smoothing
-                    if (Math.abs(rawTx - motorTargetX) > DEADBAND) {
-                        smoothedTx = smoothedTx + (rawTx - smoothedTx) * SMOOTHING;
-                        motorTargetX = smoothedTx;
-                        Turret.INSTANCE.goToAngle(motorTargetX).schedule();
-                    }
-
-                    break; // only track tag 20
+                    break;
                 }
             }
         } else {
-            // If no tag seen recently, optionally return to default after timeout
+            hasSeenTarget = false;
+            // fallback to center after timeout
             if (System.currentTimeMillis() - lastTargetSeenTime > NO_TARGET_TIMEOUT_SEC * 1000) {
-                motorTargetX = 180.0;  // middle
-                Turret.INSTANCE.goToAngle(motorTargetX).schedule();
+                desiredTx = 180.0;
+            } else {
+                desiredTx = smoothedTx; // hold current until timeout
             }
         }
-        /* ---------- Telemetry ---------- */
+
+// Move smoothedTx toward desiredTx
+        double error = desiredTx - smoothedTx;
+        smoothedTx += error * SMOOTHING;
+
+        motorTargetX = smoothedTx;
+
+// Apply to servo every loop
+        Turret.INSTANCE.setTurretAngleDeg(motorTargetX);
 
         telemetry.addData("Ball Count", ballCount);
         telemetry.addData("Range (mm)", distance);
