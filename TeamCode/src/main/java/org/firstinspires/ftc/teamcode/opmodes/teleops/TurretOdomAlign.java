@@ -42,10 +42,10 @@ public class TurretOdomAlign extends NextFTCOpMode {
     // CRITICAL: Track turret position like Teleop.java does with motorTargetX
     private double turretTargetAngle = 180.0;
 
-    // Smoothing and deadband (like BlueTeleop)
+    // Smoothing and deadband (matching Teleop.java values)
     private double smoothedTurretAngle = 180.0;
-    private static final double TURRET_SMOOTHING = 0.3;  // 0.0 = no smoothing, 1.0 = instant
-    private static final double TURRET_DEADBAND = 2.0;   // degrees - don't update if change is smaller than this
+    private static final double TURRET_SMOOTHING = 0.5;  // Matching Teleop.java SMOOTHING value
+    private static final double TURRET_DEADBAND = 3.0;   // Matching Teleop.java DEADBAND value
 
     public TurretOdomAlign() {
         addComponents(
@@ -128,15 +128,15 @@ public class TurretOdomAlign extends NextFTCOpMode {
         // Handle turret limits and wrapping
         double finalTurretAngle = constrainTurretAngle(desiredTurretAngle);
 
-        // CRITICAL FIX: Update persistent variable like Teleop.java does
+        // Update target angle based on odometry calculations
         turretTargetAngle = finalTurretAngle;
 
-        // Smooth turret movement (like BlueTeleop)
-        if (Math.abs(turretTargetAngle - smoothedTurretAngle) > TURRET_DEADBAND) {
-            smoothedTurretAngle += (turretTargetAngle - smoothedTurretAngle) * TURRET_SMOOTHING;
-        }
+        // Apply smoothing using the EXACT formula from Teleop.java (line 306)
+        // This provides gradual changes for even tiny movements
+        // Formula: smoothed = SMOOTHING * oldSmoothed + (1.0 - SMOOTHING) * newTarget
+        smoothedTurretAngle = TURRET_SMOOTHING * smoothedTurretAngle + (1.0 - TURRET_SMOOTHING) * turretTargetAngle;
 
-        // Schedule turret command with the persistent variable (like Teleop line 368)
+        // ALWAYS schedule the turret command (like Teleop.java line 365)
         Turret.INSTANCE.goToAngle(smoothedTurretAngle).schedule();
 
         // Telemetry
