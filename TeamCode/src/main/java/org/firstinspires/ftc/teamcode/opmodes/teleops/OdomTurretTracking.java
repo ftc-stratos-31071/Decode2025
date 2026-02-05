@@ -33,6 +33,8 @@ public class OdomTurretTracking extends NextFTCOpMode {
     // Tunable parameters via FTC Dashboard
     public static double INITIAL_GLOBAL_HEADING = 135.0; // Global direction turret should face (degrees) - 45° left of init
     public static boolean ENABLE_TRACKING = true; // Toggle tracking on/off
+    public static double PREDICTION_GAIN = 0.1; // Gain for predicting future position (tuneable)
+    public static double MAX_PREDICTION_DEG = 5.0; // Max prediction angle (degrees) to prevent overshoot
 
     private final MotorEx frontLeftMotor = new MotorEx("frontLeftMotor").brakeMode().reversed();
     private final MotorEx frontRightMotor = new MotorEx("frontRightMotor").brakeMode().reversed();
@@ -41,6 +43,14 @@ public class OdomTurretTracking extends NextFTCOpMode {
 
     private double targetGlobalHeading = 135.0; // The global direction we want turret to face
     private boolean initialized = false;
+    private double lastRobotHeading = 135.0;
+    private long lastUpdateTime = 0;
+
+    // Smoothing parameters
+    public static double VELOCITY_SMOOTHING = 0.7; // Smoothing factor for velocity (0 to 1)
+    public static boolean USE_PREDICTION = true; // Enable/disable prediction
+
+    private double smoothedVelocity = 0.0;
 
     public OdomTurretTracking() {
         addComponents(
@@ -93,25 +103,91 @@ public class OdomTurretTracking extends NextFTCOpMode {
         pinpoint.update(GoBildaPinpointDriver.ReadData.ONLY_UPDATE_HEADING);
         double currentRobotHeading = pinpoint.getHeading(AngleUnit.DEGREES);
 
+        long currentTime = System.currentTimeMillis();
+
         // Initialize on first update - lock to target global heading
         if (!initialized) {
             targetGlobalHeading = INITIAL_GLOBAL_HEADING;
+            lastRobotHeading = currentRobotHeading;
+            lastUpdateTime = currentTime;
             initialized = true;
         }
 
         // Calculate required turret angle to maintain global heading
         if (ENABLE_TRACKING) {
-            double requiredTurretAngle = calculateTurretAngle(currentRobotHeading, targetGlobalHeading);
+            // Calculate robot's rotation velocity with smoothing
+            double deltaTime = (currentTime - lastUpdateTime) / 1000.0; // Convert to seconds
+            double headingChange = normalizeAngleSigned(currentRobotHeading - lastRobotHeading);
+
+            // Avoid division by zero and handle first frame
+            double instantVelocity = 0.0;
+            if (deltaTime > 0.001) { // More than 1ms
+                instantVelocity = headingChange / deltaTime; // degrees per second
+            }
+
+            // Smooth the velocity to reduce jitter
+            smoothedVelocity = VELOCITY_SMOOTHING * smoothedVelocity + (1.0 - VELOCITY_SMOOTHING) * instantVelocity;
+
+            // Predict where the robot will be based on current rotation velocity
+            double prediction = 0.0;
+            if (USE_PREDICTION) {
+                prediction = smoothedVelocity * PREDICTION_GAIN;
+
+                // Clamp prediction to prevent wild overshoots
+                if (prediction > MAX_PREDICTION_DEG) prediction = MAX_PREDICTION_DEG;
+                if (prediction < -MAX_PREDICTION_DEG) prediction = -MAX_PREDICTION_DEG;
+            }
+
+            // Calculate turret angle with predictive compensation
+            double predictedRobotHeading = currentRobotHeading + prediction;
+            double requiredTurretAngle = calculateTurretAngle(predictedRobotHeading, targetGlobalHeading);
+
+            // Debug: Calculate servo positions
+            double servoAngleDeg = requiredTurretAngle + Turret.CENTER_OFFSET_DEG;
+            double rawServoPos = servoAngleDeg / 355.0;
+            double clampedServoPos = Math.max(0, Math.min(1, rawServoPos));
+            boolean isClamping = (rawServoPos != clampedServoPos);
+
             Turret.INSTANCE.setTurretAngleDeg(requiredTurretAngle);
+
+            // Store for next iteration
+            lastRobotHeading = currentRobotHeading;
+            lastUpdateTime = currentTime;
+
+            // COMPREHENSIVE TELEMETRY
+            telemetry.addLine("=== ODOMETRY TRACKING ===");
+            telemetry.addData("Robot Heading", "%.1f°", currentRobotHeading);
+            telemetry.addData("Target Global", "%.1f°", targetGlobalHeading);
+            telemetry.addData("Error", "%.1f°", normalizeAngleSigned(targetGlobalHeading - (currentRobotHeading + requiredTurretAngle)));
+            telemetry.addLine();
+
+            telemetry.addLine("=== VELOCITY & PREDICTION ===");
+            telemetry.addData("Instant Velocity", "%.1f °/s", instantVelocity);
+            telemetry.addData("Smoothed Velocity", "%.1f °/s", smoothedVelocity);
+            telemetry.addData("Prediction", USE_PREDICTION ? String.format("%.1f°", prediction) : "DISABLED");
+            telemetry.addData("Predicted Heading", "%.1f°", predictedRobotHeading);
+            telemetry.addLine();
+
+            telemetry.addLine("=== TURRET OUTPUT ===");
+            telemetry.addData("Required Turret", "%.1f°", requiredTurretAngle);
+            telemetry.addData("Actual Turret", "%.1f°", Turret.INSTANCE.getTargetTurretDeg());
+            telemetry.addData("Actual Global", "%.1f°", normalizeAngle(currentRobotHeading + Turret.INSTANCE.getTargetTurretDeg()));
+            telemetry.addLine();
+
+            telemetry.addLine("=== SERVO DEBUG ===");
+            telemetry.addData("Servo Angle", "%.1f°", servoAngleDeg);
+            telemetry.addData("Raw Servo Pos", "%.3f", rawServoPos);
+            telemetry.addData("Clamped Pos", "%.3f", clampedServoPos);
+            telemetry.addData("IS CLAMPING?", isClamping ? "⚠️ YES!" : "✓ No");
+
+            if (isClamping) {
+                telemetry.addLine();
+                telemetry.addData("WARNING", "Turret at physical limit!");
+            }
+        } else {
+            telemetry.addData("Tracking", "❌ DISABLED");
         }
 
-        // Telemetry
-        telemetry.addData("Robot Heading", "%.1f°", currentRobotHeading);
-        telemetry.addData("Target Global", "%.1f°", targetGlobalHeading);
-        telemetry.addData("Turret Angle", "%.1f°", Turret.INSTANCE.getTargetTurretDeg());
-        telemetry.addData("Actual Global", "%.1f°",
-                normalizeAngle(currentRobotHeading + Turret.INSTANCE.getTargetTurretDeg()));
-        telemetry.addData("Tracking", ENABLE_TRACKING ? "ENABLED" : "DISABLED");
         telemetry.update();
     }
 
