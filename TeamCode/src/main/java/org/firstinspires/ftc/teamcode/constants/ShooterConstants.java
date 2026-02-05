@@ -54,7 +54,7 @@ public class ShooterConstants {
     //   - NeveRest 40: 1120 ticks/rev
     //   - NeveRest 60: 1680 ticks/rev
     // If using a gearbox/pulley, multiply by the ratio!
-    public static double TICKS_PER_REV = 537.7;  // TODO: VERIFY THIS!
+    public static double TICKS_PER_REV = 28.0;  // TODO: VERIFY THIS!
 
     // ========== BATTERY COMPENSATION ==========
     // IMPORTANT: Set NOMINAL_VOLTAGE to your battery voltage when you tuned PIDF!
