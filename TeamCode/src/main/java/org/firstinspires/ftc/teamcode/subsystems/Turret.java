@@ -18,17 +18,16 @@ public class Turret implements Subsystem {
 
     private double targetTurretDeg = TurretConstants.DEFAULT_TURRET_DEG;
 
-    private static final double SERVO_RANGE_DEG = 355.0;
-    public static double CENTER_OFFSET_DEG = 140.0;
+    public static double MIN_TURRET_DEG = 140;   // lowest logical angle
+    public static double MAX_TURRET_DEG = 320; // highest logical angle
+
 
     public void setTurretAngleDeg(double turretDeg) {
-        targetTurretDeg = turretDeg;
+        // Clamp to safe range
+        targetTurretDeg = Math.max(MIN_TURRET_DEG, Math.min(MAX_TURRET_DEG, turretDeg));
 
-        double servoAngleDeg = turretDeg + CENTER_OFFSET_DEG;
-        double servoPos = servoAngleDeg / SERVO_RANGE_DEG;
-
-        if (servoPos < 0) servoPos = 0;
-        if (servoPos > 1) servoPos = 1;
+        double servoPos = targetTurretDeg / Turret.MAX_TURRET_DEG;
+        servoPos = Math.max(0, Math.min(1, servoPos));
 
         leftServo.setPosition(servoPos);
         rightServo.setPosition(servoPos);

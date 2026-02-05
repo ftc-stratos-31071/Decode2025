@@ -16,7 +16,7 @@ public class RapidFireCmd {
     public static Command create() {
         return new SequentialGroup(
                 WaitCmd.create(0.25),
-                ShootBallSteadyCmd.create(IntakeConstants.shootPower, 100)
+                ShootBallSteadyCmd.create(IntakeConstants.shootPower, 50)
         );
     }
 }

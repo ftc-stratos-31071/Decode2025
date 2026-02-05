@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.opmodes.teleops;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
@@ -13,15 +15,15 @@ import dev.nextftc.ftc.NextFTCOpMode;
 public class TurretTester extends NextFTCOpMode {
 
     // Tunable constraints via FTC Dashboard
-    public static double MIN_TURRET_DEG = -30.0;
-    public static double MAX_TURRET_DEG = 200.0;
+    public static double MIN_TURRET_DEG = 140.0;
+    public static double MAX_TURRET_DEG = 320.0;
     public static double SWEEP_SPEED = 50.0; // degrees per second
-    public static double INIT_TURRET_DEG = 90.0; // Initial position
+    public static double INIT_TURRET_DEG = 230.0; // Initial position
 
-    private double currentTarget = 180.0; // Start at center
+    private double currentTarget = 230.0; // Start at center
     private boolean movingToMax = true; // Start by moving toward max
     private long lastUpdateTime = 0;
-    private double lastInitPosition = 180.0; // Track last init position for live updates
+    private double lastInitPosition = 230.0; // Track last init position for live updates
 
     public TurretTester() {
         addComponents(
@@ -37,6 +39,9 @@ public class TurretTester extends NextFTCOpMode {
 
         // Set turret directly to our position
         Turret.INSTANCE.setTurretAngleDeg(currentTarget);
+
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Min Constraint", MIN_TURRET_DEG);

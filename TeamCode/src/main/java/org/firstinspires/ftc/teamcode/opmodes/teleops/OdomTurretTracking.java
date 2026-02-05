@@ -143,7 +143,7 @@ public class OdomTurretTracking extends NextFTCOpMode {
             double requiredTurretAngle = calculateTurretAngle(predictedRobotHeading, targetGlobalHeading);
 
             // Debug: Calculate servo positions
-            double servoAngleDeg = requiredTurretAngle + Turret.CENTER_OFFSET_DEG;
+            double servoAngleDeg = requiredTurretAngle;
             double rawServoPos = servoAngleDeg / 355.0;
             double clampedServoPos = Math.max(0, Math.min(1, rawServoPos));
             boolean isClamping = (rawServoPos != clampedServoPos);
