@@ -31,19 +31,19 @@ public class TurretOdomAlign extends NextFTCOpMode {
     // Target field angle for turret (45 degrees left of center = 135 degrees)
     private static final double TARGET_FIELD_ANGLE_DEG = 135.0;
 
-    // Turret physical limits (90 to 270 degrees range)
-    private static final double TURRET_MIN_DEG = 90.0;
-    private static final double TURRET_MAX_DEG = 270.0;
+    // Turret physical limits (updated to match TurretConstants)
+    private static final double TURRET_MIN_DEG = -30.0;
+    private static final double TURRET_MAX_DEG = 200.0;
 
     // Robot starting heading (90 degrees as specified)
     private double robotStartHeading = 90.0;
     private boolean hasInitializedHeading = false;
 
     // CRITICAL: Track turret position like Teleop.java does with motorTargetX
-    private double turretTargetAngle = 180.0;
+    private double turretTargetAngle = 90.0;
 
     // Smoothing and deadband (matching Teleop.java values)
-    private double smoothedTurretAngle = 180.0;
+    private double smoothedTurretAngle = 90.0;
     private static final double TURRET_SMOOTHING = 0.5;  // Matching Teleop.java SMOOTHING value
     private static final double TURRET_DEADBAND = 3.0;   // Matching Teleop.java DEADBAND value
 
@@ -61,10 +61,10 @@ public class TurretOdomAlign extends NextFTCOpMode {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         configurePinpoint();
 
-        // Initialize turret to center (180 degrees)
-        turretTargetAngle = 180.0;
+        // Initialize turret to center (90 degrees)
+        turretTargetAngle = 90.0;
+        smoothedTurretAngle = 90.0;
         Turret.INSTANCE.setTurretAngleDeg(turretTargetAngle);
-        Turret.INSTANCE.goToAngle(turretTargetAngle).schedule();
 
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Target Field Angle", TARGET_FIELD_ANGLE_DEG + "°");
@@ -104,7 +104,7 @@ public class TurretOdomAlign extends NextFTCOpMode {
         pinpoint.update();
         Pose2D pose = pinpoint.getPosition();
 
-        // Get current robot heading in degrees
+        // Get current robot heading in degrees from odometry
         double robotHeadingDeg = pose.getHeading(AngleUnit.DEGREES);
 
         // On first update, record the starting heading
@@ -113,42 +113,31 @@ public class TurretOdomAlign extends NextFTCOpMode {
             hasInitializedHeading = true;
         }
 
-        // Calculate robot's current heading relative to start (normalized to 0-360)
-        double robotCurrentHeading = normalizeAngle(robotHeadingDeg - robotStartHeading + 90.0);
+        // Simple field-centric turret calculation:
+        // Turret angle = TARGET_FIELD_ANGLE - current_robot_heading
+        // When robot rotates RIGHT (heading increases), turret must rotate LEFT (angle decreases)
+        double desiredTurretAngle = TARGET_FIELD_ANGLE_DEG - robotHeadingDeg;
 
-        // Calculate required turret angle to point at target field angle
-        // Turret angle (robot-relative) = target field angle - robot heading
-        double desiredTurretAngle = normalizeAngle(TARGET_FIELD_ANGLE_DEG - robotCurrentHeading);
-
-        // Convert from 0-360 range to -180 to +180 range for turret control
-        if (desiredTurretAngle > 180.0) {
-            desiredTurretAngle -= 360.0;
-        }
-
-        // Handle turret limits and wrapping
+        // Handle turret limits and wrapping - this also normalizes the angle
         double finalTurretAngle = constrainTurretAngle(desiredTurretAngle);
 
         // Update target angle based on odometry calculations
         turretTargetAngle = finalTurretAngle;
 
-        // Apply smoothing using the EXACT formula from Teleop.java (line 306)
-        // This provides gradual changes for even tiny movements
-        // Formula: smoothed = SMOOTHING * oldSmoothed + (1.0 - SMOOTHING) * newTarget
+        // Apply smoothing using the EXACT formula from Teleop.java
         smoothedTurretAngle = TURRET_SMOOTHING * smoothedTurretAngle + (1.0 - TURRET_SMOOTHING) * turretTargetAngle;
 
-        // ALWAYS schedule the turret command (like Teleop.java line 365)
+        // ALWAYS schedule the turret command
         Turret.INSTANCE.goToAngle(smoothedTurretAngle).schedule();
 
         // Telemetry
         telemetry.addData("═══ ODOMETRY TURRET ALIGN ═══", "");
         telemetry.addData("Status", hasInitializedHeading ? "TRACKING" : "INITIALIZING");
-        telemetry.addData("Raw Robot Heading", String.format("%.1f°", robotHeadingDeg));
-        telemetry.addData("Start Heading Offset", String.format("%.1f°", robotStartHeading));
-        telemetry.addData("Robot Heading (field)", String.format("%.1f°", robotCurrentHeading));
+        telemetry.addData("Robot Heading (Pinpoint)", String.format("%.1f°", robotHeadingDeg));
+        telemetry.addData("Start Heading", String.format("%.1f°", robotStartHeading));
         telemetry.addData("Target Field Angle", String.format("%.1f°", TARGET_FIELD_ANGLE_DEG));
         telemetry.addData("Desired Turret Angle", String.format("%.1f°", desiredTurretAngle));
         telemetry.addData("Final Turret Angle", String.format("%.1f°", finalTurretAngle));
-        telemetry.addData("Turret Target Variable", String.format("%.1f°", turretTargetAngle));
         telemetry.addData("Smoothed Turret Angle", String.format("%.1f°", smoothedTurretAngle));
         telemetry.addData("Actual Turret Position", String.format("%.1f°", Turret.INSTANCE.getTargetTurretDeg()));
         telemetry.addData("", "");
@@ -171,9 +160,8 @@ public class TurretOdomAlign extends NextFTCOpMode {
     }
 
     /**
-     * Constrain turret angle to physical limits, with wrapping logic
-     * If the target angle is outside limits, try wrapping (adding/subtracting 360)
-     * If still outside, clamp to nearest limit
+     * Constrain turret angle to physical limits, with improved wrapping logic
+     * for the -30° to 200° range (centered at 90°)
      */
     private double constrainTurretAngle(double angleDeg) {
         // If within limits, use as-is
@@ -181,25 +169,39 @@ public class TurretOdomAlign extends NextFTCOpMode {
             return angleDeg;
         }
 
-        // Try wrapping by 360 degrees
-        double wrappedAngle = angleDeg;
-        if (angleDeg > TURRET_MAX_DEG) {
-            wrappedAngle = angleDeg - 360.0;
-        } else if (angleDeg < TURRET_MIN_DEG) {
-            wrappedAngle = angleDeg + 360.0;
+        // Try wrapping by ±360 degrees to find the equivalent angle within range
+        double wrappedPlus = angleDeg + 360.0;
+        double wrappedMinus = angleDeg - 360.0;
+
+        // Check if either wrapped version is within limits
+        if (wrappedPlus >= TURRET_MIN_DEG && wrappedPlus <= TURRET_MAX_DEG) {
+            return wrappedPlus;
+        }
+        if (wrappedMinus >= TURRET_MIN_DEG && wrappedMinus <= TURRET_MAX_DEG) {
+            return wrappedMinus;
         }
 
-        // If wrapped angle is within limits, use it
-        if (wrappedAngle >= TURRET_MIN_DEG && wrappedAngle <= TURRET_MAX_DEG) {
-            return wrappedAngle;
-        }
+        // If no wrapped version works, find the closest reachable angle
+        // This handles edge cases where the target is unreachable
 
-        // If still out of bounds, clamp to nearest limit
-        if (angleDeg > TURRET_MAX_DEG) {
-            return TURRET_MAX_DEG;
-        } else {
-            return TURRET_MIN_DEG;
-        }
+        // Calculate distance to each limit (accounting for wrapping)
+        double distToMin = Math.abs(angleDistance(angleDeg, TURRET_MIN_DEG));
+        double distToMax = Math.abs(angleDistance(angleDeg, TURRET_MAX_DEG));
+
+        // Return the closest limit
+        return (distToMin < distToMax) ? TURRET_MIN_DEG : TURRET_MAX_DEG;
+    }
+
+    /**
+     * Calculate the shortest angular distance between two angles
+     * Accounts for wrapping (e.g., -10° is only 20° away from 10°, not 20°)
+     */
+    private double angleDistance(double angle1, double angle2) {
+        double diff = angle2 - angle1;
+        // Normalize to -180 to +180
+        while (diff > 180.0) diff -= 360.0;
+        while (diff < -180.0) diff += 360.0;
+        return diff;
     }
 
     /**

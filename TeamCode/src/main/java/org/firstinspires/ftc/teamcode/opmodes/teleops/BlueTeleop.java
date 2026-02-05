@@ -70,13 +70,13 @@ public class BlueTeleop extends NextFTCOpMode {
 
     private boolean shooterOn = false;
     private double hoodPos = ShooterConstants.servoPos;
-    private double turretPos = 180.0;
+    private double turretPos = 90.0;
     private double targetRpm = ShooterConstants.closeTargetRPM;
 
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
-    private double motorTargetX = 180.0;
+    private double motorTargetX = 90.0;
     private double smoothedTx = 0.0;
     private boolean hasSeenTarget = false;
     private long lastTargetSeenTime = 0;
@@ -90,7 +90,7 @@ public class BlueTeleop extends NextFTCOpMode {
         Shooter.INSTANCE.setTargetRPM(0.0);
         Shooter.INSTANCE.runRPM(0.0).schedule();
 
-        Turret.INSTANCE.setTurretAngleDeg(180.0);
+        Turret.INSTANCE.setTurretAngleDeg(90.0);
         Intake.INSTANCE.moveServoPos().schedule();
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
@@ -101,7 +101,7 @@ public class BlueTeleop extends NextFTCOpMode {
         rangefinder.setDistanceMode(LaserRangefinder.DistanceMode.SHORT);
         rangefinder.setTiming(20, 0);
 
-        motorTargetX = 180.0;
+        motorTargetX = 90.0;
         smoothedTx = 0.0;
         hasSeenTarget = false;
         lastTargetSeenTime = System.currentTimeMillis();
@@ -264,7 +264,7 @@ public class BlueTeleop extends NextFTCOpMode {
                     sawTargetThisLoop = true;
                     lastTargetSeenTime = System.currentTimeMillis();
 
-                    double rawTx = 180.0 - tag.ftcPose.bearing;
+                    double rawTx = 90.0 - tag.ftcPose.bearing;
 
                     if (!hasSeenTarget) {
                         smoothedTx = rawTx;
@@ -284,8 +284,8 @@ public class BlueTeleop extends NextFTCOpMode {
         if (!hasSeenTarget &&
                 System.currentTimeMillis() - lastTargetSeenTime > NO_TARGET_TIMEOUT_SEC * 1000) {
 
-            motorTargetX = 180.0;
-            smoothedTx = 180.0;
+            motorTargetX = 90.0;
+            smoothedTx = 90.0;
         }
 
         Turret.INSTANCE.setTurretAngleDeg(motorTargetX);
