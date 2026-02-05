@@ -256,35 +256,38 @@ public class BlueTeleop extends NextFTCOpMode {
         }
 
         List<AprilTagDetection> detections = aprilTag.getDetections();
-        double desiredTx = 0;
+        boolean sawTargetThisLoop = false;
 
         if (!detections.isEmpty() && AUTO_TRACK_ENABLED) {
-            // Tag is visible
             for (AprilTagDetection tag : detections) {
                 if (tag.id == 20) {
-                    desiredTx = 180.0 - tag.ftcPose.bearing;
+                    sawTargetThisLoop = true;
                     lastTargetSeenTime = System.currentTimeMillis();
-                    hasSeenTarget = true;
+
+                    double rawTx = 180.0 - tag.ftcPose.bearing;
+
+                    if (!hasSeenTarget) {
+                        smoothedTx = rawTx;
+                    }
+
+                    double error = rawTx - smoothedTx;
+                    smoothedTx += error * SMOOTHING;
+
+                    motorTargetX = smoothedTx;
                     break;
                 }
             }
-        } else {
-            hasSeenTarget = false;
-            // fallback to center after timeout
-            if (System.currentTimeMillis() - lastTargetSeenTime > NO_TARGET_TIMEOUT_SEC * 1000) {
-                desiredTx = 180.0;
-            } else {
-                desiredTx = smoothedTx; // hold current until timeout
-            }
         }
 
-// Move smoothedTx toward desiredTx
-        double error = desiredTx - smoothedTx;
-        smoothedTx += error * SMOOTHING;
+        hasSeenTarget = sawTargetThisLoop;
 
-        motorTargetX = smoothedTx;
+        if (!hasSeenTarget &&
+                System.currentTimeMillis() - lastTargetSeenTime > NO_TARGET_TIMEOUT_SEC * 1000) {
 
-// Apply to servo every loop
+            motorTargetX = 180.0;
+            smoothedTx = 180.0;
+        }
+
         Turret.INSTANCE.setTurretAngleDeg(motorTargetX);
 
         telemetry.addData("Ball Count", ballCount);
