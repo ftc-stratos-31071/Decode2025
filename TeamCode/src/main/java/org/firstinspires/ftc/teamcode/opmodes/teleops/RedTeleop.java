@@ -65,9 +65,9 @@ public class RedTeleop extends NextFTCOpMode {
     public static double START_HEADING = 90.0;
 
     // Vision tracking settings
-    public static double VISION_TRACKING_GAIN = 0.1;
+    public static double VISION_TRACKING_GAIN = 0.2;
     public static double VISION_TIMEOUT_SEC = 0.5;
-    public static double VISION_DEADBAND_DEG = 10.0;
+    public static double VISION_DEADBAND_DEG = 5.0; //10.0
     public static double VISION_SMOOTHING = 0.3;
 
     // ═══════════════════════════════════════════════════════════════════
@@ -117,7 +117,7 @@ public class RedTeleop extends NextFTCOpMode {
         Shooter.INSTANCE.setHood(hoodPos).schedule();
         Shooter.INSTANCE.setTargetRPM(0.0);
         Shooter.INSTANCE.runRPM(0.0).schedule();
-        Turret2.INSTANCE.setRawAngle(240.0);
+        Turret2.INSTANCE.setAngle(0.0);
         Intake.INSTANCE.moveServoPos().schedule();
 
         // Set up FTC Dashboard
@@ -153,7 +153,7 @@ public class RedTeleop extends NextFTCOpMode {
     @Override
     public void onStartButtonPressed() {
         Intake.INSTANCE.moveServoPos().schedule();
-        Turret2.INSTANCE.setRawAngle(240.0);
+        Turret2.INSTANCE.setAngle(0.0);
 
         // Set up mecanum drive control
         var forward = Gamepads.gamepad1().leftStickY().negate().map(v -> v * driveScale);
