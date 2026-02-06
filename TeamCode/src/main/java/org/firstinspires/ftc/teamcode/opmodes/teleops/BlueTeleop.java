@@ -15,6 +15,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.constants.AutoPoseMemory;
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.RapidFireCmd;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
@@ -120,11 +121,11 @@ public class BlueTeleop extends NextFTCOpMode {
         // Initialize odometry
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.resetPosAndIMU();
-        double initX = USE_AUTO_START_POSE ? AUTO_START_X : START_X;
-        double initY = USE_AUTO_START_POSE ? AUTO_START_Y : START_Y;
-        double initHeading = USE_AUTO_START_POSE ? AUTO_START_HEADING : START_HEADING;
+        boolean useSharedAutoPose = AutoPoseMemory.hasPose;
+        double initX = useSharedAutoPose ? AutoPoseMemory.ftcX : (USE_AUTO_START_POSE ? AUTO_START_X : START_X);
+        double initY = useSharedAutoPose ? AutoPoseMemory.ftcY : (USE_AUTO_START_POSE ? AUTO_START_Y : START_Y);
+        double initHeading = useSharedAutoPose ? AutoPoseMemory.headingDeg : (USE_AUTO_START_POSE ? AUTO_START_HEADING : START_HEADING);
         pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, initX, initY, AngleUnit.DEGREES, initHeading));
-        USE_AUTO_START_POSE = false;
 
         Shooter.INSTANCE.setHood(hoodPos).schedule();
         Shooter.INSTANCE.setTargetRPM(0.0);
@@ -327,8 +328,8 @@ public class BlueTeleop extends NextFTCOpMode {
         // Draw field visualization
         double dashboardRobotX = lastRawX;
         double dashboardRobotY = lastRawY;
-        double dashboardGoalX = -goalX;
-        double dashboardGoalY = -goalY;
+        double dashboardGoalX = goalX;
+        double dashboardGoalY = goalY;
         drawFieldVisualization(dashboardRobotX, dashboardRobotY, currentRobotHeading, dashboardGoalX, dashboardGoalY);
 
         // Check for AprilTag detections
