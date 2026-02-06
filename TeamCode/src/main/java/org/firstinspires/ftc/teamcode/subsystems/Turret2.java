@@ -129,6 +129,63 @@ public class Turret2 implements Subsystem {
         targetLogicalDeg = rawToLogical(currentRawDeg);
     }
 
+    /**
+     * Set individual servo position directly (0.0-1.0).
+     * Use this for tuning individual servos!
+     * @param position The position to set (0.0-1.0)
+     * @param leftOnly If true, only set left servo; if false, only set right servo
+     */
+    public void setServoPositionDirectIndividual(double position, boolean leftOnly) {
+        position = Range.clip(position, 0.0, 1.0);
+
+        // Apply direction reversal if needed
+        double adjustedPos = REVERSE_DIRECTION ? (1.0 - position) : position;
+
+        if (leftOnly) {
+            leftServo.setPosition(adjustedPos);
+        } else {
+            rightServo.setPosition(adjustedPos);
+        }
+
+        // Update internal state to match
+        currentRawDeg = position * SERVO_RANGE_DEG;
+        targetLogicalDeg = rawToLogical(currentRawDeg);
+    }
+
+    /**
+     * Set left servo position directly (0.0-1.0).
+     */
+    public void setServoPositionLeft(double position) {
+        position = Range.clip(position, 0.0, 1.0);
+        double adjustedPos = REVERSE_DIRECTION ? (1.0 - position) : position;
+        leftServo.setPosition(adjustedPos);
+    }
+
+    /**
+     * Set right servo position directly (0.0-1.0).
+     */
+    public void setServoPositionRight(double position) {
+        position = Range.clip(position, 0.0, 1.0);
+        double adjustedPos = REVERSE_DIRECTION ? (1.0 - position) : position;
+        rightServo.setPosition(adjustedPos);
+    }
+
+    /**
+     * Get left servo position (0.0-1.0).
+     */
+    public double getServoPositionLeft() {
+        double pos = leftServo.getPosition();
+        return REVERSE_DIRECTION ? (1.0 - pos) : pos;
+    }
+
+    /**
+     * Get right servo position (0.0-1.0).
+     */
+    public double getServoPositionRight() {
+        double pos = rightServo.getPosition();
+        return REVERSE_DIRECTION ? (1.0 - pos) : pos;
+    }
+
     private void applyRawAngle(double rawDeg) {
         // Convert raw degrees (0-355) to servo position (0.0-1.0)
         double servoPos = rawDeg / SERVO_RANGE_DEG;

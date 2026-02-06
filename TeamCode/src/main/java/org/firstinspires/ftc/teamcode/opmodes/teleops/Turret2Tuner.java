@@ -35,6 +35,10 @@ public class Turret2Tuner extends NextFTCOpMode {
     private String lastAction = "Initialized";
     private String limitWarning = "";
 
+    // Servo selection mode: 0 = Both, 1 = Left Only, 2 = Right Only
+    private int servoMode = 0;
+    private String[] servoModeNames = {"BOTH", "LEFT ONLY", "RIGHT ONLY"};
+
     public Turret2Tuner() {
         addComponents(
                 new SubsystemComponent(Turret2.INSTANCE),
@@ -81,22 +85,47 @@ public class Turret2Tuner extends NextFTCOpMode {
 
         // DPAD LEFT: Set servo position to 0.0
         Gamepads.gamepad1().dpadLeft().whenBecomesTrue(() -> {
-            Turret2.INSTANCE.setServoPositionDirect(0.0);
-            lastAction = "DPAD LEFT → Servo Position 0.0";
+            if (servoMode == 0 || servoMode == 1) {
+                Turret2.INSTANCE.setServoPositionLeft(0.0);
+                lastAction = "DPAD LEFT → Left Servo Position 0.0";
+            }
+            if (servoMode == 0 || servoMode == 2) {
+                Turret2.INSTANCE.setServoPositionRight(0.0);
+                lastAction = "DPAD LEFT → Right Servo Position 0.0";
+            }
             limitWarning = "";
         });
 
         // DPAD UP: Set servo position to 0.5
         Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
-            Turret2.INSTANCE.setServoPositionDirect(0.5);
-            lastAction = "DPAD UP → Servo Position 0.5";
+            if (servoMode == 0 || servoMode == 1) {
+                Turret2.INSTANCE.setServoPositionLeft(0.5);
+                lastAction = "DPAD UP → Left Servo Position 0.5";
+            }
+            if (servoMode == 0 || servoMode == 2) {
+                Turret2.INSTANCE.setServoPositionRight(0.5);
+                lastAction = "DPAD UP → Right Servo Position 0.5";
+            }
             limitWarning = "";
         });
 
         // DPAD RIGHT: Set servo position to 1.0
         Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
-            Turret2.INSTANCE.setServoPositionDirect(1.0);
-            lastAction = "DPAD RIGHT → Servo Position 1.0";
+            if (servoMode == 0 || servoMode == 1) {
+                Turret2.INSTANCE.setServoPositionLeft(1.0);
+                lastAction = "DPAD RIGHT → Left Servo Position 1.0";
+            }
+            if (servoMode == 0 || servoMode == 2) {
+                Turret2.INSTANCE.setServoPositionRight(1.0);
+                lastAction = "DPAD RIGHT → Right Servo Position 1.0";
+            }
+            limitWarning = "";
+        });
+
+        // DPAD DOWN: Toggle servo selection mode
+        Gamepads.gamepad1().dpadDown().whenBecomesTrue(() -> {
+            servoMode = (servoMode + 1) % 3;
+            lastAction = "DPAD DOWN → Servo Mode: " + servoModeNames[servoMode];
             limitWarning = "";
         });
 
@@ -164,7 +193,8 @@ public class Turret2Tuner extends NextFTCOpMode {
         // Read actual turret values
         double currentLogical = Turret2.INSTANCE.getTargetLogicalDeg();
         double currentRaw = Turret2.INSTANCE.getCurrentRawDeg();
-        double servoPos = Turret2.INSTANCE.getServoPosition();
+        double servoPosLeft = Turret2.INSTANCE.getServoPositionLeft();
+        double servoPosRight = Turret2.INSTANCE.getServoPositionRight();
 
         // Check if at limits
         boolean atMinLimit = currentLogical <= -Turret2.MAX_ROTATION + 0.1;
@@ -178,7 +208,8 @@ public class Turret2Tuner extends NextFTCOpMode {
         telemetry.addLine("─── CURRENT STATE ───");
         telemetry.addData("Logical Angle", "%.1f°", currentLogical);
         telemetry.addData("Raw Angle", "%.1f°", currentRaw);
-        telemetry.addData("Servo Position", "%.3f", servoPos);
+        telemetry.addData("Left Servo Position", "%.3f", servoPosLeft);
+        telemetry.addData("Right Servo Position", "%.3f", servoPosRight);
         telemetry.addLine();
 
         // Show limit status
@@ -211,6 +242,7 @@ public class Turret2Tuner extends NextFTCOpMode {
         telemetry.addLine("A = Configurable (" + CONFIGURABLE_ANGLE + "°)");
         telemetry.addLine("LB/RB = Adjust angle ±" + STEP_SIZE + "°");
         telemetry.addLine("DPAD LEFT/UP/RIGHT = Set Servo Position (0.0/0.5/1.0)");
+        telemetry.addLine("DPAD DOWN = Toggle Servo Mode (" + servoModeNames[servoMode] + ")");
         telemetry.addLine();
 
         telemetry.addLine("─── TURRET CONVENTION ───");
