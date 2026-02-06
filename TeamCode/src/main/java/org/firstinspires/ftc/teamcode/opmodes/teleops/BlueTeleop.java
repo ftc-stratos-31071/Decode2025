@@ -124,6 +124,7 @@ public class BlueTeleop extends NextFTCOpMode {
         double initY = USE_AUTO_START_POSE ? AUTO_START_Y : START_Y;
         double initHeading = USE_AUTO_START_POSE ? AUTO_START_HEADING : START_HEADING;
         pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, initX, initY, AngleUnit.DEGREES, initHeading));
+        USE_AUTO_START_POSE = false;
 
         Shooter.INSTANCE.setHood(hoodPos).schedule();
         Shooter.INSTANCE.setTargetRPM(0.0);

@@ -24,6 +24,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.constants.PedroConstants;
+import org.firstinspires.ftc.teamcode.opmodes.teleops.BlueTeleop;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.Turret2;
@@ -299,6 +300,16 @@ public class BlueTrackingAuto extends NextFTCOpMode {
 
     @Override
     public void onStop() {
+        Pose finalPose = follower.getPose();
+        double finalFtcX = finalPose.getX() - 72.0;
+        double finalFtcY = finalPose.getY() - 72.0;
+        double finalHeadingDeg = normalizeAngle(Math.toDegrees(finalPose.getHeading()));
+
+        BlueTeleop.AUTO_START_X = finalFtcX;
+        BlueTeleop.AUTO_START_Y = finalFtcY;
+        BlueTeleop.AUTO_START_HEADING = finalHeadingDeg;
+        BlueTeleop.USE_AUTO_START_POSE = true;
+
         Turret2.INSTANCE.setAngle(0.0);
         if (visionPortal != null) {
             visionPortal.close();
