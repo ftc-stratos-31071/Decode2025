@@ -153,7 +153,7 @@ public class CompTurretSystem extends NextFTCOpMode {
         pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, START_X, START_Y, AngleUnit.DEGREES, START_HEADING));
 
         // Initialize turret to center position - use raw angle to ensure it's at 240° (straight forward)
-        Turret2.INSTANCE.setRawAngle(240.0);
+        Turret2.INSTANCE.setAngle(0.0); //240.0 <- SetRawAngle
 
         // Set up FTC Dashboard
         FtcDashboard dashboard = FtcDashboard.getInstance();
