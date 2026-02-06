@@ -51,6 +51,13 @@ import java.util.List;
  * - ArduCam provides precise centering when tag is in view
  * - Result: Fast acquisition + Precise tracking
  *
+ * DECODE FIELD COORDINATE SYSTEM:
+ * - Y axis: Points from Red Wall toward Blue Alliance (across field)
+ * - X axis: Points toward audience (front of field)
+ * - Red Wall is on the LEFT as seen from audience
+ * - 0° heading = facing +X (toward audience)
+ * - 90° heading = facing +Y (toward Blue Alliance)
+ *
  * FEATURES:
  * - Uses Turret2 subsystem for turret control
  * - Odometry-based goal tracking with atan2
@@ -85,31 +92,32 @@ public class CompTurretSystem extends NextFTCOpMode {
     // TUNABLE: Target AprilTag ID to track
     public static int TARGET_TAG_ID = 20;
 
-    // TUNABLE: Goal positions (inches) - Red and Blue goals at CORNERS of field
-    // 
-    // FTC DASHBOARD COORDINATE SYSTEM (as displayed on screen):
-    // - Dashboard shows field with +X to the RIGHT, +Y pointing UP
-    // - Top of dashboard = +Y, Bottom of dashboard = -Y
-    // - Left of dashboard = -X, Right of dashboard = +X
+    // TUNABLE: Goal positions (inches)
     //
-    // CONFIRMED GOAL POSITIONS (dashboard coordinates):
-    // - Blue Goal is at BOTTOM-LEFT corner: (-72, -72)
-    // - Red Goal is at BOTTOM-RIGHT corner: (+72, -72)
-    public static double RED_GOAL_X = 72.0;    // Right side of dashboard
-    public static double RED_GOAL_Y = -72.0;   // Bottom of dashboard
-    public static double BLUE_GOAL_X = -72.0;  // Left side of dashboard
-    public static double BLUE_GOAL_Y = -72.0;  // Bottom of dashboard
+    // DECODE FIELD COORDINATE SYSTEM:
+    // - Y axis: Points from Red Wall toward Blue Alliance
+    // - X axis: Points toward audience
+    // - Field is 144" x 144" (±72" from center)
+    //
+    // GOAL POSITIONS:
+    // - Blue Goal: On the Blue Alliance side (+Y direction), centered on X
+    // - Red Goal: On the Red Wall side (-Y direction), centered on X
+    public static double RED_GOAL_X = 0.0;     // Centered on X axis
+    public static double RED_GOAL_Y = -72.0;   // Red Wall side (-Y)
+    public static double BLUE_GOAL_X = 0.0;    // Centered on X axis
+    public static double BLUE_GOAL_Y = 72.0;   // Blue Alliance side (+Y)
 
     // TUNABLE: Starting robot position (inches)
-    // Physical starting position: Robot in CENTER of field, facing TOWARD goals (toward bottom of dashboard)
-    // This means facing toward NEGATIVE Y direction
+    // Robot starts in center of field
     public static double START_X = 0.0;        // Center X
     public static double START_Y = 0.0;        // Center Y
-    // Robot facing DOWN on dashboard (toward -Y) = -90° (toward the goals)
-    public static double START_HEADING = -90.0; // Facing toward goals (toward bottom of dashboard)
+    // Robot facing toward Blue goal (+Y direction) = 90°
+    // Robot facing toward Red goal (-Y direction) = -90°
+    // Robot facing audience (+X direction) = 0°
+    public static double START_HEADING = 90.0; // Facing toward Blue goal (adjust based on actual start)
 
     // TUNABLE: AprilTag tracking settings
-    public static double VISION_TRACKING_GAIN = 0.5; // Reduced from 1.25 to prevent oscillation
+    public static double VISION_TRACKING_GAIN = 0.3; // Reduced further - controls how fast we move toward target
     public static double VISION_TIMEOUT_SEC = 1.5; // Time without tag before odometry takes over (was 1.0)
     public static double VISION_DEADBAND_DEG = 1.0; // Don't adjust if within this range
 
@@ -265,7 +273,11 @@ public class CompTurretSystem extends NextFTCOpMode {
             for (AprilTagDetection tag : detections) {
                 if (tag.id == TARGET_TAG_ID) {
                     tagDetectedThisFrame = true;
-                    tagBearing = -tag.ftcPose.bearing; // Negative because bearing is +right, -left
+                    // ftcPose.bearing: positive = tag is to the RIGHT of camera center
+                    // Turret2: POSITIVE = LEFT, NEGATIVE = RIGHT
+                    // So if tag is to the RIGHT (positive bearing), turret should move RIGHT (negative)
+                    // Therefore: NEGATE the bearing
+                    tagBearing = tag.ftcPose.bearing;
                     lastTagSeenTime = System.currentTimeMillis();
                     break;
                 }
@@ -287,9 +299,15 @@ public class CompTurretSystem extends NextFTCOpMode {
             visionMode = true;
 
             if (Math.abs(tagBearing) > VISION_DEADBAND_DEG) {
-                // Adjust current turret angle based on tag bearing
+                // tagBearing: positive = tag is to the RIGHT of camera center
+                // Turret (TESTED): NEGATIVE = LEFT, POSITIVE = RIGHT
+                // To center the tag, turret moves TOWARD the tag:
+                // - Tag on RIGHT (positive bearing) -> turret moves RIGHT (positive turret angle)
+                // - Tag on LEFT (negative bearing) -> turret moves LEFT (negative turret angle)
+                // Therefore: correction matches bearing sign (NO negation needed)
                 double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
-                targetTurretAngle = currentTurretAngle + (tagBearing * VISION_TRACKING_GAIN);
+                double correction = tagBearing * VISION_TRACKING_GAIN;  // NO negation - signs match!
+                targetTurretAngle = currentTurretAngle + correction;
 
                 // Clamp to turret limits
                 targetTurretAngle = Math.max(-Turret2.MAX_ROTATION,
@@ -402,10 +420,11 @@ public class CompTurretSystem extends NextFTCOpMode {
 
         // Draw turret direction (yellow line)
         if (trackingEnabled) {
-            // Turret2 convention: POSITIVE = RIGHT, NEGATIVE = LEFT
+            // Turret (ACTUAL TESTED): NEGATIVE = LEFT, POSITIVE = RIGHT
             // To get global heading from turret angle:
-            // - Positive turret (right) means turret points CW from robot heading
-            // - So globalTurretHeading = robotHeading - turretAngle
+            // - Negative turret (left) = CCW from robot heading = ADD to heading (but turret is negative, so subtract)
+            // - Positive turret (right) = CW from robot heading = SUBTRACT from heading (but turret is positive, so subtract)
+            // So: globalTurretHeading = robotHeading - turretAngle
 
             double turretLogical = Turret2.INSTANCE.getTargetLogicalDeg();
             double turretGlobalHeading = currentRobotHeading - turretLogical;
@@ -443,39 +462,30 @@ public class CompTurretSystem extends NextFTCOpMode {
      * COORDINATE SYSTEMS:
      * - Field: atan2 gives angle where 0° = +X axis, 90° = +Y axis (CCW positive)
      * - Robot heading: 0° = +X axis, 90° = +Y axis (CCW positive)
-     * - Turret (Turret2.java): 0° = forward, POSITIVE = RIGHT, NEGATIVE = LEFT
+     * - Turret (ACTUAL TESTED): 0° = forward, NEGATIVE = LEFT, POSITIVE = RIGHT
      *
-     * To point turret at globalTarget when robot is facing robotHeading:
-     * - If globalTarget == robotHeading, turret should be at 0° (forward)
-     * - If globalTarget is CW from robotHeading (to the right), turret needs POSITIVE angle
-     * - If globalTarget is CCW from robotHeading (to the left), turret needs NEGATIVE angle
-     *
-     * Formula: turretAngle = robotHeading - globalTarget
-     * (This gives positive when target is CW/right of robot heading)
+     * EXAMPLE:
+     * - Robot at (0,0) facing +45° (toward upper-right on dashboard)
+     * - Blue Goal at (0, 72) - directly UP on dashboard
+     * - globalTarget = atan2(72, 0) = 90° (pointing up, toward +Y)
+     * - angleDiff = 90° - 45° = 45° (goal is 45° CCW from robot = to the LEFT)
+     * - Turret should turn LEFT = NEGATIVE angle = -45°
+     * - So turretAngle = -angleDiff = -45° ✓
      */
     private double calculateTurretAngle(double robotHeading, double globalTarget) {
-        // Calculate the difference: how far CW is the target from robot heading?
-        // Positive result = target is to the RIGHT of robot = turret needs to turn RIGHT (positive in Turret2)
-        // Negative result = target is to the LEFT of robot = turret needs to turn LEFT (negative in Turret2)
-        double logicalTurretAngle = robotHeading - globalTarget;
+        double angleDiff = globalTarget - robotHeading;
 
         // Normalize to [-180, 180] range
-        logicalTurretAngle = normalizeAngleSigned(logicalTurretAngle);
+        angleDiff = normalizeAngleSigned(angleDiff);
+
+        // angleDiff: positive = target is CCW from robot heading (LEFT)
+        // angleDiff: negative = target is CW from robot heading (RIGHT)
+        // Turret (TESTED): NEGATIVE = LEFT, POSITIVE = RIGHT
+        // These are OPPOSITE, so we negate: turretAngle = -angleDiff
+        double logicalTurretAngle = -angleDiff;
 
         // Clamp to turret limits
-        double minLimit = -Turret2.MAX_ROTATION;
-        double maxLimit = Turret2.MAX_ROTATION;
-
-        if (logicalTurretAngle >= minLimit && logicalTurretAngle <= maxLimit) {
-            return logicalTurretAngle;
-        }
-
-        // If outside limits, clamp to nearest limit
-        if (logicalTurretAngle > maxLimit) {
-            return maxLimit;
-        } else {
-            return minLimit;
-        }
+        return Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, logicalTurretAngle));
     }
 
     private void displayTrackingTelemetry(double robotX, double robotY, double robotHeading,
