@@ -1,69 +1,52 @@
 package org.firstinspires.ftc.teamcode.opmodes.autos;
 
-import static org.firstinspires.ftc.teamcode.subsystems.Shooter.*;
-
 import android.util.Size;
-
-import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierCurve;
-import com.pedropathing.geometry.BezierLine;
-import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.PathChain;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import dev.nextftc.core.commands.groups.SequentialGroup;
+import java.util.List;
+
+import dev.nextftc.core.components.BindingsComponent;
+import dev.nextftc.core.components.SubsystemComponent;
 import dev.nextftc.extensions.pedro.FollowPath;
 import dev.nextftc.extensions.pedro.PedroComponent;
 import dev.nextftc.ftc.NextFTCOpMode;
 import dev.nextftc.ftc.components.BulkReadComponent;
-import dev.nextftc.core.components.BindingsComponent;
-import dev.nextftc.core.components.SubsystemComponent;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.commands.AutoDriveTimeoutCmd;
-import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
-import org.firstinspires.ftc.teamcode.commands.RapidFireTimeoutCmd;
-import org.firstinspires.ftc.teamcode.commands.WaitCmd;
 import org.firstinspires.ftc.teamcode.constants.PedroConstants;
-import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
+import org.firstinspires.ftc.teamcode.opmodes.teleops.BlueTeleop;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.Turret2;
-import org.firstinspires.ftc.teamcode.opmodes.teleops.BlueTeleop;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-import java.util.List;
-
-@Autonomous(name = "FarBlueTrackingAuto")
-public class FarBlueTrackingAuto extends NextFTCOpMode {
+@Autonomous(name = "BlueTrackingAuto")
+public class BlueTrackingAuto extends NextFTCOpMode {
 
     private Follower follower;
-
     private PathChain path1;
-    private PathChain path2;
-    private PathChain path3;
-    private PathChain path4;
-    private PathChain path5;
-    private PathChain path6;
-    private PathChain path7;
 
     // Tracking settings (from CompTurretSystem / BlueTeleop)
     public static int TARGET_TAG_ID = 20;
     public static double BLUE_GOAL_X = -72.0;
     public static double BLUE_GOAL_Y = -72.0;
-    public static double START_X = 0.0;
-    public static double START_Y = 0.0;
-    public static double START_HEADING = 90.0;
+    public static double START_X = 56.0;
+    public static double START_Y = 8.0;
+    public static double START_HEADING = 180.0;
 
     public static double VISION_TRACKING_GAIN = 0.3;
     public static double VISION_TIMEOUT_SEC = 0.5;
@@ -81,7 +64,7 @@ public class FarBlueTrackingAuto extends NextFTCOpMode {
     private double lastVisionAngle = 0.0;
     private double smoothedTurretAngle = 0.0;
 
-    public FarBlueTrackingAuto() {
+    public BlueTrackingAuto() {
         addComponents(
                 new SubsystemComponent(
                         Intake.INSTANCE,
@@ -95,96 +78,20 @@ public class FarBlueTrackingAuto extends NextFTCOpMode {
     }
 
     public void buildPaths() {
-
         path1 = follower.pathBuilder().addPath(
                         new BezierLine(
                                 new Pose(56.000, 8.000),
-
                                 new Pose(3, 8.322)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
-                .build();
-
-        path2 = follower.pathBuilder().addPath(
-                        new BezierLine(
-                                new Pose(3, 8.322),
-                                new Pose(56.000, 8)
-                        )
-                ).setTangentHeadingInterpolation()
-                .setReversed()
-                .build();
-
-
-        path3 = follower.pathBuilder().addPath(
-                        new BezierCurve(
-                                new Pose(56.000, 8),
-                                new Pose(48.548, 38.514),
-                                new Pose(18.597, 35.774)
-                        )
-                ).setTangentHeadingInterpolation()
-                .build();
-
-        path4 = follower.pathBuilder()
-                .addPath(new BezierCurve(
-                                new Pose(18.597, 35.774),
-                                new Pose(21.990, 33.279),
-                                new Pose(25.383, 30.784),
-                                new Pose(28.776, 28.289),
-                                new Pose(32.169, 25.794),
-                                new Pose(35.561, 23.299),
-                                new Pose(38.954, 20.804),
-                                new Pose(42.347, 18.309),
-                                new Pose(45.740, 15.813),
-                                new Pose(49.132, 13.318),
-                                new Pose(56, 8)
-                        )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
-                .build();
-
-        path5 = follower.pathBuilder().addPath(
-                        new BezierLine(
-                                new Pose(56, 8),
-                                new Pose(3, 27)
-                        )
-                ).setTangentHeadingInterpolation()
-                .build();
-
-        path6 = follower.pathBuilder().addPath(
-                        new BezierLine(
-                                new Pose(3, 27),
-                                new Pose(56, 8)
-                        )
-                ).setTangentHeadingInterpolation()
-                .setReversed()
-                .build();
-
-        path7 = follower.pathBuilder().addPath(
-                        new BezierLine(
-                                new Pose(56, 8),
-                                new Pose(36, 8)
-                        )
-                ).setTangentHeadingInterpolation()
-                .setReversed()
                 .build();
     }
 
     @Override
     public void onInit() {
-        // CRITICAL: Reset all subsystem state from previous runs
-        Shooter.INSTANCE.stop();
-        Intake.INSTANCE.setIntakePower(0.0);
-        Intake.INSTANCE.setTransferPower(0.0);
-
-        // Reset hood to lower angle for far shots
-        Shooter.INSTANCE.setHood(ShooterConstants.farHoodPos).schedule();
-
-        // Close door on init
-        Intake.INSTANCE.moveServoPos().schedule();
-
         // Reset turret angle
         Turret2.INSTANCE.setAngle(0.0);
         Turret2.INSTANCE.goToAngle(0.0);
-        Shooter.INSTANCE.stop();
 
         // Initialize odometry for tracking
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
@@ -220,77 +127,7 @@ public class FarBlueTrackingAuto extends NextFTCOpMode {
 
     @Override
     public void onStartButtonPressed() {
-        Shooter.INSTANCE.runRPM(ShooterConstants.farTargetRPM).schedule();
-
-        new SequentialGroup(
-                Turret2.INSTANCE.goToAngle(85.0),
-                Intake.INSTANCE.defaultPos(),
-                WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(1500),
-                Intake.INSTANCE.moveServoPos(),
-                IntakeSeqCmd.create(),
-                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
-                new FollowPath(path2),
-                Intake.INSTANCE.zeroPowerIntake(),
-                Intake.INSTANCE.zeroPowerTransfer(),
-////
-                // SHOOT collected balls
-                Intake.INSTANCE.defaultPos(),
-                WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(1500),
-//
-//                // Cycle 2: Drive and collect
-                Intake.INSTANCE.moveServoPos(),
-                IntakeSeqCmd.create(),
-                new FollowPath(path3),
-                new FollowPath(path4),
-                Intake.INSTANCE.zeroPowerIntake(),
-                Intake.INSTANCE.zeroPowerTransfer(),
-//
-//                // SHOOT
-                Intake.INSTANCE.defaultPos(),
-                WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(1500)
-//
-//                // Cycle 3: Drive and collect
-//                Intake.INSTANCE.moveServoPos(),
-//                IntakeSeqCmd.create(),
-//                AutoDriveTimeoutCmd.create(new FollowPath(path5),2),
-//                new FollowPath(path6),
-//                Intake.INSTANCE.zeroPowerIntake(),
-//                Intake.INSTANCE.zeroPowerTransfer(),
-//
-//                // SHOOT
-//                Intake.INSTANCE.defaultPos(),
-//                RapidFireTimeoutCmd.create(3000),
-//
-//                // Cycle 4: Drive and collect
-//                Intake.INSTANCE.moveServoPos(),
-//                IntakeSeqCmd.create(),
-//                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
-//                new FollowPath(path2),
-//                Intake.INSTANCE.zeroPowerIntake(),
-//                Intake.INSTANCE.zeroPowerTransfer(),
-//
-//                // SHOOT
-//                Intake.INSTANCE.defaultPos(),
-//                RapidFireTimeoutCmd.create(3000),
-//
-//                // Cycle 5: Drive and collect
-//                Intake.INSTANCE.moveServoPos(),
-//                IntakeSeqCmd.create(),
-//                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
-//                new FollowPath(path2),
-//                Intake.INSTANCE.zeroPowerIntake(),
-//                Intake.INSTANCE.zeroPowerTransfer(),
-//
-//                // FINAL SHOOT
-//                Intake.INSTANCE.defaultPos(),
-//                RapidFireTimeoutCmd.create(3000),
-//
-//                // Final positioning
-//                new FollowPath(path7)
-        ).invoke();
+        new FollowPath(path1).schedule();
     }
 
     @Override
