@@ -103,7 +103,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                         new BezierCurve(
                                 new Pose(55.000, 84.500),
                                 new Pose(33.000, 63.000),
-                                new Pose(15.500, 67.000)
+                                new Pose(14.500, 67.000)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(210), Math.toRadians(180))
 
@@ -111,16 +111,16 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
         path6 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(15.500, 67.000),
+                                new Pose(14.500, 67.000),
                                 new Pose(13.000, 59.000),
-                                new Pose(8.000, 57.500)
+                                new Pose(7.500, 57.000)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(110))
                 .build();
 
         path7 = follower.pathBuilder()
                 .addPath(new BezierLine(
-                        new Pose(8.000, 57.500),
+                        new Pose(7.500, 57.000),
                         new Pose(55.000, 84.500)
                 ))
                 .setLinearHeadingInterpolation(
@@ -141,14 +141,14 @@ public class CloseBlueAuto extends NextFTCOpMode {
         path9 = follower.pathBuilder().addPath(
                         new BezierLine(
                                 new Pose(40.000, 85.500),
-                                new Pose(20.000, 85.500)
+                                new Pose(15.000, 85.500)
                         )
                 ).setTangentHeadingInterpolation()
                 .build();
 
         path10 = follower.pathBuilder()
                 .addPath(new BezierLine(
-                        new Pose(10.000, 85.500),
+                        new Pose(15.000, 85.500),
                         new Pose(55.000, 109.000)
                 ))
                 .setLinearHeadingInterpolation(
@@ -183,52 +183,51 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
                 Intake.INSTANCE.defaultPos(),
-                WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(900),
+                WaitCmd.create(0.2),
+                RapidFireTimeoutCmd.create(1100),
                 Intake.INSTANCE.moveServoPos(),
                 new FollowPath(path2),
                 IntakeSeqCmd.create(),
                 new FollowPath(path3),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(90.0),
+                Turret2.INSTANCE.goToAngle(80.0),
                 new FollowPath(path4),
                 Intake.INSTANCE.defaultPos(),
-                WaitCmd.create(0.25),
+                WaitCmd.create(0.2),
                 RapidFireTimeoutCmd.create(900),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 new FollowPath(path5),
                 new FollowPath(path6),
-                WaitCmd.create(0.5),
-                new FollowPath(path7),
+                WaitCmd.create(0.3),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
+                new FollowPath(path7),
                 Intake.INSTANCE.defaultPos(),
-                WaitCmd.create(0.25),
+                WaitCmd.create(0.2),
                 RapidFireTimeoutCmd.create(900),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 new FollowPath(path5),
                 new FollowPath(path6),
-                WaitCmd.create(0.5),
-                new FollowPath(path7),
+                WaitCmd.create(0.3),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
+                new FollowPath(path7),
                 Intake.INSTANCE.defaultPos(),
-                WaitCmd.create(0.25),
+                WaitCmd.create(0.2),
                 RapidFireTimeoutCmd.create(900),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 new FollowPath(path5),
-                WaitCmd.create(0.5),
                 new FollowPath(path6),
-                WaitCmd.create(0.5),
-                new FollowPath(path7),
+                WaitCmd.create(0.3),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
+                new FollowPath(path7),
                 Intake.INSTANCE.defaultPos(),
-                WaitCmd.create(0.25),
+                WaitCmd.create(0.2),
                 RapidFireTimeoutCmd.create(900),
                 Intake.INSTANCE.moveServoPos(),
                 new FollowPath(path8),
@@ -236,11 +235,11 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 new FollowPath(path9),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(70.0),
-                Shooter.INSTANCE.setHood(ShooterConstants.servoPos + 0.4),
+                Turret2.INSTANCE.goToAngle(55.0),
+                Shooter.INSTANCE.setHood(ShooterConstants.servoPos + 0.5),
                 new FollowPath(path10),
                 Intake.INSTANCE.defaultPos(),
-                WaitCmd.create(0.25),
+                WaitCmd.create(0.2),
                 RapidFireTimeoutCmd.create(900),
                 Intake.INSTANCE.moveServoPos()
         ).invoke();

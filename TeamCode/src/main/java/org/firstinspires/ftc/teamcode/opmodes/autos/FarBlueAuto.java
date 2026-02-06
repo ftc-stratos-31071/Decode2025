@@ -70,15 +70,15 @@ public class FarBlueAuto extends NextFTCOpMode {
                         new BezierLine(
                                 new Pose(56.000, 8.000),
 
-                                new Pose(3, 8.322)
+                                new Pose(3, 10.322)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
 
         path2 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(3, 8.322),
-                                new Pose(56.000, 8)
+                                new Pose(3, 10.322),
+                                new Pose(56.000, 10)
                         )
                 ).setTangentHeadingInterpolation()
                 .setReversed()
@@ -87,16 +87,16 @@ public class FarBlueAuto extends NextFTCOpMode {
 
         path3 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(56.000, 8),
+                                new Pose(56.000, 10),
                                 new Pose(48.548, 38.514),
-                                new Pose(18.597, 35.774)
+                                new Pose(13.597, 35.774)
                         )
                 ).setTangentHeadingInterpolation()
                 .build();
 
         path4 = follower.pathBuilder()
                 .addPath(new BezierCurve(
-                                new Pose(18.597, 35.774),
+                                new Pose(13.597, 35.774),
                                 new Pose(21.990, 33.279),
                                 new Pose(25.383, 30.784),
                                 new Pose(28.776, 28.289),
@@ -106,14 +106,14 @@ public class FarBlueAuto extends NextFTCOpMode {
                                 new Pose(42.347, 18.309),
                                 new Pose(45.740, 15.813),
                                 new Pose(49.132, 13.318),
-                                new Pose(56, 8)
+                                new Pose(56, 10)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
 
         path5 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(56, 8),
+                                new Pose(56, 10),
                                 new Pose(3, 27)
                         )
                 ).setTangentHeadingInterpolation()
@@ -122,15 +122,15 @@ public class FarBlueAuto extends NextFTCOpMode {
         path6 = follower.pathBuilder().addPath(
                         new BezierLine(
                                 new Pose(3, 27),
-                                new Pose(56, 8)
+                                new Pose(56, 10)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
 
         path7 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(56, 8),
-                                new Pose(36, 8)
+                                new Pose(56, 10),
+                                new Pose(36, 10)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
@@ -165,10 +165,10 @@ public class FarBlueAuto extends NextFTCOpMode {
     public void onStartButtonPressed() {
         Shooter.INSTANCE.runRPM(4650).schedule();
         new SequentialGroup(
-                Turret2.INSTANCE.goToAngle(70.0),
+                Turret2.INSTANCE.goToAngle(75.0),
                 Intake.INSTANCE.defaultPos(),
-                WaitCmd.create(0.25),
-                RapidFireTimeoutCmdFar.create(3000),
+                WaitCmd.create(0.5),
+                RapidFireTimeoutCmdFar.create(2000),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
@@ -179,7 +179,7 @@ public class FarBlueAuto extends NextFTCOpMode {
                 // SHOOT collected balls
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),// OPEN door (0.7)
-                RapidFireTimeoutCmdFar.create(3000), // 1000ms timeout
+                RapidFireTimeoutCmdFar.create(2000), // 1000ms timeout
 //
 //                // Cycle 2: Drive and collect
                 Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
@@ -192,7 +192,7 @@ public class FarBlueAuto extends NextFTCOpMode {
 //                // SHOOT
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),// OPEN door (0.7)
-                RapidFireTimeoutCmdFar.create(3000),  // 1000ms timeout
+                RapidFireTimeoutCmdFar.create(2000),  // 1000ms timeout
 //
 //                // Cycle 3: Drive and collect
                 Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
@@ -205,34 +205,28 @@ public class FarBlueAuto extends NextFTCOpMode {
 //                // SHOOT
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),// OPEN door (0.7)
-                RapidFireTimeoutCmdFar.create(3000)  // 1000ms timeout
+                RapidFireTimeoutCmdFar.create(2000),  // 1000ms timeout
 //
 //                // Cycle 4: Drive and collect
-//                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
-//                IntakeSeqCmd.create(),
-//                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
-//                new FollowPath(path2),
-//                Intake.INSTANCE.zeroPowerIntake(),
-//                Intake.INSTANCE.zeroPowerTransfer(),
+                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
+                IntakeSeqCmd.create(),
+                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
+                new FollowPath(path2),
+                Intake.INSTANCE.zeroPowerIntake(),
+                Intake.INSTANCE.zeroPowerTransfer(),
 //
 //                // SHOOT
-//                Intake.INSTANCE.defaultPos(),  // OPEN door (0.7)
-//                RapidFireTimeoutCmd.create(3000),  // 1000ms timeout
+                Intake.INSTANCE.defaultPos(),
+                WaitCmd.create(0.25),// OPEN door (0.7)
+                RapidFireTimeoutCmdFar.create(2000),  // 1000ms timeout
 //
 //                // Cycle 5: Drive and collect
-//                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
-//                IntakeSeqCmd.create(),
-//                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
-//                new FollowPath(path2),
-//                Intake.INSTANCE.zeroPowerIntake(),
-//                Intake.INSTANCE.zeroPowerTransfer(),
-//
-//                // FINAL SHOOT
-//                Intake.INSTANCE.defaultPos(),  // OPEN door (0.7)
-//                RapidFireTimeoutCmd.create(3000),  // 1000ms timeout
+                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
+                Intake.INSTANCE.zeroPowerIntake(),
+                Intake.INSTANCE.zeroPowerTransfer(),
 //
 //                // Final positioning (door can stay open or close - doesn't matter)
-//                new FollowPath(path7)
+                new FollowPath(path7)
         ).invoke();
     }
 
