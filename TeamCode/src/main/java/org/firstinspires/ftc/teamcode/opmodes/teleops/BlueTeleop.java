@@ -62,6 +62,10 @@ public class BlueTeleop extends NextFTCOpMode {
     public static double START_X = 0.0;
     public static double START_Y = 0.0;
     public static double START_HEADING = 90.0;
+    public static boolean USE_AUTO_START_POSE = false;
+    public static double AUTO_START_X = 0.0;
+    public static double AUTO_START_Y = 0.0;
+    public static double AUTO_START_HEADING = 90.0;
 
     // Vision tracking settings
     public static double VISION_TRACKING_GAIN = 0.3;
@@ -113,7 +117,10 @@ public class BlueTeleop extends NextFTCOpMode {
         // Initialize odometry
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.resetPosAndIMU();
-        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, START_X, START_Y, AngleUnit.DEGREES, START_HEADING));
+        double initX = USE_AUTO_START_POSE ? AUTO_START_X : START_X;
+        double initY = USE_AUTO_START_POSE ? AUTO_START_Y : START_Y;
+        double initHeading = USE_AUTO_START_POSE ? AUTO_START_HEADING : START_HEADING;
+        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, initX, initY, AngleUnit.DEGREES, initHeading));
 
         Shooter.INSTANCE.setHood(hoodPos).schedule();
         Shooter.INSTANCE.setTargetRPM(0.0);
