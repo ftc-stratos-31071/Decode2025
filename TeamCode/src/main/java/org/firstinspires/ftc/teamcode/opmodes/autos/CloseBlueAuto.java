@@ -160,11 +160,11 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
     @Override
     public void onInit() {
-        Shooter.INSTANCE.setHood(ShooterConstants.servoPos).schedule();
         Intake.INSTANCE.moveServoPos().schedule();
         Shooter.INSTANCE.setTargetRPM(0.0);
         Turret2.INSTANCE.setAngle(0.0);
-        Turret2.INSTANCE.goToAngle(0.0);
+        Turret2.INSTANCE.goToAngle(0.0).schedule();
+        Shooter.INSTANCE.setHood(ShooterConstants.servoPos).schedule();
         follower = PedroConstants.createFollower(hardwareMap);
         follower.setStartingPose(
                 new Pose(19.500, 123.500, Math.toRadians(142.5))
@@ -176,6 +176,8 @@ public class CloseBlueAuto extends NextFTCOpMode {
     public void onStartButtonPressed() {
         Shooter.INSTANCE.setTargetRPM(3700);
         Shooter.INSTANCE.runRPM(3700).schedule();
+        Shooter.INSTANCE.setHood(ShooterConstants.servoPos).schedule();
+        Turret2.INSTANCE.goToAngle(10.0).schedule();
         new SequentialGroup(
                 IntakeSeqCmd.create(),
                 new FollowPath(path1),
@@ -190,7 +192,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 new FollowPath(path3),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(90.0),
+                Turret2.INSTANCE.goToAngle(110.0),
                 new FollowPath(path4),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
@@ -235,8 +237,8 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 new FollowPath(path9),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(70.0),
-                Shooter.INSTANCE.setHood(ShooterConstants.servoPos),
+                Turret2.INSTANCE.goToAngle(80.0),
+                Shooter.INSTANCE.setHood(ShooterConstants.servoPos + 0.4),
                 new FollowPath(path10),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
