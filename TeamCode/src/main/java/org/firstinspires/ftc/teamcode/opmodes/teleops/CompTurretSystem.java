@@ -102,10 +102,10 @@ public class CompTurretSystem extends NextFTCOpMode {
     // GOAL POSITIONS:
     // - Blue Goal: On the Blue Alliance side (+Y direction), centered on X
     // - Red Goal: On the Red Wall side (-Y direction), centered on X
-    public static double RED_GOAL_X = 0.0;     // Centered on X axis
+    public static double RED_GOAL_X = 72.0;     // Centered on X axis
     public static double RED_GOAL_Y = -72.0;   // Red Wall side (-Y)
-    public static double BLUE_GOAL_X = 0.0;    // Centered on X axis
-    public static double BLUE_GOAL_Y = 72.0;   // Blue Alliance side (+Y)
+    public static double BLUE_GOAL_X = -72.0;    // Centered on X axis
+    public static double BLUE_GOAL_Y = -72.0;   // Blue Alliance side (+Y)
 
     // TUNABLE: Starting robot position (inches)
     // Robot starts in center of field

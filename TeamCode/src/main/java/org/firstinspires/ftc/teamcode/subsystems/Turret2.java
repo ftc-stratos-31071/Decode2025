@@ -46,7 +46,7 @@ public class Turret2 implements Subsystem {
      * The RAW servo angle (in degrees) when the turret faces straight forward.
      * TUNE THIS: Run Turret2Tuner, find where turret faces forward, use that value.
      */
-    public static double PHYSICAL_CENTER_RAW = 240.0;  //final value
+    public static double PHYSICAL_CENTER_RAW = 180.0;  //final value
 
     /**
      * Maximum rotation from center (in logical degrees).
