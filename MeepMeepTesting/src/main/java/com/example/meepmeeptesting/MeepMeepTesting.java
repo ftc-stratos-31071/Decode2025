@@ -28,9 +28,9 @@ public class MeepMeepTesting {
 //        );
 
                 Pose2d startPose = new Pose2d(
-                62.5,                  // x
-                -13.0,                  // y
-                Math.toRadians(230.0) // heading
+                72.0,                  // x
+                0.0,                  // y
+                Math.toRadians(180.0) // heading
         );
 
 
@@ -90,15 +90,7 @@ public class MeepMeepTesting {
 //                        .setReversed(false)
 //                        .strafeTo(new Vector2d(-12.0, 40.0))
 
-                        .strafeTo(new Vector2d(62.0, -13.0))
-                        .strafeToSplineHeading(
-                                new Vector2d(51.0, -70.5),
-                                Math.toRadians(270.0))
-                        .turnTo(Math.toRadians(295.0))
-                        .strafeToLinearHeading(
-                                new Vector2d(61.5, -10.5),
-                                Math.toRadians(180.0))
-                        .strafeTo(new Vector2d(61.5, -45.0))
+                        .strafeTo(new Vector2d(-72.0, 0.0))
                         .build()
         );
 

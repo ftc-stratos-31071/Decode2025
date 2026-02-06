@@ -100,7 +100,7 @@ public class BlueTrackingAuto extends NextFTCOpMode {
 
     @Override
     public void onInit() {
-        follower = PedroConstants.createFollower(hardwareMap);
+        follower = PedroComponent.follower();
         follower.setStartingPose(
                 new Pose(START_X, START_Y, Math.toRadians(START_HEADING))
         );

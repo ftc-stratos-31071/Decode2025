@@ -245,4 +245,3 @@ public class FarBlueAuto extends NextFTCOpMode {
         telemetry.update();
     }
 }
-
