@@ -103,7 +103,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                         new BezierCurve(
                                 new Pose(55.000, 84.500),
                                 new Pose(33.000, 63.000),
-                                new Pose(16.500, 67.000)
+                                new Pose(14.500, 67.000)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(210), Math.toRadians(180))
 
@@ -111,20 +111,20 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
         path6 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(16.500, 67.000),
+                                new Pose(14.500, 67.000),
                                 new Pose(13.000, 59.000),
-                                new Pose(11.000, 58.000)
+                                new Pose(8.000, 57.500)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(120))
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(110))
                 .build();
 
         path7 = follower.pathBuilder()
                 .addPath(new BezierLine(
-                        new Pose(11.000, 58.000),
+                        new Pose(8.000, 57.500),
                         new Pose(55.000, 84.500)
                 ))
                 .setLinearHeadingInterpolation(
-                        Math.toRadians(120),
+                        Math.toRadians(110),
                         Math.toRadians(210)
                 )
                 .build();
@@ -164,7 +164,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
         Intake.INSTANCE.moveServoPos().schedule();
         Shooter.INSTANCE.setTargetRPM(0.0);
         Turret2.INSTANCE.setAngle(0.0);
-        Turret2.INSTANCE.goToAngle(-10.0);
+        Turret2.INSTANCE.goToAngle(0.0);
         follower = PedroConstants.createFollower(hardwareMap);
         follower.setStartingPose(
                 new Pose(19.500, 123.500, Math.toRadians(142.5))
@@ -180,67 +180,62 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 new FollowPath(path1),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(1000),
-                WaitCmd.create(0.25),
+                RapidFireTimeoutCmd.create(800),
                 Intake.INSTANCE.moveServoPos(),
                 new FollowPath(path2),
                 IntakeSeqCmd.create(),
                 new FollowPath(path3),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(50.0),
+                Turret2.INSTANCE.goToAngle(90.0),
                 new FollowPath(path4),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(1000),
-                WaitCmd.create(0.25),
+                RapidFireTimeoutCmd.create(800),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 new FollowPath(path5),
                 new FollowPath(path6),
                 WaitCmd.create(1.0),
+                new FollowPath(path7),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                new FollowPath(path7),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(1000),
-                WaitCmd.create(0.25),
+                RapidFireTimeoutCmd.create(800),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 new FollowPath(path5),
                 new FollowPath(path6),
                 WaitCmd.create(1.0),
+                new FollowPath(path7),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                new FollowPath(path7),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(1000),
-                WaitCmd.create(0.25),
+                RapidFireTimeoutCmd.create(800),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 new FollowPath(path5),
                 new FollowPath(path6),
                 WaitCmd.create(1.0),
+                new FollowPath(path7),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                new FollowPath(path7),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(1000),
-                WaitCmd.create(0.25),
+                RapidFireTimeoutCmd.create(800),
                 Intake.INSTANCE.moveServoPos(),
                 new FollowPath(path8),
                 IntakeSeqCmd.create(),
                 new FollowPath(path9),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
+                Turret2.INSTANCE.goToAngle(75.0),
                 new FollowPath(path10),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(1000),
-                WaitCmd.create(0.25),
+                RapidFireTimeoutCmd.create(800),
                 Intake.INSTANCE.moveServoPos()
         ).invoke();
     }

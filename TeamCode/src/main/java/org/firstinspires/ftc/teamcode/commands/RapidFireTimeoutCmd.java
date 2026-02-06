@@ -19,8 +19,8 @@ public class RapidFireTimeoutCmd {
     public static Command create(double timeoutMs) {
         // Create the shooting sequence
         Command shootingSequence = new SequentialGroup(
-//                WaitCmd.create(0.25),
-                ShootBallSteadyCmd.create(IntakeConstants.shootPower, 100)
+                WaitCmd.create(0.25),
+                ShootBallSteadyCmd.create(IntakeConstants.shootPower, 1000)
         );
 
         // Wrap it with timeout logic (convert ms to seconds)

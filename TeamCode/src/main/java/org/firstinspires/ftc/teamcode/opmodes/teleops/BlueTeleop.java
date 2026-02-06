@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.LaserRangefinder;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
-import org.firstinspires.ftc.teamcode.subsystems.Turret;
+import org.firstinspires.ftc.teamcode.subsystems.Turret2;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -40,7 +40,7 @@ public class BlueTeleop extends NextFTCOpMode {
 
     public BlueTeleop() {
         addComponents(
-                new SubsystemComponent(Intake.INSTANCE, Shooter.INSTANCE),
+                new SubsystemComponent(Intake.INSTANCE, Shooter.INSTANCE, Turret2.INSTANCE),
                 BulkReadComponent.INSTANCE,
                 BindingsComponent.INSTANCE
         );
@@ -48,6 +48,7 @@ public class BlueTeleop extends NextFTCOpMode {
 
     public static boolean AUTO_TRACK_ENABLED = true;
     public static double NO_TARGET_TIMEOUT_SEC = 0.5;
+    public static double SMOOTHING = 0.2;
 
     private final MotorEx frontLeftMotor  = new MotorEx("frontLeftMotor").brakeMode().reversed();
     private final MotorEx frontRightMotor = new MotorEx("frontRightMotor").brakeMode().reversed();
@@ -66,19 +67,22 @@ public class BlueTeleop extends NextFTCOpMode {
     private double driveScale = 1.0;
 
     private boolean shooterOn = false;
+    private boolean farOn = false;
     private double hoodPos = ShooterConstants.servoPos;
-    private double turretPos = 230.0;
-    public static double TURRET_MULTIPLIER = 1.25;
+    private double turretPos = 0.0;
+    public static double TURRET_MULTIPLIER = 1.85;
     private long lastTurretUpdateTime = 0;
     private double targetRpm = ShooterConstants.closeTargetRPM;
 
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
-    private double motorTargetX = 230.0;
+    private double motorTargetX = 0.0;
     private boolean hasSeenTarget = false;
     private long lastTargetSeenTime = 0;
     private boolean ballCountingEnabled = true;
+    private double smoothedTx = 0.0;
+    public static double TURRET_MAX_SPEED_DEG_PER_SEC = 30.0;
 
 
 
@@ -89,8 +93,7 @@ public class BlueTeleop extends NextFTCOpMode {
         Shooter.INSTANCE.setTargetRPM(0.0);
         Shooter.INSTANCE.runRPM(0.0).schedule();
 
-        Turret.INSTANCE.setTurretAngleDeg(230.0);
-        Turret.INSTANCE.goToAngle(230.0);
+        Turret2.INSTANCE.setAngle(0.0);
         Intake.INSTANCE.moveServoPos().schedule();
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
@@ -101,8 +104,8 @@ public class BlueTeleop extends NextFTCOpMode {
         rangefinder.setDistanceMode(LaserRangefinder.DistanceMode.SHORT);
         rangefinder.setTiming(20, 0);
 
-        motorTargetX = 230.0;
-        turretPos = 230.0;
+        motorTargetX = 0.0;
+        turretPos = 0.0;
         lastTurretUpdateTime = System.currentTimeMillis();
         hasSeenTarget = false;
         lastTargetSeenTime = System.currentTimeMillis();
@@ -128,9 +131,9 @@ public class BlueTeleop extends NextFTCOpMode {
     @Override
     public void onStartButtonPressed() {
         Intake.INSTANCE.moveServoPos().schedule();
-        turretPos = 230.0;
-        motorTargetX = 230.0;
-        Turret.INSTANCE.setTurretAngleDeg(turretPos);
+        turretPos = 0.0;
+        motorTargetX = 0.0;
+        Turret2.INSTANCE.setAngle(0.0);
         lastTurretUpdateTime = System.currentTimeMillis(); // reset timer
 
         var forward = Gamepads.gamepad1().leftStickY().negate().map(v -> v * driveScale);
@@ -210,14 +213,17 @@ public class BlueTeleop extends NextFTCOpMode {
             Shooter.INSTANCE.setHood(hoodPos).schedule();
         });
 
-        Gamepads.gamepad2().dpadRight().whenBecomesTrue(() -> {
-            turretPos = turretPos + 10;
-            Turret.INSTANCE.goToAngle(turretPos).schedule();
-        });
+        Gamepads.gamepad1().y().whenBecomesTrue(() -> {
+            farOn = !farOn;
 
-        Gamepads.gamepad2().dpadLeft().whenBecomesTrue(() -> {
-            turretPos = turretPos - 10;
-            Turret.INSTANCE.goToAngle(turretPos).schedule();
+            if (farOn) {
+                targetRpm = ShooterConstants.farTargetRPM;
+                Shooter.INSTANCE.runRPM(ShooterConstants.farTargetRPM).schedule();
+            }
+            else {
+                targetRpm = ShooterConstants.closeTargetRPM;
+                Shooter.INSTANCE.runRPM(ShooterConstants.closeTargetRPM).schedule();
+            }
         });
 
         Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
@@ -269,8 +275,15 @@ public class BlueTeleop extends NextFTCOpMode {
                     sawTargetThisLoop = true;
                     lastTargetSeenTime = System.currentTimeMillis();
 
-                    double offsetFromCenter = -tag.ftcPose.bearing; // bearing is +right, -left
-                    motorTargetX = 230.0 + offsetFromCenter * TURRET_MULTIPLIER;
+                    double rawTx = 0.0 - tag.ftcPose.bearing;
+
+                    if (!hasSeenTarget) {
+                        smoothedTx = rawTx;
+                    }
+
+                    double error = rawTx - smoothedTx;
+                    smoothedTx += error * SMOOTHING;
+                    motorTargetX = smoothedTx;
                     break;
                 }
             }
@@ -280,13 +293,23 @@ public class BlueTeleop extends NextFTCOpMode {
 
         if (!hasSeenTarget &&
                 System.currentTimeMillis() - lastTargetSeenTime > NO_TARGET_TIMEOUT_SEC * 1000) {
-            motorTargetX = 230.0;
+            motorTargetX = 0.0;
+            smoothedTx = 0.0;
         }
+
+        double dt = (now - lastTurretUpdateTime) / 1000.0;
         lastTurretUpdateTime = now;
 
-        turretPos = motorTargetX;
+        double error = motorTargetX - turretPos;
+        double maxStep = TURRET_MAX_SPEED_DEG_PER_SEC * dt;
 
-        Turret.INSTANCE.setTurretAngleDeg(turretPos);
+        if (Math.abs(error) > maxStep) {
+            turretPos += Math.signum(error) * maxStep;
+        } else {
+            turretPos = motorTargetX;
+        }
+
+        Turret2.INSTANCE.setAngle(turretPos*TURRET_MULTIPLIER);
 
         telemetry.addData("Ball Count", ballCount);
         telemetry.addData("Range (mm)", distance);
@@ -298,7 +321,7 @@ public class BlueTeleop extends NextFTCOpMode {
         double currentRPM = (rightRPM + leftRPM) / 2.0;
         telemetry.addData("Current RPM", currentRPM);
         telemetry.addData("Hood Position", hoodPos);
-        telemetry.addData("Current Turret Deg", Turret.INSTANCE.getTargetTurretDeg());
+        telemetry.addData("Current Turret Deg", Turret2.INSTANCE.getCurrentLogicalDeg());
 
         telemetry.update();
     }
