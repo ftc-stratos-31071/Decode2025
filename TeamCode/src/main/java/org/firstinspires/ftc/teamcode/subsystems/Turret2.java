@@ -15,6 +15,11 @@ import dev.nextftc.hardware.impl.ServoEx;
  * - "Logical Angle" = User-friendly angle where 0° = turret facing forward
  * - PHYSICAL_CENTER_RAW = The raw servo angle when turret faces forward
  *
+ * PHYSICAL BEHAVIOR (TESTED):
+ * - Positive logical angles (+45°) = Turret turns RIGHT
+ * - Negative logical angles (-45°) = Turret turns LEFT
+ * - 0° = Turret facing straight forward
+ *
  * TUNING PROCESS:
  * 1. Run Turret2Tuner OpMode
  * 2. Use bumpers to manually find the position where turret faces straight forward
@@ -61,7 +66,7 @@ public class Turret2 implements Subsystem {
     // STATE
     // ═══════════════════════════════════════════════════════════════════
 
-    /** Current target in LOGICAL degrees (0 = forward, positive = left, negative = right) */
+    /** Current target in LOGICAL degrees (0 = forward, positive = RIGHT, negative = LEFT) */
     private double targetLogicalDeg = 0.0;
 
     /** Current raw angle being sent to servos */
@@ -74,8 +79,8 @@ public class Turret2 implements Subsystem {
     /**
      * Set turret angle in LOGICAL coordinates.
      * 0° = facing forward
-     * Positive = rotate left
-     * Negative = rotate right
+     * Positive = rotate RIGHT
+     * Negative = rotate LEFT
      */
     public void setAngle(double logicalDeg) {
         // Clamp to allowed range

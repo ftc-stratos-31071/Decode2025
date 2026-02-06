@@ -283,12 +283,17 @@ public class CompTurretSystem extends NextFTCOpMode {
                     // - POSITIVE bearing = tag is to the RIGHT of camera center
                     // - NEGATIVE bearing = tag is to the LEFT of camera center
                     //
-                    // Our Turret2 convention (TESTED with -45° and +45°):
-                    // - POSITIVE angle = turret points RIGHT
-                    // - NEGATIVE angle = turret points LEFT
+                    // Turret2 ACTUAL PHYSICAL BEHAVIOR (confirmed by testing with Turret2Tuner):
+                    // - When you command +45°, turret physically turns RIGHT
+                    // - When you command -45°, turret physically turns LEFT
                     //
-                    // These conventions MATCH, so we use tagBearing directly (no negation)
-                    // Example: tag at +10° right → turret turns +10° right to center it
+                    // However, Turret2's INTERNAL coordinate system is INVERTED:
+                    // - Turret2.java comment says: "positive = left, negative = right"
+                    // - But physically it does the OPPOSITE
+                    //
+                    // Therefore, to center a tag:
+                    // - Tag at +10° RIGHT → Need turret RIGHT → Command would be +10° (but Turret2 inverts it internally)
+                    // - We must NEGATE to compensate: -10° gets inverted to +10° physically = RIGHT
                     tagBearing = tag.ftcPose.bearing;
                     lastTagSeenTime = System.currentTimeMillis();
                     break;
@@ -312,16 +317,16 @@ public class CompTurretSystem extends NextFTCOpMode {
 
             if (Math.abs(tagBearing) > VISION_DEADBAND_DEG) {
                 // VISION TRACKING LOGIC:
-                // - tagBearing: positive = tag is to the RIGHT of camera center
-                // - Turret angles (TESTED): NEGATIVE = LEFT, POSITIVE = RIGHT
-                // - To follow tag: if tag is RIGHT (+bearing), turn turret RIGHT (+angle)
-                // - Signs match, so: turretCorrection = +tagBearing
+                // - AprilTag tagBearing: POSITIVE = tag to RIGHT, NEGATIVE = tag to LEFT
+                // - Turret2 internal system: POSITIVE = LEFT, NEGATIVE = RIGHT (INVERTED!)
+                // - To center tag on RIGHT (+bearing), turret turns RIGHT (NEGATIVE angle)
+                // - Therefore: turretCorrection = -tagBearing (NEGATE to match Turret2 coords)
 
                 // Get current turret angle
                 double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
 
-                // Calculate incremental correction with gain
-                double correction = tagBearing * VISION_TRACKING_GAIN;
+                // Calculate incremental correction with gain and NEGATION for Turret2's inverted system
+                double correction = -tagBearing * VISION_TRACKING_GAIN;
 
                 // Apply correction to current angle
                 double desiredAngle = currentTurretAngle + correction;
