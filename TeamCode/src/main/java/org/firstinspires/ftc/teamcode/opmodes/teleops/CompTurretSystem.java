@@ -117,9 +117,10 @@ public class CompTurretSystem extends NextFTCOpMode {
     public static double START_HEADING = 90.0; // Facing toward Blue goal (adjust based on actual start)
 
     // TUNABLE: AprilTag tracking settings
-    public static double VISION_TRACKING_GAIN = 0.3; // Reduced further - controls how fast we move toward target
-    public static double VISION_TIMEOUT_SEC = 1.5; // Time without tag before odometry takes over (was 1.0)
-    public static double VISION_DEADBAND_DEG = 1.0; // Don't adjust if within this range
+    public static double VISION_TRACKING_GAIN = 0.5; // How aggressively to correct toward target (0.0-1.0)
+    public static double VISION_TIMEOUT_SEC = 3.0; // Time without tag before odometry takes over
+    public static double VISION_DEADBAND_DEG = 3.0; // Don't adjust if within this range (increased for stability)
+    public static double VISION_SMOOTHING = 0.7; // Smoothing factor (0.0-1.0, higher = smoother but slower)
 
     // TUNABLE: Enable/disable tracking system
     public static boolean TRACKING_ENABLED = true;
@@ -133,6 +134,8 @@ public class CompTurretSystem extends NextFTCOpMode {
     private long lastTagSeenTime = 0;
     private double targetGlobalHeading = 0.0;
     private boolean poseCalibrated = false;
+    private double lastVisionAngle = 0.0; // Store last good vision angle for hold mode
+    private double smoothedTurretAngle = 0.0; // Smoothed turret angle for stability
 
     public CompTurretSystem() {
         addComponents(
@@ -305,22 +308,36 @@ public class CompTurretSystem extends NextFTCOpMode {
                 // - Tag on RIGHT (positive bearing) -> turret moves RIGHT (positive turret angle)
                 // - Tag on LEFT (negative bearing) -> turret moves LEFT (negative turret angle)
                 // Therefore: correction matches bearing sign (NO negation needed)
+
+                // CALCULATE ABSOLUTE TARGET ANGLE (not incremental correction)
+                // This prevents stacking corrections on top of each other
                 double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
-                double correction = tagBearing * VISION_TRACKING_GAIN;  // NO negation - signs match!
-                targetTurretAngle = currentTurretAngle + correction;
+
+                // The target is simply: current angle + bearing correction
+                // But apply gain to prevent overshooting
+                double desiredAngle = currentTurretAngle + (tagBearing * VISION_TRACKING_GAIN);
+
+                // Apply smoothing to prevent jitter
+                targetTurretAngle = smoothedTurretAngle * VISION_SMOOTHING + desiredAngle * (1.0 - VISION_SMOOTHING);
 
                 // Clamp to turret limits
                 targetTurretAngle = Math.max(-Turret2.MAX_ROTATION,
                                             Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
+
+                // Store this as the last good vision angle
+                lastVisionAngle = targetTurretAngle;
+                smoothedTurretAngle = targetTurretAngle;
             } else {
-                // Within deadband - hold current position (tag is centered)
+                // Within deadband - tag is centered, LOCK position
                 targetTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
+                lastVisionAngle = targetTurretAngle;
+                smoothedTurretAngle = targetTurretAngle;
             }
         } else if (timeSinceLastTag < VISION_TIMEOUT_SEC) {
-            // ⏳ HOLD MODE: Tag was recently visible, hold position while waiting
-            // Don't move turret - just wait to see if tag comes back
-            visionMode = true; // Still in vision mode (holding)
-            targetTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
+            // ⏳ HOLD MODE: Tag was recently visible, hold the last good vision angle
+            // This prevents the turret from wandering when tag is briefly occluded
+            visionMode = true;
+            targetTurretAngle = lastVisionAngle; // Hold the last angle we calculated with vision
         } else {
             // 🧭 ODOMETRY MODE: Tag lost for more than VISION_TIMEOUT_SEC
             // Odometry takes over to reacquire the target
