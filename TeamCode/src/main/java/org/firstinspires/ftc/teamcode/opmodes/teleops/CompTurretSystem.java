@@ -117,10 +117,10 @@ public class CompTurretSystem extends NextFTCOpMode {
     public static double START_HEADING = 90.0; // Facing toward Blue goal (adjust based on actual start)
 
     // TUNABLE: AprilTag tracking settings
-    public static double VISION_TRACKING_GAIN = 0.5; // How aggressively to correct toward target (0.0-1.0)
-    public static double VISION_TIMEOUT_SEC = 3.0; // Time without tag before odometry takes over
-    public static double VISION_DEADBAND_DEG = 3.0; // Don't adjust if within this range (increased for stability)
-    public static double VISION_SMOOTHING = 0.7; // Smoothing factor (0.0-1.0, higher = smoother but slower)
+    public static double VISION_TRACKING_GAIN = 0.1; // How aggressively to correct toward target (0.0-1.0)
+    public static double VISION_TIMEOUT_SEC = 0.5; // Time without tag before odometry takes over
+    public static double VISION_DEADBAND_DEG = 10.0; // Don't adjust if within this range (increased for stability)
+    public static double VISION_SMOOTHING = 0.3; // Smoothing factor (0.0-1.0, higher = smoother but slower)
 
     // TUNABLE: Enable/disable tracking system
     public static boolean TRACKING_ENABLED = true;
