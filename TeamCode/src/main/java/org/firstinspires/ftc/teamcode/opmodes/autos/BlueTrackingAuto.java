@@ -150,8 +150,12 @@ public class BlueTrackingAuto extends NextFTCOpMode {
         lastPedroY = pose.getY();
         lastHeadingDeg = Math.toDegrees(pose.getHeading());
 
-        lastFtcX = lastPedroX - 72.0;
-        lastFtcY = lastPedroY - 72.0;
+        // Map Pedro field coords to dashboard/traditional FTC-centered coords.
+        // Requested mapping examples:
+        // Pedro (0,144)   -> FTC (-72,-72)
+        // Pedro (144,144) -> FTC (-72, 72)
+        lastFtcX = 72.0 - lastPedroY;
+        lastFtcY = lastPedroX - 72.0;
         lastDecodeX = -lastFtcX;
         lastDecodeY = -lastFtcY;
     }
