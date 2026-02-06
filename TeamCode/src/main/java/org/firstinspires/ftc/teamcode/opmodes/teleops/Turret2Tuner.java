@@ -14,23 +14,13 @@ import org.firstinspires.ftc.teamcode.subsystems.Turret2;
 /**
  * Turret2 Tuning OpMode
  *
- * TUNING PROCESS:
- * 1. Use LEFT/RIGHT BUMPERS to move turret in raw degrees
- * 2. Find the position where turret faces STRAIGHT FORWARD
- * 3. Note the "Raw Angle" shown in telemetry
- * 4. Set PHYSICAL_CENTER_RAW to that value
- * 5. Test with Y button (should go to center)
- *
  * CONTROLS:
- * - Left Bumper: Increase raw angle
- * - Right Bumper: Decrease raw angle
- * - Y Button: Go to 0° (center)
- * - X Button: Go to +45° (left)
- * - B Button: Go to -45° (right)
- * - A Button: Go to A_ANGLE
- * - DPad Up: Go to PHYSICAL_CENTER_RAW
- * - DPad Down: Go to TEST_RAW_ANGLE
- * - DPad Left/Right: Adjust step size
+ * - Y Button: Go to 0° (center/forward)
+ * - X Button: Go to -45° (LEFT)
+ * - B Button: Go to +45° (RIGHT)
+ * - A Button: Go to CONFIGURABLE_ANGLE (default 120°)
+ * - Left Bumper: Decrease angle by STEP_SIZE
+ * - Right Bumper: Increase angle by STEP_SIZE
  */
 @Config
 @TeleOp(name = "Turret2 Tuner", group = "Tuning")
@@ -38,18 +28,12 @@ public class Turret2Tuner extends NextFTCOpMode {
 
     // Dashboard tunable values
     public static double STEP_SIZE = 5.0;
-    public static double TEST_RAW_ANGLE = 177.5;
 
-    /** Test angle in LOGICAL degrees (relative to center) - change this on dashboard */
-    public static double CONFIGURABLE_TEST_ANGLE = 45.0;
+    /** Configurable test angle for A button - change this on dashboard */
+    public static double CONFIGURABLE_ANGLE = 120.0;
 
-    // Button preset angles (logical degrees)
-    public static double X_ANGLE = 45.0;
-    public static double B_ANGLE = -45.0;
-
-    private double currentRawAngle = 177.5;
-    private boolean usingRawMode = true;
     private String lastAction = "Initialized";
+    private String limitWarning = "";
 
     public Turret2Tuner() {
         addComponents(
@@ -61,83 +45,92 @@ public class Turret2Tuner extends NextFTCOpMode {
 
     @Override
     public void onInit() {
-        currentRawAngle = Turret2.PHYSICAL_CENTER_RAW;
-        Turret2.INSTANCE.setRawAngleNoLimits(currentRawAngle);
+        Turret2.INSTANCE.setAngle(0.0);
         updateTelemetry();
     }
 
     @Override
     public void onStartButtonPressed() {
-        // RAW CONTROL (for finding physical center)
-        Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> {
-            currentRawAngle += STEP_SIZE;
-            Turret2.INSTANCE.setRawAngleNoLimits(currentRawAngle);
-            usingRawMode = true;
-            lastAction = "Raw +" + STEP_SIZE + "° → " + currentRawAngle + "°";
-        });
-
-        Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
-            currentRawAngle -= STEP_SIZE;
-            Turret2.INSTANCE.setRawAngleNoLimits(currentRawAngle);
-            usingRawMode = true;
-            lastAction = "Raw -" + STEP_SIZE + "° → " + currentRawAngle + "°";
-        });
-
-        // Y BUTTON: Go to center (raw 225°)
+        // Y BUTTON: Go to center (0°)
         Gamepads.gamepad1().y().whenBecomesTrue(() -> {
-            currentRawAngle = Turret2.PHYSICAL_CENTER_RAW;
-            Turret2.INSTANCE.setRawAngleNoLimits(currentRawAngle);
-            usingRawMode = true;
-            lastAction = "Y → Raw Center " + currentRawAngle + "°";
+            Turret2.INSTANCE.setAngle(0.0);
+            lastAction = "Y → Center 0°";
+            limitWarning = "";
         });
 
-        // X BUTTON: Go to logical +45° (left)
+        // X BUTTON: Go to -45° (LEFT)
         Gamepads.gamepad1().x().whenBecomesTrue(() -> {
-            Turret2.INSTANCE.setAngle(X_ANGLE);
-            currentRawAngle = Turret2.INSTANCE.getCurrentRawDeg();
-            usingRawMode = false;
-            lastAction = "X → Logical " + X_ANGLE + "° (Left)";
+            Turret2.INSTANCE.setAngle(-45.0);
+            lastAction = "X → Left -45°";
+            limitWarning = "";
         });
 
-        // B BUTTON: Go to logical -45° (right)
+        // B BUTTON: Go to +45° (RIGHT)
         Gamepads.gamepad1().b().whenBecomesTrue(() -> {
-            Turret2.INSTANCE.setAngle(B_ANGLE);
-            currentRawAngle = Turret2.INSTANCE.getCurrentRawDeg();
-            usingRawMode = false;
-            lastAction = "B → Logical " + B_ANGLE + "° (Right)";
+            Turret2.INSTANCE.setAngle(45.0);
+            lastAction = "B → Right +45°";
+            limitWarning = "";
         });
 
-        // A BUTTON: Go to configurable test angle (LOGICAL)
+        // A BUTTON: Go to configurable angle
         Gamepads.gamepad1().a().whenBecomesTrue(() -> {
-            Turret2.INSTANCE.setAngle(CONFIGURABLE_TEST_ANGLE);
-            currentRawAngle = Turret2.INSTANCE.getCurrentRawDeg();
-            usingRawMode = false;
-            lastAction = "A → Logical " + CONFIGURABLE_TEST_ANGLE + "°";
+            Turret2.INSTANCE.setAngle(CONFIGURABLE_ANGLE);
+            lastAction = "A → Configurable " + CONFIGURABLE_ANGLE + "°";
+            limitWarning = "";
         });
 
-        // DPAD CONTROLS
-        Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
-            currentRawAngle = Turret2.PHYSICAL_CENTER_RAW;
-            Turret2.INSTANCE.setRawAngleNoLimits(currentRawAngle);
-            usingRawMode = true;
-            lastAction = "DPad Up → Raw Center " + currentRawAngle + "°";
+        // LEFT BUMPER: Decrease angle (turn more LEFT / negative)
+        Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> {
+            // Read current turret position
+            double currentAngle = Turret2.INSTANCE.getTargetLogicalDeg();
+
+            // Check if already at minimum limit
+            if (currentAngle <= -Turret2.MAX_ROTATION + 0.1) {
+                lastAction = "LB → Already at LEFT limit!";
+                limitWarning = "⚠️ AT MINIMUM LIMIT (-" + Turret2.MAX_ROTATION + "°)";
+                return;
+            }
+
+            // Calculate new angle
+            double newAngle = currentAngle - STEP_SIZE;
+
+            // Clamp to turret limits
+            if (newAngle < -Turret2.MAX_ROTATION) {
+                newAngle = -Turret2.MAX_ROTATION;
+                limitWarning = "⚠️ CLAMPED TO MINIMUM LIMIT";
+            } else {
+                limitWarning = "";
+            }
+
+            Turret2.INSTANCE.setAngle(newAngle);
+            lastAction = "LB → " + String.format("%.1f", newAngle) + "°";
         });
 
-        Gamepads.gamepad1().dpadDown().whenBecomesTrue(() -> {
-            currentRawAngle = TEST_RAW_ANGLE;
-            Turret2.INSTANCE.setRawAngleNoLimits(currentRawAngle);
-            usingRawMode = true;
-            lastAction = "DPad Down → Test Raw " + currentRawAngle + "°";
-        });
+        // RIGHT BUMPER: Increase angle (turn more RIGHT / positive)
+        Gamepads.gamepad1().rightBumper().whenBecomesTrue(() -> {
+            // Read current turret position
+            double currentAngle = Turret2.INSTANCE.getTargetLogicalDeg();
 
-        Gamepads.gamepad1().dpadLeft().whenBecomesTrue(() -> {
-            STEP_SIZE = Math.max(1.0, STEP_SIZE - 1.0);
-            lastAction = "Step size → " + STEP_SIZE + "°";
-        });
+            // Check if already at maximum limit
+            if (currentAngle >= Turret2.MAX_ROTATION - 0.1) {
+                lastAction = "RB → Already at RIGHT limit!";
+                limitWarning = "⚠️ AT MAXIMUM LIMIT (+" + Turret2.MAX_ROTATION + "°)";
+                return;
+            }
 
-        Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
-            STEP_SIZE = Math.min(30.0, STEP_SIZE + 1.0);
-            lastAction = "Step size → " + STEP_SIZE + "°";
+            // Calculate new angle
+            double newAngle = currentAngle + STEP_SIZE;
+
+            // Clamp to turret limits
+            if (newAngle > Turret2.MAX_ROTATION) {
+                newAngle = Turret2.MAX_ROTATION;
+                limitWarning = "⚠️ CLAMPED TO MAXIMUM LIMIT";
+            } else {
+                limitWarning = "";
+            }
+
+            Turret2.INSTANCE.setAngle(newAngle);
+            lastAction = "RB → " + String.format("%.1f", newAngle) + "°";
         });
     }
 
@@ -147,45 +140,61 @@ public class Turret2Tuner extends NextFTCOpMode {
     }
 
     private void updateTelemetry() {
-        telemetry.addLine("���═════════════════════════════════");
+        // Read actual turret values
+        double currentLogical = Turret2.INSTANCE.getTargetLogicalDeg();
+        double currentRaw = Turret2.INSTANCE.getCurrentRawDeg();
+        double servoPos = Turret2.INSTANCE.getServoPosition();
+
+        // Check if at limits
+        boolean atMinLimit = currentLogical <= -Turret2.MAX_ROTATION + 0.1;
+        boolean atMaxLimit = currentLogical >= Turret2.MAX_ROTATION - 0.1;
+
+        telemetry.addLine("══════════════════════════════════");
         telemetry.addLine("        TURRET2 TUNER");
         telemetry.addLine("══════════════════════════════════");
         telemetry.addLine();
 
         telemetry.addLine("─── CURRENT STATE ───");
-        telemetry.addData("Mode", usingRawMode ? "RAW (tuning)" : "LOGICAL (testing)");
-        telemetry.addData("Raw Angle", "%.1f°", Turret2.INSTANCE.getCurrentRawDeg());
-        telemetry.addData("Logical Angle", "%.1f°", Turret2.INSTANCE.getTargetLogicalDeg());
-        telemetry.addData("Servo Position", "%.3f", Turret2.INSTANCE.getServoPosition());
+        telemetry.addData("Logical Angle", "%.1f°", currentLogical);
+        telemetry.addData("Raw Angle", "%.1f°", currentRaw);
+        telemetry.addData("Servo Position", "%.3f", servoPos);
+        telemetry.addLine();
+
+        // Show limit status
+        if (atMinLimit) {
+            telemetry.addLine("⚠️ AT LEFT LIMIT (LB disabled)");
+        } else if (atMaxLimit) {
+            telemetry.addLine("⚠️ AT RIGHT LIMIT (RB disabled)");
+        } else {
+            telemetry.addLine("✓ Within range");
+        }
         telemetry.addLine();
 
         telemetry.addLine("─── CONFIGURATION ───");
-        telemetry.addData("PHYSICAL_CENTER_RAW", "%.1f° (logical 0°)", Turret2.PHYSICAL_CENTER_RAW);
+        telemetry.addData("PHYSICAL_CENTER_RAW", "%.1f°", Turret2.PHYSICAL_CENTER_RAW);
         telemetry.addData("MAX_ROTATION", "±%.1f°", Turret2.MAX_ROTATION);
-        telemetry.addData("REVERSE_DIRECTION", Turret2.REVERSE_DIRECTION);
         telemetry.addData("Step Size", "%.1f°", STEP_SIZE);
-        telemetry.addLine();
-
-        // Show configurable test angle info
-        telemetry.addLine("─── TEST ANGLE (A Button) ───");
-        telemetry.addData("Configurable Logical", "%.1f°", CONFIGURABLE_TEST_ANGLE);
-        telemetry.addData("  = Raw", "%.1f°", CONFIGURABLE_TEST_ANGLE + Turret2.PHYSICAL_CENTER_RAW);
+        telemetry.addData("Configurable Angle (A)", "%.1f°", CONFIGURABLE_ANGLE);
         telemetry.addLine();
 
         telemetry.addData("Last Action", lastAction);
+        if (!limitWarning.isEmpty()) {
+            telemetry.addLine(limitWarning);
+        }
         telemetry.addLine();
 
         telemetry.addLine("─── CONTROLS ───");
-        telemetry.addLine("LB/RB = Raw angle ±step");
-        telemetry.addLine("Y=Center(225°) X=Left(+45°)");
-        telemetry.addLine("B=Right(-45°) A=TestAngle");
-        telemetry.addLine("DPad ↑=Center ↓=TestRaw ←/→=Step");
+        telemetry.addLine("Y = Center (0°)");
+        telemetry.addLine("X = Left (-45°)");
+        telemetry.addLine("B = Right (+45°)");
+        telemetry.addLine("A = Configurable (" + CONFIGURABLE_ANGLE + "°)");
+        telemetry.addLine("LB/RB = Adjust angle ±" + STEP_SIZE + "°");
         telemetry.addLine();
 
-        telemetry.addLine("─── REFERENCE ───");
-        telemetry.addLine("Raw 225° = Logical 0° = CENTER");
-        telemetry.addLine("Raw > 225 = Logical + = LEFT");
-        telemetry.addLine("Raw < 225 = Logical - = RIGHT");
+        telemetry.addLine("─── TURRET CONVENTION ───");
+        telemetry.addLine("0° = Forward");
+        telemetry.addLine("POSITIVE = RIGHT");
+        telemetry.addLine("NEGATIVE = LEFT");
 
         telemetry.update();
     }
