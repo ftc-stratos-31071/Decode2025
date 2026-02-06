@@ -177,7 +177,6 @@ public class CloseBlueAuto extends NextFTCOpMode {
         Shooter.INSTANCE.setTargetRPM(3700);
         Shooter.INSTANCE.runRPM(3700).schedule();
         Shooter.INSTANCE.setHood(ShooterConstants.servoPos).schedule();
-        Turret2.INSTANCE.goToAngle(10.0).schedule();
         new SequentialGroup(
                 IntakeSeqCmd.create(),
                 new FollowPath(path1),
@@ -192,7 +191,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 new FollowPath(path3),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(110.0),
+                Turret2.INSTANCE.goToAngle(90.0),
                 new FollowPath(path4),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
@@ -237,7 +236,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 new FollowPath(path9),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(80.0),
+                Turret2.INSTANCE.goToAngle(70.0),
                 Shooter.INSTANCE.setHood(ShooterConstants.servoPos + 0.4),
                 new FollowPath(path10),
                 Intake.INSTANCE.defaultPos(),

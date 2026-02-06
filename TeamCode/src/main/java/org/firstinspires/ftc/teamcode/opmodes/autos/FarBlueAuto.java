@@ -24,7 +24,7 @@ import dev.nextftc.core.components.SubsystemComponent;
 import org.firstinspires.ftc.teamcode.commands.AutoDriveTimeoutCmd;
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.RapidFireCmd;
-import org.firstinspires.ftc.teamcode.commands.RapidFireTimeoutCmd;
+import org.firstinspires.ftc.teamcode.commands.RapidFireTimeoutCmdFar;
 import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyAutoCmd;
 import org.firstinspires.ftc.teamcode.commands.ShootBallSteadyCmd;
 import org.firstinspires.ftc.teamcode.commands.WaitCmd;
@@ -124,8 +124,7 @@ public class FarBlueAuto extends NextFTCOpMode {
                                 new Pose(3, 27),
                                 new Pose(56, 8)
                         )
-                ).setTangentHeadingInterpolation()
-                .setReversed()
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
 
         path7 = follower.pathBuilder().addPath(
@@ -133,15 +132,14 @@ public class FarBlueAuto extends NextFTCOpMode {
                                 new Pose(56, 8),
                                 new Pose(36, 8)
                         )
-                ).setTangentHeadingInterpolation()
-                .setReversed()
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
     }
 
     @Override
     public void onInit() {
         // CRITICAL: Reset all subsystem state from previous runs
-        Shooter.INSTANCE.stop();  // Clear PID state and stop motors
+        Shooter.INSTANCE.runRPM(0.0).schedule();
         Intake.INSTANCE.setIntakePower(0.0);  // Stop intake motors
         Intake.INSTANCE.setTransferPower(0.0);  // Stop transfer motors
 
@@ -165,13 +163,12 @@ public class FarBlueAuto extends NextFTCOpMode {
 
     @Override
     public void onStartButtonPressed() {
-        Shooter.INSTANCE.runRPM(ShooterConstants.farTargetRPM).schedule();
-
+        Shooter.INSTANCE.runRPM(4650).schedule();
         new SequentialGroup(
-                Turret2.INSTANCE.goToAngle(85.0),
+                Turret2.INSTANCE.goToAngle(70.0),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(1500),
+                RapidFireTimeoutCmdFar.create(3000),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
@@ -182,7 +179,7 @@ public class FarBlueAuto extends NextFTCOpMode {
                 // SHOOT collected balls
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),// OPEN door (0.7)
-                RapidFireTimeoutCmd.create(1500), // 1000ms timeout
+                RapidFireTimeoutCmdFar.create(3000), // 1000ms timeout
 //
 //                // Cycle 2: Drive and collect
                 Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
@@ -195,19 +192,20 @@ public class FarBlueAuto extends NextFTCOpMode {
 //                // SHOOT
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),// OPEN door (0.7)
-                RapidFireTimeoutCmd.create(1500)  // 1000ms timeout
+                RapidFireTimeoutCmdFar.create(3000),  // 1000ms timeout
 //
 //                // Cycle 3: Drive and collect
-//                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
-//                IntakeSeqCmd.create(),
-//                AutoDriveTimeoutCmd.create(new FollowPath(path5),2),
-//                new FollowPath(path6),
-//                Intake.INSTANCE.zeroPowerIntake(),
-//                Intake.INSTANCE.zeroPowerTransfer(),
+                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
+                IntakeSeqCmd.create(),
+                AutoDriveTimeoutCmd.create(new FollowPath(path5),2),
+                new FollowPath(path6),
+                Intake.INSTANCE.zeroPowerIntake(),
+                Intake.INSTANCE.zeroPowerTransfer(),
 //
 //                // SHOOT
-//                Intake.INSTANCE.defaultPos(),  // OPEN door (0.7)
-//                RapidFireTimeoutCmd.create(3000),  // 1000ms timeout
+                Intake.INSTANCE.defaultPos(),
+                WaitCmd.create(0.25),// OPEN door (0.7)
+                RapidFireTimeoutCmdFar.create(3000)  // 1000ms timeout
 //
 //                // Cycle 4: Drive and collect
 //                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
@@ -236,6 +234,15 @@ public class FarBlueAuto extends NextFTCOpMode {
 //                // Final positioning (door can stay open or close - doesn't matter)
 //                new FollowPath(path7)
         ).invoke();
+    }
+
+    @Override
+    public void onUpdate() {
+        double rightRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.rightMotor.getVelocity()));
+        double leftRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.leftMotor.getVelocity()));
+        double currentRPM = (rightRPM + leftRPM) / 2.0;
+        telemetry.addData("Current RPM", currentRPM);
+        telemetry.update();
     }
 }
 

@@ -7,7 +7,7 @@ public class ShooterConstants {
     // Servo positions
     public static double servoPos = 0.4;
     public static double defaultPos = 1.0;
-    public static double farHoodPos = 0.1;
+    public static double farHoodPos = 0.4;
     public static double zeroPower = 0.0;
 
     // ========== PIDF TUNING ==========
@@ -17,13 +17,13 @@ public class ShooterConstants {
     // kF (Feedforward): Main power output based on target RPM
     // - This should get you ~90% of the way to target speed
     // - Tune this first by testing different RPMs and adjusting until close
-    public static double kF = 0.000172;
+    public static double kF = 0.00017;
 
     // kP (Proportional): Corrects remaining error
     // - Too low: slow to reach target, won't maintain speed under load
     // - Too high: oscillates/overshoots
     // - Tune after kF to eliminate steady-state error
-    public static double kP = 0.0019;
+    public static double kP = 0.001;
 
     // kI (Integral): Eliminates long-term steady-state error
     // - Set to 0 for flywheels (usually not needed, can cause overshoot)
@@ -41,7 +41,7 @@ public class ShooterConstants {
 
     // Default target RPM for PIDF control
     public static double closeTargetRPM = 3700.0;
-    public static double farTargetRPM = 4500.0;
+    public static double farTargetRPM = 4800.0;
     public static double tolRpm = 50.0;
     public static double tolRpm2 = 100.0;
 
