@@ -89,8 +89,8 @@ public class TurretRotationTuner extends NextFTCOpMode {
         // Set initial robot position and heading (configurable via dashboard)
         pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, START_X, START_Y, AngleUnit.DEGREES, START_HEADING));
 
-        // Initialize turret to center position (logical 0° = facing forward)
-        Turret2.INSTANCE.setAngle(0.0);
+        // Initialize turret to center position - use raw angle to ensure it's at 240° (straight forward)
+        Turret2.INSTANCE.setRawAngle(240.0);
 
         telemetry.addData("Status", "✓ Initialized");
         telemetry.addLine();
@@ -205,8 +205,8 @@ public class TurretRotationTuner extends NextFTCOpMode {
 
         // Draw turret direction (yellow line showing where turret is pointing)
         if (trackingEnabled) {
-            // Flip the visualization: subtract instead of add to match physical turret direction
-            double turretGlobalHeading = normalizeAngle(currentRobotHeading - Turret2.INSTANCE.getTargetLogicalDeg());
+            // Use ACTUAL current angle, not target, for realistic visualization
+            double turretGlobalHeading = normalizeAngle(currentRobotHeading + Turret2.INSTANCE.getCurrentLogicalDeg());
             double turretRadians = Math.toRadians(turretGlobalHeading);
             double turretLength = 18;
             double turretEndX = currentX + turretLength * Math.cos(turretRadians);
@@ -337,8 +337,8 @@ public class TurretRotationTuner extends NextFTCOpMode {
      */
     private double calculateTurretAngle(double robotHeading, double globalTarget) {
         // Calculate the turret angle: global_target - robot_heading
-        // INVERTED: Negate the result because turret rotates opposite to expected
-        double logicalTurretAngle = -(globalTarget - robotHeading);
+        // REMOVED INVERSION - turret should point in SAME direction as goal, not opposite
+        double logicalTurretAngle = globalTarget - robotHeading;
 
         // Normalize to [-180, 180] range for shortest path
         logicalTurretAngle = normalizeAngleSigned(logicalTurretAngle);

@@ -33,14 +33,28 @@ import java.util.List;
 /**
  * CompTurretSystem - Hybrid Odometry + AprilTag Vision Tracking using Turret2
  *
- * TRACKING MODES:
- * 1. VISION MODE (priority): When AprilTag is detected, turret tracks and centers on the tag
- * 2. ODOMETRY MODE (fallback): Turret tracks goal position using odometry + atan2
+ * TRACKING SYSTEM:
+ * This uses a HYBRID approach where BOTH systems work together:
+ *
+ * 1. ODOMETRY (Base Layer - ALWAYS ACTIVE):
+ *    - Uses Pinpoint odometry to continuously track goal position
+ *    - Calculates bearing to goal using atan2(deltaY, deltaX)
+ *    - Provides general direction to the target
+ *
+ * 2. VISION (Refinement Layer - WHEN TAG VISIBLE):
+ *    - ArduCam scans for AprilTag on the goal
+ *    - When tag detected, applies fine-tuning corrections
+ *    - Adds small adjustments on top of odometry base angle
+ *
+ * HOW IT WORKS:
+ * - Odometry drives turret to general location of goal
+ * - ArduCam provides precise centering when tag is in view
+ * - Result: Fast acquisition + Precise tracking
  *
  * FEATURES:
  * - Uses Turret2 subsystem for turret control
  * - Odometry-based goal tracking with atan2
- * - AprilTag-based tracking when tag is visible (priority)
+ * - AprilTag-based fine-tuning when tag visible
  * - Button to calibrate pinpoint pose using AprilTag
  * - FTC Dashboard visualization
  *
@@ -74,7 +88,7 @@ public class CompTurretSystem extends NextFTCOpMode {
     // TUNABLE: Goal positions (inches) - Red and Blue goals
     public static double RED_GOAL_X = -72.0;
     public static double RED_GOAL_Y = 72.0;
-    public static double BLUE_GOAL_X = 72.0;
+    public static double BLUE_GOAL_X = -72.0;
     public static double BLUE_GOAL_Y = -72.0;
 
     // TUNABLE: Starting robot position (inches)
@@ -83,14 +97,15 @@ public class CompTurretSystem extends NextFTCOpMode {
     public static double START_HEADING = 90.0;
 
     // TUNABLE: AprilTag tracking settings
-    public static double VISION_TRACKING_GAIN = 1.25;
-    public static double VISION_TIMEOUT_SEC = 0.5;
+    public static double VISION_TRACKING_GAIN = 0.5; // Reduced from 1.25 to prevent oscillation
+    public static double VISION_TIMEOUT_SEC = 1.0; // Time without tag before odometry takes over
+    public static double VISION_DEADBAND_DEG = 1.0; // Don't adjust if within this range
 
     // TUNABLE: Enable/disable tracking system
     public static boolean TRACKING_ENABLED = true;
 
     // TUNABLE: Use Red goal (true) or Blue goal (false)
-    public static boolean USE_RED_GOAL = true;
+    public static boolean USE_RED_GOAL = false;
 
     // State variables
     private boolean trackingEnabled = true;
@@ -114,8 +129,8 @@ public class CompTurretSystem extends NextFTCOpMode {
         pinpoint.resetPosAndIMU();
         pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, START_X, START_Y, AngleUnit.DEGREES, START_HEADING));
 
-        // Initialize turret to center
-        Turret2.INSTANCE.setAngle(0.0);
+        // Initialize turret to center position - use raw angle to ensure it's at 240° (straight forward)
+        Turret2.INSTANCE.setRawAngle(240.0);
 
         // Set up FTC Dashboard
         FtcDashboard dashboard = FtcDashboard.getInstance();
@@ -206,7 +221,7 @@ public class CompTurretSystem extends NextFTCOpMode {
 
     @Override
     public void onUpdate() {
-        // Update odometry
+        // Update odometry (always running in background)
         pinpoint.update();
         Pose2D currentPose = pinpoint.getPosition();
 
@@ -226,11 +241,10 @@ public class CompTurretSystem extends NextFTCOpMode {
             return;
         }
 
-        // Check for AprilTag detections
+        // Check for AprilTag detections (camera always scanning in background)
         List<AprilTagDetection> detections = aprilTag.getDetections();
         boolean tagDetectedThisFrame = false;
         double tagBearing = 0.0;
-        AprilTagDetection currentTag = null;
 
         if (!detections.isEmpty()) {
             for (AprilTagDetection tag : detections) {
@@ -238,38 +252,40 @@ public class CompTurretSystem extends NextFTCOpMode {
                     tagDetectedThisFrame = true;
                     tagBearing = -tag.ftcPose.bearing; // Negative because bearing is +right, -left
                     lastTagSeenTime = System.currentTimeMillis();
-                    currentTag = tag;
                     break;
                 }
             }
         }
 
-        // Determine tracking mode - Vision has priority
-        long timeSinceLastTag = System.currentTimeMillis() - lastTagSeenTime;
-        boolean useVisionMode = tagDetectedThisFrame || (timeSinceLastTag < VISION_TIMEOUT_SEC * 1000);
+        // Calculate how long it's been since we last saw the tag
+        double timeSinceLastTag = (System.currentTimeMillis() - lastTagSeenTime) / 1000.0;
 
         double targetTurretAngle;
 
-        if (useVisionMode && tagDetectedThisFrame) {
-            // VISION MODE: Adjust turret based on AprilTag bearing
+        // PRIORITY SYSTEM: Vision takes priority, odometry only kicks in after timeout
+        if (tagDetectedThisFrame || timeSinceLastTag < VISION_TIMEOUT_SEC) {
+            // 🎥 VISION MODE: Tag is visible OR was recently visible (within timeout)
             visionMode = true;
 
-            // Get current turret angle and adjust based on tag bearing
-            double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
-            targetTurretAngle = currentTurretAngle + (tagBearing * VISION_TRACKING_GAIN);
+            if (tagDetectedThisFrame && Math.abs(tagBearing) > VISION_DEADBAND_DEG) {
+                // Adjust current turret angle based on tag bearing
+                double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
+                targetTurretAngle = currentTurretAngle + (tagBearing * VISION_TRACKING_GAIN);
 
-            // Clamp to turret limits
-            targetTurretAngle = Math.max(-Turret2.MAX_ROTATION,
-                                        Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
-
+                // Clamp to turret limits
+                targetTurretAngle = Math.max(-Turret2.MAX_ROTATION,
+                                            Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
+            } else {
+                // Within deadband OR waiting for timeout - hold current position
+                targetTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
+            }
         } else {
-            // ODOMETRY MODE: Track goal position using atan2
+            // 🧭 ODOMETRY MODE: Tag lost for more than VISION_TIMEOUT_SEC
+            // Now odometry takes over to reacquire the target
             visionMode = false;
 
-            // Calculate angle to goal using atan2
+            // Calculate odometry-based angle to goal
             targetGlobalHeading = calculateAngleToGoal(currentX, currentY, goalX, goalY);
-
-            // Calculate turret angle needed to point at goal
             targetTurretAngle = calculateTurretAngle(currentRobotHeading, targetGlobalHeading);
         }
 
@@ -278,7 +294,7 @@ public class CompTurretSystem extends NextFTCOpMode {
 
         // Display telemetry
         displayTrackingTelemetry(currentX, currentY, currentRobotHeading, goalX, goalY,
-                                 tagDetectedThisFrame, tagBearing, targetTurretAngle);
+                                 tagDetectedThisFrame, tagBearing, targetTurretAngle, timeSinceLastTag);
     }
 
     /**
@@ -363,7 +379,8 @@ public class CompTurretSystem extends NextFTCOpMode {
 
         // Draw turret direction (yellow line)
         if (trackingEnabled) {
-            // Flip the visualization: subtract to match physical turret direction
+            // Use TARGET angle to match what the control system is commanding
+            // This shows where the turret is GOING, not where it currently is
             double turretGlobalHeading = normalizeAngle(currentRobotHeading - Turret2.INSTANCE.getTargetLogicalDeg());
             double turretRadians = Math.toRadians(turretGlobalHeading);
             double turretLength = 18;
@@ -397,7 +414,9 @@ public class CompTurretSystem extends NextFTCOpMode {
      * Calculate the turret angle needed to point at the target global heading.
      */
     private double calculateTurretAngle(double robotHeading, double globalTarget) {
-        // INVERTED: Negate the result because turret rotates opposite to expected
+        // Calculate the turret angle needed: turret should rotate to make up the difference
+        // Formula: turretAngle = globalTarget - robotHeading
+        // If turret rotates opposite, we need to INVERT the calculation
         double logicalTurretAngle = -(globalTarget - robotHeading);
 
         // Normalize to [-180, 180] range
@@ -433,23 +452,40 @@ public class CompTurretSystem extends NextFTCOpMode {
 
     private void displayTrackingTelemetry(double robotX, double robotY, double robotHeading,
                                           double goalX, double goalY,
-                                          boolean tagDetected, double tagBearing, double targetAngle) {
+                                          boolean tagDetected, double tagBearing, double targetAngle, double timeSinceLastTag) {
         telemetry.addLine("═══ COMP TURRET SYSTEM ═══");
+        telemetry.addLine();
+
+        // Show priority system status with timeout
+        telemetry.addLine("📋 PRIORITY TRACKING SYSTEM:");
+        if (visionMode) {
+            telemetry.addData("  🎯 Vision Priority", "ACTIVE (Controls Turret)");
+            telemetry.addData("  🧭 Odometry", "Standby (Running in background)");
+            if (!tagDetected) {
+                double timeUntilOdom = VISION_TIMEOUT_SEC - timeSinceLastTag;
+                telemetry.addData("  ⏱️ Odometry takeover in", "%.1f sec", timeUntilOdom);
+            }
+        } else {
+            telemetry.addData("  🧭 Odometry Priority", "ACTIVE (Controls Turret)");
+            telemetry.addData("  🎯 Vision", "Scanning (Tag lost %.1fs ago)", timeSinceLastTag);
+        }
         telemetry.addLine();
 
         // Mode indicator
         if (visionMode) {
-            telemetry.addLine("🎥 MODE: VISION TRACKING");
+            telemetry.addLine("🎯 MODE: VISION LOCK");
             telemetry.addData("  Tag ID", TARGET_TAG_ID);
-            telemetry.addData("  Tag Detected", tagDetected ? "✓ YES" : "✗ NO (timeout)");
+            telemetry.addData("  Tag Detected", tagDetected ? "✓ YES" : "✗ NO (holding)");
             if (tagDetected) {
                 telemetry.addData("  Tag Bearing", "%.2f°", tagBearing);
+                telemetry.addData("  Status", Math.abs(tagBearing) < VISION_DEADBAND_DEG ? "✓ CENTERED" : "⟳ CENTERING");
             }
         } else {
-            telemetry.addLine("🧭 MODE: ODOMETRY TRACKING");
+            telemetry.addLine("🧭 MODE: ODOMETRY ACQUISITION");
             telemetry.addData("  Goal", USE_RED_GOAL ? "RED" : "BLUE");
             telemetry.addData("  Goal Position", "(%.1f, %.1f)", goalX, goalY);
             telemetry.addData("  Bearing to Goal", "%.1f°", targetGlobalHeading);
+            telemetry.addData("  Status", "Searching for tag...");
         }
         telemetry.addLine();
 
@@ -483,6 +519,13 @@ public class CompTurretSystem extends NextFTCOpMode {
         telemetry.addData("  Y", "Reset to Center");
         telemetry.addData("  X", "Calibrate Pose");
         telemetry.addData("  DPad ↑↓", "Switch Goal");
+        telemetry.addLine();
+
+        // Dashboard tuning reminder
+        telemetry.addLine("💡 DASHBOARD SETTINGS:");
+        telemetry.addData("  VISION_TIMEOUT_SEC", "%.1f sec", VISION_TIMEOUT_SEC);
+        telemetry.addData("  VISION_TRACKING_GAIN", "%.2f", VISION_TRACKING_GAIN);
+        telemetry.addData("  VISION_DEADBAND_DEG", "%.1f°", VISION_DEADBAND_DEG);
 
         telemetry.update();
     }

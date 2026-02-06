@@ -148,6 +148,11 @@ public class Turret2 implements Subsystem {
         return targetLogicalDeg;
     }
 
+    /** Get current actual logical angle in degrees (0 = forward) - reflects actual servo position */
+    public double getCurrentLogicalDeg() {
+        return rawToLogical(currentRawDeg);
+    }
+
     /** Get current raw servo angle in degrees (0-355) */
     public double getCurrentRawDeg() {
         return currentRawDeg;
