@@ -108,6 +108,9 @@ public class BlueTeleop extends NextFTCOpMode {
     private double lastVisionAngle = 0.0;
     private double smoothedTurretAngle = 0.0;
     private boolean poseCalibrated = false;
+    private double lastRawX = 0.0;
+    private double lastRawY = 0.0;
+    private double lastRawHeading = 0.0;
 
 
 
@@ -295,6 +298,8 @@ public class BlueTeleop extends NextFTCOpMode {
             ballPresent = detected;
         }
 
+        updateOdometry();
+
         if (AUTO_TRACK_ENABLED && trackingEnabled) {
             updateTurretTracking();
         }
@@ -306,14 +311,10 @@ public class BlueTeleop extends NextFTCOpMode {
      * Update turret tracking using hybrid odometry + vision system
      */
     private void updateTurretTracking() {
-        // Update odometry
-        pinpoint.update();
-        Pose2D currentPose = pinpoint.getPosition();
-
         // Invert X and Y to match DECODE field coordinate system
-        double currentX = -currentPose.getX(DistanceUnit.INCH);
-        double currentY = -currentPose.getY(DistanceUnit.INCH);
-        double currentRobotHeading = currentPose.getHeading(AngleUnit.DEGREES);
+        double currentX = -lastRawX;
+        double currentY = -lastRawY;
+        double currentRobotHeading = lastRawHeading;
 
         // Get current goal position
         double goalX = BLUE_GOAL_X;
@@ -323,7 +324,11 @@ public class BlueTeleop extends NextFTCOpMode {
         targetGlobalHeading = calculateAngleToGoal(currentX, currentY, goalX, goalY);
 
         // Draw field visualization
-        drawFieldVisualization(currentX, currentY, currentRobotHeading, goalX, goalY);
+        double dashboardRobotX = lastRawX;
+        double dashboardRobotY = lastRawY;
+        double dashboardGoalX = -goalX;
+        double dashboardGoalY = -goalY;
+        drawFieldVisualization(dashboardRobotX, dashboardRobotY, currentRobotHeading, dashboardGoalX, dashboardGoalY);
 
         // Check for AprilTag detections
         List<AprilTagDetection> detections = aprilTag.getDetections();
@@ -471,6 +476,14 @@ public class BlueTeleop extends NextFTCOpMode {
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 
+    private void updateOdometry() {
+        pinpoint.update();
+        Pose2D currentPose = pinpoint.getPosition();
+        lastRawX = currentPose.getX(DistanceUnit.INCH);
+        lastRawY = currentPose.getY(DistanceUnit.INCH);
+        lastRawHeading = currentPose.getHeading(AngleUnit.DEGREES);
+    }
+
     /**
      * Calculate angle to goal using atan2
      */
@@ -501,6 +514,8 @@ public class BlueTeleop extends NextFTCOpMode {
 
         telemetry.addData("Ball Count", ballCount);
         telemetry.addData("Range (mm)", distanceMm);
+        telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastRawX, lastRawY, lastRawHeading);
+        telemetry.addData("Pose Decode (x,y,hdg)", "(%.1f, %.1f, %.1f°)", -lastRawX, -lastRawY, lastRawHeading);
         telemetry.addLine();
 
         // Shooter info
