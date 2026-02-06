@@ -102,8 +102,8 @@ public class CompTurretSystem extends NextFTCOpMode {
     // GOAL POSITIONS:
     // - Blue Goal: On the Blue Alliance side (+Y direction), centered on X
     // - Red Goal: On the Red Wall side (-Y direction), centered on X
-    public static double RED_GOAL_X = 72.0;     // Centered on X axis
-    public static double RED_GOAL_Y = -72.0;   // Red Wall side (-Y)
+    public static double RED_GOAL_X = -72.0;     // Centered on X axis
+    public static double RED_GOAL_Y = 72.0;   // Red Wall side (-Y)
     public static double BLUE_GOAL_X = -72.0;    // Centered on X axis
     public static double BLUE_GOAL_Y = -72.0;   // Blue Alliance side (+Y)
 
@@ -248,8 +248,11 @@ public class CompTurretSystem extends NextFTCOpMode {
         pinpoint.update();
         Pose2D currentPose = pinpoint.getPosition();
 
-        double currentX = currentPose.getX(DistanceUnit.INCH);
-        double currentY = currentPose.getY(DistanceUnit.INCH);
+        // DECODE FIELD FIX: Invert X and Y from Pinpoint to match DECODE field coordinate system
+        // Pinpoint gives readings in standard FTC field coordinates
+        // DECODE field has inverted axes, so we need to flip them for correct visualization
+        double currentX = -currentPose.getX(DistanceUnit.INCH);
+        double currentY = -currentPose.getY(DistanceUnit.INCH);
         double currentRobotHeading = currentPose.getHeading(AngleUnit.DEGREES);
 
         // Get current goal position
@@ -276,10 +279,16 @@ public class CompTurretSystem extends NextFTCOpMode {
             for (AprilTagDetection tag : detections) {
                 if (tag.id == TARGET_TAG_ID) {
                     tagDetectedThisFrame = true;
-                    // ftcPose.bearing: positive = tag is to the RIGHT of camera center
-                    // Turret2: POSITIVE = LEFT, NEGATIVE = RIGHT
-                    // So if tag is to the RIGHT (positive bearing), turret should move RIGHT (negative)
-                    // Therefore: NEGATE the bearing
+                    // AprilTag ftcPose.bearing convention:
+                    // - POSITIVE bearing = tag is to the RIGHT of camera center
+                    // - NEGATIVE bearing = tag is to the LEFT of camera center
+                    //
+                    // Our Turret2 convention (TESTED with -45° and +45°):
+                    // - POSITIVE angle = turret points RIGHT
+                    // - NEGATIVE angle = turret points LEFT
+                    //
+                    // These conventions MATCH, so we use tagBearing directly (no negation)
+                    // Example: tag at +10° right → turret turns +10° right to center it
                     tagBearing = tag.ftcPose.bearing;
                     lastTagSeenTime = System.currentTimeMillis();
                     break;
@@ -302,33 +311,40 @@ public class CompTurretSystem extends NextFTCOpMode {
             visionMode = true;
 
             if (Math.abs(tagBearing) > VISION_DEADBAND_DEG) {
-                // tagBearing: positive = tag is to the RIGHT of camera center
-                // Turret (TESTED): NEGATIVE = LEFT, POSITIVE = RIGHT
-                // To center the tag, turret moves TOWARD the tag:
-                // - Tag on RIGHT (positive bearing) -> turret moves RIGHT (positive turret angle)
-                // - Tag on LEFT (negative bearing) -> turret moves LEFT (negative turret angle)
-                // Therefore: correction matches bearing sign (NO negation needed)
+                // VISION TRACKING LOGIC:
+                // - tagBearing: positive = tag is to the RIGHT of camera center
+                // - Turret angles (TESTED): NEGATIVE = LEFT, POSITIVE = RIGHT
+                // - To follow tag: if tag is RIGHT (+bearing), turn turret RIGHT (+angle)
+                // - Signs match, so: turretCorrection = +tagBearing
 
-                // CALCULATE ABSOLUTE TARGET ANGLE (not incremental correction)
-                // This prevents stacking corrections on top of each other
+                // Get current turret angle
                 double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
 
-                // The target is simply: current angle + bearing correction
-                // But apply gain to prevent overshooting
-                double desiredAngle = currentTurretAngle + (tagBearing * VISION_TRACKING_GAIN);
+                // Calculate incremental correction with gain
+                double correction = tagBearing * VISION_TRACKING_GAIN;
 
-                // Apply smoothing to prevent jitter
+                // Apply correction to current angle
+                double desiredAngle = currentTurretAngle + correction;
+
+                // Apply smoothing filter to prevent jitter
+                // Initialize smoothedTurretAngle on first vision frame
+                if (smoothedTurretAngle == 0.0) {
+                    smoothedTurretAngle = currentTurretAngle;
+                }
+
+                // Exponential smoothing: blend old and new values
                 targetTurretAngle = smoothedTurretAngle * VISION_SMOOTHING + desiredAngle * (1.0 - VISION_SMOOTHING);
 
-                // Clamp to turret limits
+                // Clamp to turret physical limits
                 targetTurretAngle = Math.max(-Turret2.MAX_ROTATION,
                                             Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
 
-                // Store this as the last good vision angle
+                // Store this as the last good angle for hold mode
                 lastVisionAngle = targetTurretAngle;
                 smoothedTurretAngle = targetTurretAngle;
             } else {
-                // Within deadband - tag is centered, LOCK position
+                // Within deadband - tag is CENTERED, LOCK position
+                // Stop moving and hold current angle
                 targetTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
                 lastVisionAngle = targetTurretAngle;
                 smoothedTurretAngle = targetTurretAngle;
