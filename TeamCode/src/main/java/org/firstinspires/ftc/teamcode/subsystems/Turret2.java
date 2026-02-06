@@ -111,6 +111,24 @@ public class Turret2 implements Subsystem {
         applyRawAngle(currentRawDeg);
     }
 
+    /**
+     * Set servo position directly (0.0-1.0) for both servos.
+     * Use this for low-level tuning only!
+     */
+    public void setServoPositionDirect(double position) {
+        position = Range.clip(position, 0.0, 1.0);
+
+        // Apply direction reversal if needed
+        double adjustedPos = REVERSE_DIRECTION ? (1.0 - position) : position;
+
+        leftServo.setPosition(adjustedPos);
+        rightServo.setPosition(adjustedPos);
+
+        // Update internal state to match
+        currentRawDeg = position * SERVO_RANGE_DEG;
+        targetLogicalDeg = rawToLogical(currentRawDeg);
+    }
+
     private void applyRawAngle(double rawDeg) {
         // Convert raw degrees (0-355) to servo position (0.0-1.0)
         double servoPos = rawDeg / SERVO_RANGE_DEG;

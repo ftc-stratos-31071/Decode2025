@@ -79,6 +79,27 @@ public class Turret2Tuner extends NextFTCOpMode {
             limitWarning = "";
         });
 
+        // DPAD LEFT: Set servo position to 0.0
+        Gamepads.gamepad1().dpadLeft().whenBecomesTrue(() -> {
+            Turret2.INSTANCE.setServoPositionDirect(0.0);
+            lastAction = "DPAD LEFT → Servo Position 0.0";
+            limitWarning = "";
+        });
+
+        // DPAD UP: Set servo position to 0.5
+        Gamepads.gamepad1().dpadUp().whenBecomesTrue(() -> {
+            Turret2.INSTANCE.setServoPositionDirect(0.5);
+            lastAction = "DPAD UP → Servo Position 0.5";
+            limitWarning = "";
+        });
+
+        // DPAD RIGHT: Set servo position to 1.0
+        Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
+            Turret2.INSTANCE.setServoPositionDirect(1.0);
+            lastAction = "DPAD RIGHT → Servo Position 1.0";
+            limitWarning = "";
+        });
+
         // LEFT BUMPER: Decrease angle (turn more LEFT / negative)
         Gamepads.gamepad1().leftBumper().whenBecomesTrue(() -> {
             // Read current turret position
@@ -189,6 +210,7 @@ public class Turret2Tuner extends NextFTCOpMode {
         telemetry.addLine("B = Right (+45°)");
         telemetry.addLine("A = Configurable (" + CONFIGURABLE_ANGLE + "°)");
         telemetry.addLine("LB/RB = Adjust angle ±" + STEP_SIZE + "°");
+        telemetry.addLine("DPAD LEFT/UP/RIGHT = Set Servo Position (0.0/0.5/1.0)");
         telemetry.addLine();
 
         telemetry.addLine("─── TURRET CONVENTION ───");
