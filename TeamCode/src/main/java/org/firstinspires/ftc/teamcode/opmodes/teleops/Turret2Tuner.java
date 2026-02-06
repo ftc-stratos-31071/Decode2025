@@ -206,6 +206,7 @@ public class Turret2Tuner extends NextFTCOpMode {
         telemetry.addLine();
 
         telemetry.addLine("─── CURRENT STATE ───");
+        telemetry.addData("Servo Mode", servoModeNames[servoMode]);
         telemetry.addData("Logical Angle", "%.1f°", currentLogical);
         telemetry.addData("Raw Angle", "%.1f°", currentRaw);
         telemetry.addData("Left Servo Position", "%.3f", servoPosLeft);
