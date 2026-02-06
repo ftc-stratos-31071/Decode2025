@@ -34,7 +34,7 @@ import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.constants.TurretConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
-import org.firstinspires.ftc.teamcode.subsystems.Turret;
+import org.firstinspires.ftc.teamcode.subsystems.Turret2;
 
 @Autonomous(name = "FarBlueAuto")
 public class FarBlueAuto extends NextFTCOpMode {
@@ -49,14 +49,14 @@ public class FarBlueAuto extends NextFTCOpMode {
     private PathChain path6;
     private PathChain path7;
 
-    private double turretPos = 180.0;
+    private double turretPos = 0.0;
 
     public FarBlueAuto() {
         addComponents(
                 new SubsystemComponent(
                         Intake.INSTANCE,
-                        INSTANCE,
-                        Turret.INSTANCE
+                        Shooter.INSTANCE,
+                        Turret2.INSTANCE
                 ),
                 new PedroComponent(PedroConstants::createFollower),
                 BulkReadComponent.INSTANCE,
@@ -152,7 +152,7 @@ public class FarBlueAuto extends NextFTCOpMode {
         Intake.INSTANCE.moveServoPos().schedule();
 
         // Reset turret angle
-        Turret.INSTANCE.goToAngle(TurretConstants.BLUE_FAR_ANGLE).schedule();
+//        Turret2.INSTANCE.goToAngle()
 
         follower = PedroConstants.createFollower(hardwareMap);
         follower.setStartingPose(
@@ -172,15 +172,15 @@ public class FarBlueAuto extends NextFTCOpMode {
         new SequentialGroup(
                 // SHOOT FIRST - preloaded balls
                 Intake.INSTANCE.defaultPos(),  // OPEN door (0.7)
-                RapidFireTimeoutCmd.create(3000) // 1000ms timeout
+//                RapidFireTimeoutCmd.create(4500) // 1000ms timeout
 
                 // Cycle 1: Drive and collect
-//                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
-//                IntakeSeqCmd.create(),
-//                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
-//                new FollowPath(path2),
-//                Intake.INSTANCE.zeroPowerIntake(),
-//                Intake.INSTANCE.zeroPowerTransfer()
+                Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
+                IntakeSeqCmd.create(),
+                AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
+                new FollowPath(path2),
+                Intake.INSTANCE.zeroPowerIntake(),
+                Intake.INSTANCE.zeroPowerTransfer()
 ////
 //                // SHOOT collected balls
 //                Intake.INSTANCE.defaultPos(),  // OPEN door (0.7)

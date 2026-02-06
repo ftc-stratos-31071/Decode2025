@@ -57,7 +57,7 @@ public class Turret2 implements Subsystem {
      * Maximum rotation from center (in logical degrees).
      * Turret can rotate from -MAX_ROTATION to +MAX_ROTATION.
      */
-    public static double MAX_ROTATION = 120.0;
+    public static double MAX_ROTATION = 180.0;
 
     /** Set to true if turret rotates opposite to expected direction */
     public static boolean REVERSE_DIRECTION = false;

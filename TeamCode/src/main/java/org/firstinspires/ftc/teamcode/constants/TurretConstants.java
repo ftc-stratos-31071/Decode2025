@@ -13,5 +13,5 @@ public class TurretConstants {
     // This is used internally by Turret.java to convert logical → physical coordinates
     public static double PHYSICAL_CENTER = 45.0;
 
-    public static double BLUE_FAR_ANGLE = 310;
+    public static double BLUE_FAR_ANGLE = 50;
 }

@@ -103,7 +103,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                         new BezierCurve(
                                 new Pose(55.000, 84.500),
                                 new Pose(33.000, 63.000),
-                                new Pose(14.500, 67.000)
+                                new Pose(15.500, 67.000)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(210), Math.toRadians(180))
 
@@ -111,7 +111,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
         path6 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(14.500, 67.000),
+                                new Pose(15.500, 67.000),
                                 new Pose(13.000, 59.000),
                                 new Pose(8.000, 57.500)
                         )
@@ -177,10 +177,13 @@ public class CloseBlueAuto extends NextFTCOpMode {
         Shooter.INSTANCE.setTargetRPM(3700);
         Shooter.INSTANCE.runRPM(3700).schedule();
         new SequentialGroup(
+                IntakeSeqCmd.create(),
                 new FollowPath(path1),
+                Intake.INSTANCE.moveIntake(0.0),
+                Intake.INSTANCE.moveTransfer(0.0),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(800),
+                RapidFireTimeoutCmd.create(900),
                 Intake.INSTANCE.moveServoPos(),
                 new FollowPath(path2),
                 IntakeSeqCmd.create(),
@@ -191,51 +194,53 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 new FollowPath(path4),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(800),
+                RapidFireTimeoutCmd.create(900),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 new FollowPath(path5),
                 new FollowPath(path6),
-                WaitCmd.create(1.0),
+                WaitCmd.create(0.5),
                 new FollowPath(path7),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(800),
+                RapidFireTimeoutCmd.create(900),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 new FollowPath(path5),
                 new FollowPath(path6),
-                WaitCmd.create(1.0),
+                WaitCmd.create(0.5),
                 new FollowPath(path7),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(800),
+                RapidFireTimeoutCmd.create(900),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 new FollowPath(path5),
+                WaitCmd.create(0.5),
                 new FollowPath(path6),
-                WaitCmd.create(1.0),
+                WaitCmd.create(0.5),
                 new FollowPath(path7),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(800),
+                RapidFireTimeoutCmd.create(900),
                 Intake.INSTANCE.moveServoPos(),
                 new FollowPath(path8),
                 IntakeSeqCmd.create(),
                 new FollowPath(path9),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(75.0),
+                Turret2.INSTANCE.goToAngle(70.0),
+                Shooter.INSTANCE.setHood(ShooterConstants.servoPos),
                 new FollowPath(path10),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),
-                RapidFireTimeoutCmd.create(800),
+                RapidFireTimeoutCmd.create(900),
                 Intake.INSTANCE.moveServoPos()
         ).invoke();
     }
