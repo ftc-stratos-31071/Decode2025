@@ -200,41 +200,36 @@ public class Turret2Tuner extends NextFTCOpMode {
         boolean atMinLimit = currentLogical <= -Turret2.MAX_ROTATION + 0.1;
         boolean atMaxLimit = currentLogical >= Turret2.MAX_ROTATION - 0.1;
 
+        telemetry.addLine("=== Turret2 Tuner ===");
+        telemetry.addData("Current Logical", "%.2f°", currentLogical);
+        telemetry.addData("Current Raw", "%.2f°", currentRaw);
+        telemetry.addData("Turret Limits", "-%.1f° to +%.1f°", Turret2.MAX_ROTATION, Turret2.MAX_ROTATION);
+        telemetry.addData("Step Size", "%.1f°", STEP_SIZE);
+        telemetry.addData("Configurable Angle (A)", "%.1f°", CONFIGURABLE_ANGLE);
+        telemetry.addData("Servo Mode", "%s", servoModeNames[servoMode]);
+        telemetry.addData("Left Servo Pos", "%.3f", servoPosLeft);
+        telemetry.addData("Right Servo Pos", "%.3f", servoPosRight);
 
-
-
-
-
-
-
-
-
-        // Show limit status
         if (atMinLimit) {
+            telemetry.addData("Limit Status", "AT LEFT LIMIT (-%.1f°)", Turret2.MAX_ROTATION);
         } else if (atMaxLimit) {
+            telemetry.addData("Limit Status", "AT RIGHT LIMIT (+%.1f°)", Turret2.MAX_ROTATION);
         } else {
+            telemetry.addData("Limit Status", "In range");
         }
 
-
-
-
-
+        telemetry.addData("Last Action", lastAction);
         if (!limitWarning.isEmpty()) {
+            telemetry.addData("Warning", limitWarning);
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+        telemetry.addLine();
+        telemetry.addLine("Controls:");
+        telemetry.addLine("Y=0°  X=-45°  B=+45°  A=CONFIG");
+        telemetry.addLine("LB/RB=step -/+");
+        telemetry.addLine("DPad Left/Up/Right=0.0/0.5/1.0");
+        telemetry.addLine("DPad Down=toggle servo mode");
+        telemetry.update();
     }
 
     @Override

@@ -65,10 +65,10 @@ public class BlueTeleop extends NextFTCOpMode {
     public static double AUTO_START_HEADING = 90.0;
 
     // Vision tracking settings
-    public static double VISION_TRACKING_GAIN = 0.3;
-    public static double VISION_TIMEOUT_SEC = 1.0;
-    public static double VISION_DEADBAND_DEG = 15.0;
-    public static double VISION_SMOOTHING = 0.6;
+    public static double VISION_TRACKING_GAIN = 0.3; //0.1
+    public static double VISION_TIMEOUT_SEC = 1.0; //0.0.5
+    public static double VISION_DEADBAND_DEG = 15.0; //10.0
+    public static double VISION_SMOOTHING = 0.6; //0.3
     public static double TAG_SEARCH_TRIGGER_THRESHOLD = 0.6;
     public static double TRIGGER_SEARCH_START_ANGLE_DEG = 60.0;
 
