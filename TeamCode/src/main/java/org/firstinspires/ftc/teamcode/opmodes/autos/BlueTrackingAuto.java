@@ -42,7 +42,7 @@ public class BlueTrackingAuto extends NextFTCOpMode {
     public static double VISION_TRACKING_GAIN = 0.3;
     public static double VISION_TIMEOUT_SEC = 0.5;
     public static double VISION_DEADBAND_DEG = 10.0;
-    public static double VISION_SMOOTHING = 0.5;
+    public static double VISION_SMOOTHING = 0.4;
 
     private Follower follower;
 

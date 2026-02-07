@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.constants;
 
 public final class AutoPoseMemory {
-    private AutoPoseMemory() {}
+    public AutoPoseMemory() {}
 
     public static boolean hasPose = false;
     public static double ftcX = 0.0;
