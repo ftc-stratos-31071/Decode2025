@@ -67,12 +67,14 @@ public class BlueTrackingAuto extends NextFTCOpMode {
     @Override
     public void onUpdate() {
         updatePose();
+        AutoPoseMemory.setFtcPose(lastFtcX, lastFtcY, lastHeadingDeg);
         drawFieldVisualization(lastFtcX, lastFtcY, lastHeadingDeg);
 
         telemetry.addData("Mode", "TRACK ONLY (no drive commands)");
         telemetry.addData("Pose Pedro (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastPedroX, lastPedroY, lastHeadingDeg);
         telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastFtcX, lastFtcY, lastHeadingDeg);
-        telemetry.addData("AutoPoseMemory.hasPose", AutoPoseMemory.hasPose);
+        telemetry.addData("AutoPoseMemory", "has=%s (%.1f, %.1f, %.1f°)",
+                AutoPoseMemory.hasPose, AutoPoseMemory.ftcX, AutoPoseMemory.ftcY, AutoPoseMemory.headingDeg);
         telemetry.update();
     }
 

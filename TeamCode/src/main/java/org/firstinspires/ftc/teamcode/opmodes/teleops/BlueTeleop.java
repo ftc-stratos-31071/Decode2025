@@ -109,6 +109,7 @@ public class BlueTeleop extends NextFTCOpMode {
     private double lastVisionAngle = 0.0;
     private double smoothedTurretAngle = 0.0;
     private boolean poseCalibrated = false;
+    private boolean startedFromAutoPose = false;
     private double lastRawX = 0.0;
     private double lastRawY = 0.0;
     private double lastFtcX = 0.0;
@@ -124,6 +125,7 @@ public class BlueTeleop extends NextFTCOpMode {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.resetPosAndIMU();
         boolean useSharedAutoPose = AutoPoseMemory.hasPose;
+        startedFromAutoPose = useSharedAutoPose;
         double initFtcX = useSharedAutoPose ? AutoPoseMemory.ftcX : (USE_AUTO_START_POSE ? AUTO_START_X : START_X);
         double initFtcY = useSharedAutoPose ? AutoPoseMemory.ftcY : (USE_AUTO_START_POSE ? AUTO_START_Y : START_Y);
         double initHeading = useSharedAutoPose ? AutoPoseMemory.headingDeg : (USE_AUTO_START_POSE ? AUTO_START_HEADING : START_HEADING);
@@ -548,6 +550,9 @@ public class BlueTeleop extends NextFTCOpMode {
         }
         telemetry.addData("Turret Angle", "%.1f°", Turret2.INSTANCE.getCurrentLogicalDeg());
         telemetry.addData("Pose Calibrated", poseCalibrated ? "✓" : "✗");
+        telemetry.addData("AutoPose Used", startedFromAutoPose ? "YES" : "NO");
+        telemetry.addData("AutoPose Memory", "has=%s (%.1f, %.1f, %.1f°)",
+                AutoPoseMemory.hasPose, AutoPoseMemory.ftcX, AutoPoseMemory.ftcY, AutoPoseMemory.headingDeg);
 
         telemetry.update();
     }
