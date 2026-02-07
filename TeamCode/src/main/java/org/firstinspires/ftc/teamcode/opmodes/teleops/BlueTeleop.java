@@ -115,6 +115,12 @@ public class BlueTeleop extends NextFTCOpMode {
     private double lastFtcY = 0.0;
     private double lastRawHeading = 0.0;
     private double lastTraditionalHeading = 0.0;
+    private String initPoseSource = "UNKNOWN";
+    private double initPoseFtcX = 0.0;
+    private double initPoseFtcY = 0.0;
+    private double initPoseHeading = 0.0;
+    private boolean waitingForLateAutoPose = false;
+    private boolean lateAutoPoseApplied = false;
 
 
 
@@ -126,13 +132,13 @@ public class BlueTeleop extends NextFTCOpMode {
         pinpoint.resetPosAndIMU();
         boolean useSharedAutoPose = AutoPoseMemory.hasPose;
         startedFromAutoPose = useSharedAutoPose;
-        double initFtcX = useSharedAutoPose ? AutoPoseMemory.ftcX : (USE_AUTO_START_POSE ? AUTO_START_X : START_X);
-        double initFtcY = useSharedAutoPose ? AutoPoseMemory.ftcY : (USE_AUTO_START_POSE ? AUTO_START_Y : START_Y);
-        double initTraditionalHeading = useSharedAutoPose ? AutoPoseMemory.headingDeg : (USE_AUTO_START_POSE ? AUTO_START_HEADING : START_HEADING);
-        double initPedroX = AutoPoseMemory.traditionalToPedroX(initFtcX, initFtcY);
-        double initPedroY = AutoPoseMemory.traditionalToPedroY(initFtcX, initFtcY);
-        double initPedroHeading = AutoPoseMemory.traditionalToPedroHeading(initTraditionalHeading);
-        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, initPedroX, initPedroY, AngleUnit.DEGREES, initPedroHeading));
+        initPoseFtcX = useSharedAutoPose ? AutoPoseMemory.ftcX : (USE_AUTO_START_POSE ? AUTO_START_X : START_X);
+        initPoseFtcY = useSharedAutoPose ? AutoPoseMemory.ftcY : (USE_AUTO_START_POSE ? AUTO_START_Y : START_Y);
+        initPoseHeading = useSharedAutoPose ? AutoPoseMemory.headingDeg : (USE_AUTO_START_POSE ? AUTO_START_HEADING : START_HEADING);
+        initPoseSource = useSharedAutoPose ? "AutoPoseMemory@Init" : (USE_AUTO_START_POSE ? "AutoStartConfig" : "TeleopStartConfig");
+        waitingForLateAutoPose = !useSharedAutoPose;
+        lateAutoPoseApplied = false;
+        setPinpointFromTraditional(initPoseFtcX, initPoseFtcY, initPoseHeading);
 
         Shooter.INSTANCE.setHood(hoodPos).schedule();
         Shooter.INSTANCE.setTargetRPM(0.0);
@@ -284,6 +290,7 @@ public class BlueTeleop extends NextFTCOpMode {
 
     @Override
     public void onUpdate() {
+        tryLateAutoPoseHandoff();
 
         double distance = rangefinder.getDistance(DistanceUnit.MM);
         long now = System.currentTimeMillis();
@@ -410,11 +417,9 @@ public class BlueTeleop extends NextFTCOpMode {
 
                 double robotFtcX = -robotX;
                 double robotFtcY = -robotY;
-                double robotRawX = ftcToRawX(robotFtcX, robotFtcY);
-                double robotRawY = ftcToRawY(robotFtcX, robotFtcY);
 
-                double currentPedroHeadingDeg = pinpoint.getHeading(AngleUnit.DEGREES);
-                pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, robotRawX, robotRawY, AngleUnit.DEGREES, currentPedroHeadingDeg));
+                double currentTraditionalHeadingDeg = pinpoint.getHeading(AngleUnit.DEGREES);
+                pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, robotFtcX, robotFtcY, AngleUnit.DEGREES, currentTraditionalHeadingDeg));
 
                 poseCalibrated = true;
                 Gamepads.gamepad1().getGamepad().invoke().rumble(200);
@@ -428,10 +433,38 @@ public class BlueTeleop extends NextFTCOpMode {
         Pose2D currentPose = pinpoint.getPosition();
         lastRawX = currentPose.getX(DistanceUnit.INCH);
         lastRawY = currentPose.getY(DistanceUnit.INCH);
-        lastFtcX = rawToFtcX(lastRawX, lastRawY);
-        lastFtcY = rawToFtcY(lastRawX, lastRawY);
+        lastFtcX = lastRawX;
+        lastFtcY = lastRawY;
         lastRawHeading = currentPose.getHeading(AngleUnit.DEGREES);
-        lastTraditionalHeading = AutoPoseMemory.pedroToTraditionalHeading(lastRawHeading);
+        lastTraditionalHeading = lastRawHeading;
+    }
+
+    private void setPinpointFromTraditional(double ftcX, double ftcY, double traditionalHeadingDeg) {
+        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, ftcX, ftcY, AngleUnit.DEGREES, traditionalHeadingDeg));
+    }
+
+    private void tryLateAutoPoseHandoff() {
+        if (!waitingForLateAutoPose) {
+            return;
+        }
+
+        if (!AutoPoseMemory.hasPose) {
+            return;
+        }
+
+        long ageMs = System.currentTimeMillis() - AutoPoseMemory.updatedAtMs;
+        if (ageMs > 10_000L) {
+            return;
+        }
+
+        initPoseFtcX = AutoPoseMemory.ftcX;
+        initPoseFtcY = AutoPoseMemory.ftcY;
+        initPoseHeading = AutoPoseMemory.headingDeg;
+        initPoseSource = "AutoPoseMemory@Late";
+        startedFromAutoPose = true;
+        waitingForLateAutoPose = false;
+        lateAutoPoseApplied = true;
+        setPinpointFromTraditional(initPoseFtcX, initPoseFtcY, initPoseHeading);
     }
 
     /**
@@ -489,6 +522,9 @@ public class BlueTeleop extends NextFTCOpMode {
         telemetry.addData("Target Global Hdg", "%.1f°", targetGlobalHeading);
         telemetry.addData("Pose Calibrated", poseCalibrated ? "✓" : "✗");
         telemetry.addData("AutoPose Used", startedFromAutoPose ? "YES" : "NO");
+        telemetry.addData("Init Pose Source", initPoseSource);
+        telemetry.addData("Init Pose FTC", "(%.1f, %.1f, %.1f°)", initPoseFtcX, initPoseFtcY, initPoseHeading);
+        telemetry.addData("Late AutoPose Applied", lateAutoPoseApplied ? "YES" : "NO");
         telemetry.addData("AutoPose Memory", "has=%s (%.1f, %.1f, %.1f°)",
                 AutoPoseMemory.hasPose, AutoPoseMemory.ftcX, AutoPoseMemory.ftcY, AutoPoseMemory.headingDeg);
 
@@ -506,23 +542,6 @@ public class BlueTeleop extends NextFTCOpMode {
         if (degrees > 180.0) degrees -= 360.0;
         else if (degrees < -180.0) degrees += 360.0;
         return degrees;
-    }
-
-    // Pinpoint/Pedro frame <-> Traditional FTC frame (rotated mapping).
-    private double rawToFtcX(double rawX, double rawY) {
-        return AutoPoseMemory.pedroToTraditionalX(rawX, rawY);
-    }
-
-    private double rawToFtcY(double rawX, double rawY) {
-        return AutoPoseMemory.pedroToTraditionalY(rawX, rawY);
-    }
-
-    private double ftcToRawX(double ftcX, double ftcY) {
-        return AutoPoseMemory.traditionalToPedroX(ftcX, ftcY);
-    }
-
-    private double ftcToRawY(double ftcX, double ftcY) {
-        return AutoPoseMemory.traditionalToPedroY(ftcX, ftcY);
     }
 
     @Override
