@@ -7,6 +7,7 @@ public class ShooterConstants {
     // Servo positions
     public static double servoPos = 0.4;
     public static double defaultPos = 1.0;
+    public static double FAR_MODE_HOOD_POS = 0.3;
     public static double farHoodPos = 0.4;
     public static double zeroPower = 0.0;
 

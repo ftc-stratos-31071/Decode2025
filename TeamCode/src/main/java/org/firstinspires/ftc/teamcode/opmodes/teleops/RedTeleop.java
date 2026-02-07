@@ -16,6 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.commands.IntakeSeqCmd;
 import org.firstinspires.ftc.teamcode.commands.RapidFireCmd;
+import org.firstinspires.ftc.teamcode.constants.AutoPoseMemory;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
@@ -63,6 +64,10 @@ public class RedTeleop extends NextFTCOpMode {
     public static double START_X = 0.0;
     public static double START_Y = 0.0;
     public static double START_HEADING = 90.0;
+    public static boolean USE_AUTO_START_POSE = false;
+    public static double AUTO_START_X = 0.0;
+    public static double AUTO_START_Y = 0.0;
+    public static double AUTO_START_HEADING = 90.0;
 
     // Vision tracking settings
     public static double VISION_TRACKING_GAIN = 0.3;
@@ -105,13 +110,28 @@ public class RedTeleop extends NextFTCOpMode {
     private double lastVisionAngle = 0.0;
     private double smoothedTurretAngle = 0.0;
     private boolean poseCalibrated = false;
+    private boolean startedFromAutoPose = false;
+    private double initPoseFtcX = 0.0;
+    private double initPoseFtcY = 0.0;
+    private double initPoseHeading = 0.0;
+    private String initPoseSource = "UNKNOWN";
+    private boolean waitingForLateAutoPose = false;
+    private boolean lateAutoPoseApplied = false;
 
     @Override
     public void onInit() {
         // Initialize odometry (from CompTurretSystem)
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.resetPosAndIMU();
-        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, START_X, START_Y, AngleUnit.DEGREES, START_HEADING));
+        boolean useSharedAutoPose = AutoPoseMemory.hasPose;
+        startedFromAutoPose = useSharedAutoPose;
+        initPoseFtcX = useSharedAutoPose ? AutoPoseMemory.ftcX : (USE_AUTO_START_POSE ? AUTO_START_X : START_X);
+        initPoseFtcY = useSharedAutoPose ? AutoPoseMemory.ftcY : (USE_AUTO_START_POSE ? AUTO_START_Y : START_Y);
+        initPoseHeading = useSharedAutoPose ? AutoPoseMemory.headingDeg : (USE_AUTO_START_POSE ? AUTO_START_HEADING : START_HEADING);
+        initPoseSource = useSharedAutoPose ? "AutoPoseMemory@Init" : (USE_AUTO_START_POSE ? "AutoStartConfig" : "TeleopStartConfig");
+        waitingForLateAutoPose = !useSharedAutoPose;
+        lateAutoPoseApplied = false;
+        setPinpointFromTraditional(initPoseFtcX, initPoseFtcY, initPoseHeading);
 
         // Initialize shooter and turret (from BlueTeleop)
         Shooter.INSTANCE.setHood(hoodPos).schedule();
@@ -265,6 +285,8 @@ public class RedTeleop extends NextFTCOpMode {
 
     @Override
     public void onUpdate() {
+        tryLateAutoPoseHandoff();
+
         // Update turret tracking (from CompTurretSystem)
         if (AUTO_TRACK_ENABLED && trackingEnabled) {
             updateTurretTracking();
@@ -392,6 +414,32 @@ public class RedTeleop extends NextFTCOpMode {
         }
     }
 
+    private void setPinpointFromTraditional(double ftcX, double ftcY, double traditionalHeadingDeg) {
+        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, ftcX, ftcY, AngleUnit.DEGREES, traditionalHeadingDeg));
+    }
+
+    private void tryLateAutoPoseHandoff() {
+        if (!waitingForLateAutoPose) {
+            return;
+        }
+        if (!AutoPoseMemory.hasPose) {
+            return;
+        }
+        long ageMs = System.currentTimeMillis() - AutoPoseMemory.updatedAtMs;
+        if (ageMs > 10_000L) {
+            return;
+        }
+
+        initPoseFtcX = AutoPoseMemory.ftcX;
+        initPoseFtcY = AutoPoseMemory.ftcY;
+        initPoseHeading = AutoPoseMemory.headingDeg;
+        initPoseSource = "AutoPoseMemory@Late";
+        startedFromAutoPose = true;
+        waitingForLateAutoPose = false;
+        lateAutoPoseApplied = true;
+        setPinpointFromTraditional(initPoseFtcX, initPoseFtcY, initPoseHeading);
+    }
+
     /**
      * Draw field visualization on FTC Dashboard
      */
@@ -488,6 +536,12 @@ public class RedTeleop extends NextFTCOpMode {
         }
         telemetry.addData("Turret Angle", "%.1f°", Turret2.INSTANCE.getCurrentLogicalDeg());
         telemetry.addData("Pose Calibrated", poseCalibrated ? "✓" : "✗");
+        telemetry.addData("AutoPose Used", startedFromAutoPose ? "YES" : "NO");
+        telemetry.addData("Init Pose Source", initPoseSource);
+        telemetry.addData("Init Pose FTC", "(%.1f, %.1f, %.1f°)", initPoseFtcX, initPoseFtcY, initPoseHeading);
+        telemetry.addData("Late AutoPose Applied", lateAutoPoseApplied ? "YES" : "NO");
+        telemetry.addData("AutoPose Memory", "has=%s (%.1f, %.1f, %.1f°)",
+                AutoPoseMemory.hasPose, AutoPoseMemory.ftcX, AutoPoseMemory.ftcY, AutoPoseMemory.headingDeg);
 
         telemetry.update();
     }
@@ -513,4 +567,3 @@ public class RedTeleop extends NextFTCOpMode {
         }
     }
 }
-

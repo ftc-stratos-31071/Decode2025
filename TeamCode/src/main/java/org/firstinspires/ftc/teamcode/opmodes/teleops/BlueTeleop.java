@@ -2,9 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes.teleops;
 
 import android.util.Size;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -69,7 +67,7 @@ public class BlueTeleop extends NextFTCOpMode {
     // Vision tracking settings
     public static double VISION_TRACKING_GAIN = 0.3;
     public static double VISION_TIMEOUT_SEC = 0.5;
-    public static double VISION_DEADBAND_DEG = 10.0;
+    public static double VISION_DEADBAND_DEG = 5.0;
     public static double VISION_SMOOTHING = 0.5;
 
     private final MotorEx frontLeftMotor  = new MotorEx("frontLeftMotor").brakeMode().reversed();
@@ -147,9 +145,6 @@ public class BlueTeleop extends NextFTCOpMode {
         Turret2.INSTANCE.setAngle(0.0);
         Intake.INSTANCE.moveServoPos().schedule();
 
-        FtcDashboard dashboard = FtcDashboard.getInstance();
-        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
-
         RevColorSensorV3 sensor = hardwareMap.get(RevColorSensorV3.class, "range");
         rangefinder = new LaserRangefinder(sensor);
         rangefinder.setDistanceMode(LaserRangefinder.DistanceMode.SHORT);
@@ -169,8 +164,6 @@ public class BlueTeleop extends NextFTCOpMode {
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .addProcessor(aprilTag)
                 .build();
-
-        dashboard.startCameraStream(visionPortal, 30);
 
         lastTagSeenTime = System.currentTimeMillis();
     }
@@ -263,10 +256,14 @@ public class BlueTeleop extends NextFTCOpMode {
             if (farOn) {
                 targetRpm = ShooterConstants.farTargetRPM;
                 Shooter.INSTANCE.runRPM(ShooterConstants.farTargetRPM).schedule();
+                hoodPos = ShooterConstants.FAR_MODE_HOOD_POS;
+                Shooter.INSTANCE.setHood(hoodPos).schedule();
             }
             else {
                 targetRpm = ShooterConstants.closeTargetRPM;
                 Shooter.INSTANCE.runRPM(ShooterConstants.closeTargetRPM).schedule();
+                hoodPos = ShooterConstants.servoPos;
+                Shooter.INSTANCE.setHood(hoodPos).schedule();
             }
         });
 
@@ -488,46 +485,36 @@ public class BlueTeleop extends NextFTCOpMode {
         return Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, logicalTurretAngle));
     }
 
-    /**
-     * Display telemetry
-     */
     private void displayTelemetry(double distanceMm) {
-        telemetry.addLine("═══ BLUE TELEOP ═══");
-        telemetry.addLine();
-
+        telemetry.addLine("BLUE TELEOP");
         telemetry.addData("Ball Count", ballCount);
-        telemetry.addData("Range (mm)", distanceMm);
-        telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastFtcX, lastFtcY, lastTraditionalHeading);
-        telemetry.addData("Pose Decode (x,y,hdg)", "(%.1f, %.1f, %.1f°)", -lastFtcX, -lastFtcY, lastTraditionalHeading);
-        telemetry.addLine();
+        telemetry.addData("Range mm", distanceMm);
+        telemetry.addData("Pose FTC", "(%.1f, %.1f, %.1f)", lastFtcX, lastFtcY, lastTraditionalHeading);
+        telemetry.addData("Pose Decode", "(%.1f, %.1f, %.1f)", -lastFtcX, -lastFtcY, lastTraditionalHeading);
 
-        // Shooter info
         double rightRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.rightMotor.getVelocity()));
         double leftRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.leftMotor.getVelocity()));
         double currentRPM = (rightRPM + leftRPM) / 2.0;
         telemetry.addData("Current RPM", currentRPM);
-        telemetry.addData("Hood Position", hoodPos);
-        telemetry.addLine();
+        telemetry.addData("Target RPM", targetRpm);
+        telemetry.addData("Hood", hoodPos);
+        telemetry.addData("Far Mode", farOn ? "ON" : "OFF");
+        telemetry.addData("Shooter", shooterOn ? "ON" : "OFF");
 
-        // Turret tracking
-        if (trackingEnabled) {
-            telemetry.addData("Tracking Mode", visionMode ? "🎯 VISION" : "🧭 ODOMETRY");
-            telemetry.addData("Goal", "BLUE");
-        } else {
-            telemetry.addData("Tracking", "DISABLED");
-        }
-        telemetry.addData("Turret Angle", "%.1f°", Turret2.INSTANCE.getCurrentLogicalDeg());
-        telemetry.addData("Target Turret", "%.1f°", targetTurretAngle);
-        telemetry.addData("Goal Decode (x,y)", "(%.1f, %.1f)", BLUE_GOAL_X, BLUE_GOAL_Y);
-        telemetry.addData("Target Global Hdg", "%.1f°", targetGlobalHeading);
-        telemetry.addData("Pose Calibrated", poseCalibrated ? "✓" : "✗");
+        telemetry.addData("Tracking Enabled", trackingEnabled ? "YES" : "NO");
+        telemetry.addData("Tracking Mode", visionMode ? "VISION" : "ODOMETRY");
+        telemetry.addData("Turret Angle", "%.1f", Turret2.INSTANCE.getCurrentLogicalDeg());
+        telemetry.addData("Target Turret", "%.1f", targetTurretAngle);
+        telemetry.addData("Goal Decode", "(%.1f, %.1f)", BLUE_GOAL_X, BLUE_GOAL_Y);
+        telemetry.addData("Target Global Hdg", "%.1f", targetGlobalHeading);
+        telemetry.addData("Pose Calibrated", poseCalibrated ? "YES" : "NO");
+
         telemetry.addData("AutoPose Used", startedFromAutoPose ? "YES" : "NO");
         telemetry.addData("Init Pose Source", initPoseSource);
-        telemetry.addData("Init Pose FTC", "(%.1f, %.1f, %.1f°)", initPoseFtcX, initPoseFtcY, initPoseHeading);
+        telemetry.addData("Init Pose FTC", "(%.1f, %.1f, %.1f)", initPoseFtcX, initPoseFtcY, initPoseHeading);
         telemetry.addData("Late AutoPose Applied", lateAutoPoseApplied ? "YES" : "NO");
-        telemetry.addData("AutoPose Memory", "has=%s (%.1f, %.1f, %.1f°)",
+        telemetry.addData("AutoPose Memory", "has=%s (%.1f, %.1f, %.1f)",
                 AutoPoseMemory.hasPose, AutoPoseMemory.ftcX, AutoPoseMemory.ftcY, AutoPoseMemory.headingDeg);
-
         telemetry.update();
     }
 

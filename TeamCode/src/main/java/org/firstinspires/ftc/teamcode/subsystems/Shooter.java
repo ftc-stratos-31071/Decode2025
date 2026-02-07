@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
@@ -226,15 +224,5 @@ public class Shooter implements Subsystem {
         DEBUG_rightRPM = rightRPM;
         DEBUG_leftRPM = leftRPM;
 
-        TelemetryPacket packet = new TelemetryPacket();
-        packet.put("Target RPM", targetRPM);
-        packet.put("Current RPM", currentRPM);
-        packet.put("Output", compensatedOutput);
-        if (ShooterConstants.ENABLE_BATTERY_COMPENSATION && voltageSensor != null) {
-            packet.put("Battery Voltage", DEBUG_voltage);
-            packet.put("Compensation", String.format("%.2fx", DEBUG_compensation));
-        }
-        FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 }
-
