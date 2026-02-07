@@ -174,7 +174,7 @@ public class FarRedTrackAuto extends NextFTCOpMode {
     public void onStartButtonPressed() {
         Shooter.INSTANCE.runRPM(ShooterConstants.farTargetRPM).schedule();
         new SequentialGroup(
-                Turret2.INSTANCE.goToAngle(-65.0),
+                Turret2.INSTANCE.goToAngle(-80.0),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.5),
                 RapidFireTimeoutCmdFar.create(2000),

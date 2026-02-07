@@ -54,7 +54,7 @@ public class BlueTeleopTrack extends NextFTCOpMode {
     public static double VISION_DEADBAND_DEG = 15.0; //10.0
     public static double VISION_SMOOTHING = 0.6; //0.3
     public static double TAG_SEARCH_TRIGGER_THRESHOLD = 0.6;
-    public static double TRIGGER_SEARCH_START_ANGLE_DEG = 75.0;
+    public static double TRIGGER_SEARCH_START_ANGLE_DEG = 70.0;
 
     private final MotorEx frontLeftMotor  = new MotorEx("frontLeftMotor").brakeMode().reversed();
     private final MotorEx frontRightMotor = new MotorEx("frontRightMotor").brakeMode().reversed();
@@ -262,6 +262,7 @@ public class BlueTeleopTrack extends NextFTCOpMode {
             smoothedTurretAngle = 0.0;
             triggerSearchDirection = 0;
             triggerSearchBaseAngle = 0.0;
+            trackingResumeAtMs = System.currentTimeMillis() + (long) (VISION_TIMEOUT_SEC * 1000.0);
             Turret2.INSTANCE.setAngle(0.0);
         });
     }
