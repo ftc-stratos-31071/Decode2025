@@ -27,7 +27,6 @@ import dev.nextftc.ftc.components.BulkReadComponent;
 
 @Autonomous(name = "CloseBlueTrackAuto")
 public class CloseBlueTrackAuto extends NextFTCOpMode {
-
     private Follower follower;
     private PathChain path1;
     private PathChain path2;
@@ -193,7 +192,7 @@ public class CloseBlueTrackAuto extends NextFTCOpMode {
                 new FollowPath(path3),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(90.0),
+                Turret2.INSTANCE.goToAngle(80.0), //90
                 new FollowPath(path4),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.2),
@@ -226,7 +225,7 @@ public class CloseBlueTrackAuto extends NextFTCOpMode {
                 new FollowPath(path9),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(70.0),
+                Turret2.INSTANCE.goToAngle(60.0), //70
                 Shooter.INSTANCE.runRPMAuto(3500),
                 Shooter.INSTANCE.setHood(ShooterConstants.servoPos + 0.3),
                 new FollowPath(path10),
@@ -240,9 +239,6 @@ public class CloseBlueTrackAuto extends NextFTCOpMode {
     @Override
     public void onUpdate() {
         updatePose();
-
-
-
     }
 
     private void updatePose() {
