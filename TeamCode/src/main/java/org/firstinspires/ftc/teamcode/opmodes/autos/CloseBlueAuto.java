@@ -43,6 +43,8 @@ public class CloseBlueAuto extends NextFTCOpMode {
     private PathChain path8;
     private PathChain path9;
     private PathChain path10;
+    private PathChain path11;
+    private PathChain path12;
 
     public CloseBlueAuto() {
         addComponents(
@@ -103,7 +105,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                         new BezierCurve(
                                 new Pose(55.000, 84.500),
                                 new Pose(33.000, 63.000),
-                                new Pose(14.500, 67.000)
+                                new Pose(15.500, 67.000)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(210), Math.toRadians(180))
 
@@ -111,16 +113,16 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
         path6 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(14.500, 67.000),
+                                new Pose(15.500, 67.000),
                                 new Pose(13.000, 59.000),
-                                new Pose(7.500, 57.000)
+                                new Pose(9.500, 57.000)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(110))
                 .build();
 
         path7 = follower.pathBuilder()
                 .addPath(new BezierLine(
-                        new Pose(7.500, 57.000),
+                        new Pose(9.500, 57.000),
                         new Pose(55.000, 84.500)
                 ))
                 .setLinearHeadingInterpolation(
@@ -156,6 +158,28 @@ public class CloseBlueAuto extends NextFTCOpMode {
                         Math.toRadians(210)
                 )
                 .build();
+
+//        path11 = follower.pathBuilder()
+//                .addPath(new BezierLine(
+//                        new Pose(15.000, 85.500),
+//                        new Pose(40.000, 85.500)
+//                ))
+//                .setLinearHeadingInterpolation(
+//                        Math.toRadians(180),
+//                        Math.toRadians(210)
+//                )
+//                .build();
+//
+//        path12 = follower.pathBuilder()
+//                .addPath(new BezierLine(
+//                        new Pose(7.500, 57.000),
+//                        new Pose(55.000, 109.000)
+//                ))
+//                .setLinearHeadingInterpolation(
+//                        Math.toRadians(110),
+//                        Math.toRadians(210)
+//                )
+//                .build();
     }
 
     @Override
@@ -191,7 +215,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 new FollowPath(path3),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(80.0),
+                Turret2.INSTANCE.goToAngle(90.0),
                 new FollowPath(path4),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.2),
@@ -235,8 +259,8 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 new FollowPath(path9),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
-                Turret2.INSTANCE.goToAngle(55.0),
-                Shooter.INSTANCE.setHood(ShooterConstants.servoPos + 0.5),
+                Turret2.INSTANCE.goToAngle(70.0),
+                Shooter.INSTANCE.setHood(ShooterConstants.servoPos + 0.6),
                 new FollowPath(path10),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.2),
