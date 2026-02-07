@@ -63,6 +63,7 @@ import android.widget.TextView;
 
 import com.google.blocks.ftcrobotcontroller.ProgrammingWebHandlers;
 import com.google.blocks.ftcrobotcontroller.runtime.BlocksOpMode;
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.ftccommon.ClassManagerFactory;
 import com.qualcomm.ftccommon.FtcAboutActivity;
 import com.qualcomm.ftccommon.FtcEventLoop;
@@ -352,6 +353,8 @@ public class FtcRobotControllerActivity extends Activity
      */
     if (permissionsValidated) {
       ClassManager.getInstance().setOnBotJavaClassHelper(onBotJavaHelper);
+      // Register Dashboard's class hooks before global class scanning starts.
+      FtcDashboard.start(this);
       ClassManagerFactory.registerFilters();
       ClassManagerFactory.processAllClasses();
     }
@@ -466,6 +469,7 @@ public class FtcRobotControllerActivity extends Activity
   protected void onDestroy() {
     super.onDestroy();
     RobotLog.vv(TAG, "onDestroy()");
+    FtcDashboard.stop(this);
 
     shutdownRobot();  // Ensure the robot is put away to bed
     if (callback != null) callback.close();

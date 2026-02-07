@@ -42,7 +42,7 @@ public class BlueTrackingAuto extends NextFTCOpMode {
     public static double VISION_TRACKING_GAIN = 0.3;
     public static double VISION_TIMEOUT_SEC = 0.5;
     public static double VISION_DEADBAND_DEG = 10.0;
-    public static double VISION_SMOOTHING = 0.3;
+    public static double VISION_SMOOTHING = 0.5;
 
     private Follower follower;
 
@@ -120,7 +120,6 @@ public class BlueTrackingAuto extends NextFTCOpMode {
         if (trackingEnabled) {
             updateTurretTracking();
         }
-        AutoPoseMemory.setFtcPose(lastFtcX, lastFtcY, lastTraditionalHeadingDeg);
 
         telemetry.addData("Mode", "TRACK ONLY (no drive commands)");
         telemetry.addData("Pose Pedro (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastPedroX, lastPedroY, lastPedroHeadingDeg);
@@ -172,7 +171,7 @@ public class BlueTrackingAuto extends NextFTCOpMode {
             visionMode = true;
             if (Math.abs(tagBearing) > VISION_DEADBAND_DEG) {
                 double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
-                double correction = tagBearing * VISION_TRACKING_GAIN;
+                double correction = -tagBearing * VISION_TRACKING_GAIN;
                 double desiredAngle = currentTurretAngle + correction;
 
                 if (smoothedTurretAngle == 0.0) {
@@ -222,7 +221,7 @@ public class BlueTrackingAuto extends NextFTCOpMode {
     private double calculateTurretAngle(double robotHeading, double globalTarget) {
         double angleDiff = globalTarget - robotHeading;
         angleDiff = normalizeAngleSigned(angleDiff);
-        double logicalTurretAngle = angleDiff;
+        double logicalTurretAngle = -angleDiff;
         return Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, logicalTurretAngle));
     }
 

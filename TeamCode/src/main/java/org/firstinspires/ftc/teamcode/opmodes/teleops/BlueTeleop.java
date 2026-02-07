@@ -70,7 +70,7 @@ public class BlueTeleop extends NextFTCOpMode {
     public static double VISION_TRACKING_GAIN = 0.3;
     public static double VISION_TIMEOUT_SEC = 0.5;
     public static double VISION_DEADBAND_DEG = 10.0;
-    public static double VISION_SMOOTHING = 0.3;
+    public static double VISION_SMOOTHING = 0.5;
 
     private final MotorEx frontLeftMotor  = new MotorEx("frontLeftMotor").brakeMode().reversed();
     private final MotorEx frontRightMotor = new MotorEx("frontRightMotor").brakeMode().reversed();
@@ -104,6 +104,7 @@ public class BlueTeleop extends NextFTCOpMode {
     private boolean visionMode = false;
     private long lastTagSeenTime = 0;
     private double targetGlobalHeading = 0.0;
+    private double targetTurretAngle = 0.0;
     private double lastVisionAngle = 0.0;
     private double smoothedTurretAngle = 0.0;
     private boolean poseCalibrated = false;
@@ -320,16 +321,9 @@ public class BlueTeleop extends NextFTCOpMode {
      */
     private void updateTurretTracking() {
         // Convert FTC-centered pose to Decode coordinates.
-        double currentX = -lastFtcX;
-        double currentY = -lastFtcY;
-        double currentRobotHeading = lastTraditionalHeading;
-
-        // Get current goal position
-        double goalX = BLUE_GOAL_X;
-        double goalY = BLUE_GOAL_Y;
-
-        // ALWAYS update targetGlobalHeading using atan2 (odometry runs continuously)
-        targetGlobalHeading = calculateAngleToGoal(currentX, currentY, goalX, goalY);
+        double currentDecodeX = -lastFtcX;
+        double currentDecodeY = -lastFtcY;
+        targetGlobalHeading = calculateAngleToGoal(currentDecodeX, currentDecodeY, BLUE_GOAL_X, BLUE_GOAL_Y);
 
         // Check for AprilTag detections
         List<AprilTagDetection> detections = aprilTag.getDetections();
@@ -350,8 +344,6 @@ public class BlueTeleop extends NextFTCOpMode {
         // Calculate time since last tag detection
         double timeSinceLastTag = (System.currentTimeMillis() - lastTagSeenTime) / 1000.0;
 
-        double targetTurretAngle;
-
         // PRIORITY SYSTEM: Vision when tag visible, odometry otherwise
         if (tagDetectedThisFrame) {
             // VISION MODE: Tag is visible
@@ -360,7 +352,7 @@ public class BlueTeleop extends NextFTCOpMode {
             if (Math.abs(tagBearing) > VISION_DEADBAND_DEG) {
                 // Apply vision correction
                 double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
-                double correction = tagBearing * VISION_TRACKING_GAIN;
+                double correction = -tagBearing * VISION_TRACKING_GAIN;
                 double desiredAngle = currentTurretAngle + correction;
 
                 // Initialize smoothing on first frame
@@ -387,7 +379,7 @@ public class BlueTeleop extends NextFTCOpMode {
         } else {
             // ODOMETRY MODE: Tag lost, use odometry
             visionMode = false;
-            targetTurretAngle = calculateTurretAngle(currentRobotHeading, targetGlobalHeading);
+            targetTurretAngle = calculateTurretAngle(lastTraditionalHeading, targetGlobalHeading);
         }
 
         // Command turret to target angle
@@ -459,7 +451,7 @@ public class BlueTeleop extends NextFTCOpMode {
     private double calculateTurretAngle(double robotHeading, double globalTarget) {
         double angleDiff = globalTarget - robotHeading;
         angleDiff = normalizeAngleSigned(angleDiff);
-        double logicalTurretAngle = angleDiff;
+        double logicalTurretAngle = -angleDiff;
         return Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, logicalTurretAngle));
     }
 
@@ -492,6 +484,9 @@ public class BlueTeleop extends NextFTCOpMode {
             telemetry.addData("Tracking", "DISABLED");
         }
         telemetry.addData("Turret Angle", "%.1f°", Turret2.INSTANCE.getCurrentLogicalDeg());
+        telemetry.addData("Target Turret", "%.1f°", targetTurretAngle);
+        telemetry.addData("Goal Decode (x,y)", "(%.1f, %.1f)", BLUE_GOAL_X, BLUE_GOAL_Y);
+        telemetry.addData("Target Global Hdg", "%.1f°", targetGlobalHeading);
         telemetry.addData("Pose Calibrated", poseCalibrated ? "✓" : "✗");
         telemetry.addData("AutoPose Used", startedFromAutoPose ? "YES" : "NO");
         telemetry.addData("AutoPose Memory", "has=%s (%.1f, %.1f, %.1f°)",
