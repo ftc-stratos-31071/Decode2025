@@ -172,7 +172,7 @@ public class BlueTrackingAuto extends NextFTCOpMode {
             visionMode = true;
             if (Math.abs(tagBearing) > VISION_DEADBAND_DEG) {
                 double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
-                double correction = -tagBearing * VISION_TRACKING_GAIN;
+                double correction = tagBearing * VISION_TRACKING_GAIN;
                 double desiredAngle = currentTurretAngle + correction;
 
                 if (smoothedTurretAngle == 0.0) {
@@ -222,7 +222,7 @@ public class BlueTrackingAuto extends NextFTCOpMode {
     private double calculateTurretAngle(double robotHeading, double globalTarget) {
         double angleDiff = globalTarget - robotHeading;
         angleDiff = normalizeAngleSigned(angleDiff);
-        double logicalTurretAngle = -angleDiff;
+        double logicalTurretAngle = angleDiff;
         return Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, logicalTurretAngle));
     }
 

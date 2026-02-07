@@ -360,7 +360,7 @@ public class BlueTeleop extends NextFTCOpMode {
             if (Math.abs(tagBearing) > VISION_DEADBAND_DEG) {
                 // Apply vision correction
                 double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
-                double correction = -tagBearing * VISION_TRACKING_GAIN;
+                double correction = tagBearing * VISION_TRACKING_GAIN;
                 double desiredAngle = currentTurretAngle + correction;
 
                 // Initialize smoothing on first frame
@@ -459,7 +459,7 @@ public class BlueTeleop extends NextFTCOpMode {
     private double calculateTurretAngle(double robotHeading, double globalTarget) {
         double angleDiff = globalTarget - robotHeading;
         angleDiff = normalizeAngleSigned(angleDiff);
-        double logicalTurretAngle = -angleDiff;
+        double logicalTurretAngle = angleDiff;
         return Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, logicalTurretAngle));
     }
 
