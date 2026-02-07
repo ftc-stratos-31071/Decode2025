@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.teamcode.opmodes.autos;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.canvas.Canvas;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -31,7 +28,8 @@ public class BlueTrackingAuto extends NextFTCOpMode {
 
     private double lastPedroX = 0.0;
     private double lastPedroY = 0.0;
-    private double lastHeadingDeg = 0.0;
+    private double lastPedroHeadingDeg = 0.0;
+    private double lastTraditionalHeadingDeg = 0.0;
     private double lastFtcX = 0.0;
     private double lastFtcY = 0.0;
 
@@ -67,12 +65,11 @@ public class BlueTrackingAuto extends NextFTCOpMode {
     @Override
     public void onUpdate() {
         updatePose();
-        AutoPoseMemory.setFtcPose(lastFtcX, lastFtcY, lastHeadingDeg);
-        drawFieldVisualization(lastFtcX, lastFtcY, lastHeadingDeg);
+        AutoPoseMemory.setFtcPose(lastFtcX, lastFtcY, lastTraditionalHeadingDeg);
 
         telemetry.addData("Mode", "TRACK ONLY (no drive commands)");
-        telemetry.addData("Pose Pedro (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastPedroX, lastPedroY, lastHeadingDeg);
-        telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastFtcX, lastFtcY, lastHeadingDeg);
+        telemetry.addData("Pose Pedro (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastPedroX, lastPedroY, lastPedroHeadingDeg);
+        telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastFtcX, lastFtcY, lastTraditionalHeadingDeg);
         telemetry.addData("AutoPoseMemory", "has=%s (%.1f, %.1f, %.1f°)",
                 AutoPoseMemory.hasPose, AutoPoseMemory.ftcX, AutoPoseMemory.ftcY, AutoPoseMemory.headingDeg);
         telemetry.update();
@@ -82,28 +79,11 @@ public class BlueTrackingAuto extends NextFTCOpMode {
         Pose pose = follower.getPose();
         lastPedroX = pose.getX();
         lastPedroY = pose.getY();
-        lastHeadingDeg = normalizeAngle(Math.toDegrees(pose.getHeading()));
+        lastPedroHeadingDeg = normalizeAngle(Math.toDegrees(pose.getHeading()));
+        lastTraditionalHeadingDeg = AutoPoseMemory.pedroToTraditionalHeading(lastPedroHeadingDeg);
 
         lastFtcX = AutoPoseMemory.pedroToTraditionalX(lastPedroX, lastPedroY);
         lastFtcY = AutoPoseMemory.pedroToTraditionalY(lastPedroX, lastPedroY);
-    }
-
-    private void drawFieldVisualization(double ftcX, double ftcY, double headingDeg) {
-        TelemetryPacket packet = new TelemetryPacket();
-        Canvas fieldOverlay = packet.fieldOverlay();
-
-        fieldOverlay.setStroke("#00A8FF");
-        fieldOverlay.setFill("#00A8FF");
-        fieldOverlay.fillCircle(ftcX, ftcY, 6);
-
-        double headingRadians = Math.toRadians(headingDeg);
-        double arrowLength = 12;
-        double arrowEndX = ftcX + arrowLength * Math.cos(headingRadians);
-        double arrowEndY = ftcY + arrowLength * Math.sin(headingRadians);
-        fieldOverlay.setStrokeWidth(2);
-        fieldOverlay.strokeLine(ftcX, ftcY, arrowEndX, arrowEndY);
-
-        FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 
     private double normalizeAngle(double degrees) {
@@ -115,6 +95,6 @@ public class BlueTrackingAuto extends NextFTCOpMode {
     @Override
     public void onStop() {
         updatePose();
-        AutoPoseMemory.setFtcPose(lastFtcX, lastFtcY, lastHeadingDeg);
+        AutoPoseMemory.setFtcPose(lastFtcX, lastFtcY, lastTraditionalHeadingDeg);
     }
 }

@@ -3,10 +3,8 @@ package org.firstinspires.ftc.teamcode.opmodes.teleops;
 import android.util.Size;
 
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -115,6 +113,7 @@ public class BlueTeleop extends NextFTCOpMode {
     private double lastFtcX = 0.0;
     private double lastFtcY = 0.0;
     private double lastRawHeading = 0.0;
+    private double lastTraditionalHeading = 0.0;
 
 
 
@@ -128,10 +127,11 @@ public class BlueTeleop extends NextFTCOpMode {
         startedFromAutoPose = useSharedAutoPose;
         double initFtcX = useSharedAutoPose ? AutoPoseMemory.ftcX : (USE_AUTO_START_POSE ? AUTO_START_X : START_X);
         double initFtcY = useSharedAutoPose ? AutoPoseMemory.ftcY : (USE_AUTO_START_POSE ? AUTO_START_Y : START_Y);
-        double initHeading = useSharedAutoPose ? AutoPoseMemory.headingDeg : (USE_AUTO_START_POSE ? AUTO_START_HEADING : START_HEADING);
-        double initRawX = ftcToRawX(initFtcX, initFtcY);
-        double initRawY = ftcToRawY(initFtcX, initFtcY);
-        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, initRawX, initRawY, AngleUnit.DEGREES, initHeading));
+        double initTraditionalHeading = useSharedAutoPose ? AutoPoseMemory.headingDeg : (USE_AUTO_START_POSE ? AUTO_START_HEADING : START_HEADING);
+        double initPedroX = AutoPoseMemory.traditionalToPedroX(initFtcX, initFtcY);
+        double initPedroY = AutoPoseMemory.traditionalToPedroY(initFtcX, initFtcY);
+        double initPedroHeading = AutoPoseMemory.traditionalToPedroHeading(initTraditionalHeading);
+        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, initPedroX, initPedroY, AngleUnit.DEGREES, initPedroHeading));
 
         Shooter.INSTANCE.setHood(hoodPos).schedule();
         Shooter.INSTANCE.setTargetRPM(0.0);
@@ -308,7 +308,7 @@ public class BlueTeleop extends NextFTCOpMode {
 
         updateOdometry();
 
-        if (AUTO_TRACK_ENABLED && trackingEnabled) {
+        if (trackingEnabled) {
             updateTurretTracking();
         }
 
@@ -322,7 +322,7 @@ public class BlueTeleop extends NextFTCOpMode {
         // Convert FTC-centered pose to Decode coordinates.
         double currentX = -lastFtcX;
         double currentY = -lastFtcY;
-        double currentRobotHeading = lastRawHeading;
+        double currentRobotHeading = lastTraditionalHeading;
 
         // Get current goal position
         double goalX = BLUE_GOAL_X;
@@ -330,13 +330,6 @@ public class BlueTeleop extends NextFTCOpMode {
 
         // ALWAYS update targetGlobalHeading using atan2 (odometry runs continuously)
         targetGlobalHeading = calculateAngleToGoal(currentX, currentY, goalX, goalY);
-
-        // Draw field visualization
-        double dashboardRobotX = lastFtcX;
-        double dashboardRobotY = lastFtcY;
-        double dashboardGoalX = goalX;
-        double dashboardGoalY = goalY;
-        drawFieldVisualization(dashboardRobotX, dashboardRobotY, currentRobotHeading, dashboardGoalX, dashboardGoalY);
 
         // Check for AprilTag detections
         List<AprilTagDetection> detections = aprilTag.getDetections();
@@ -428,65 +421,14 @@ public class BlueTeleop extends NextFTCOpMode {
                 double robotRawX = ftcToRawX(robotFtcX, robotFtcY);
                 double robotRawY = ftcToRawY(robotFtcX, robotFtcY);
 
-                double currentHeadingDeg = pinpoint.getHeading(AngleUnit.DEGREES);
-                pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, robotRawX, robotRawY, AngleUnit.DEGREES, currentHeadingDeg));
+                double currentPedroHeadingDeg = pinpoint.getHeading(AngleUnit.DEGREES);
+                pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, robotRawX, robotRawY, AngleUnit.DEGREES, currentPedroHeadingDeg));
 
                 poseCalibrated = true;
                 Gamepads.gamepad1().getGamepad().invoke().rumble(200);
                 break;
             }
         }
-    }
-
-    /**
-     * Draw field visualization on FTC Dashboard
-     */
-    private void drawFieldVisualization(double currentX, double currentY, double currentRobotHeading,
-                                        double goalX, double goalY) {
-        TelemetryPacket packet = new TelemetryPacket();
-        Canvas fieldOverlay = packet.fieldOverlay();
-
-        // Draw goal
-        String goalColor = "#0000FF";
-        fieldOverlay.setStroke(goalColor);
-        fieldOverlay.setStrokeWidth(2);
-        double goalSize = 4;
-        fieldOverlay.strokeLine(goalX - goalSize, goalY - goalSize, goalX + goalSize, goalY + goalSize);
-        fieldOverlay.strokeLine(goalX - goalSize, goalY + goalSize, goalX + goalSize, goalY - goalSize);
-        fieldOverlay.strokeCircle(goalX, goalY, 6);
-
-        // Draw robot
-        fieldOverlay.setStroke("#0000FF");
-        fieldOverlay.setFill("#0000FF");
-        fieldOverlay.fillCircle(currentX, currentY, 6);
-
-        // Draw robot heading
-        double headingRadians = Math.toRadians(currentRobotHeading);
-        double arrowLength = 12;
-        double arrowEndX = currentX + arrowLength * Math.cos(headingRadians);
-        double arrowEndY = currentY + arrowLength * Math.sin(headingRadians);
-        fieldOverlay.strokeLine(currentX, currentY, arrowEndX, arrowEndY);
-
-        // Draw line to goal
-        fieldOverlay.setStroke("#00FF00");
-        fieldOverlay.setStrokeWidth(1);
-        fieldOverlay.strokeLine(currentX, currentY, goalX, goalY);
-
-        // Draw turret direction
-        if (trackingEnabled) {
-            double turretLogical = Turret2.INSTANCE.getTargetLogicalDeg();
-            double turretGlobalHeading = currentRobotHeading - turretLogical;
-            double turretRadians = Math.toRadians(turretGlobalHeading);
-            double turretLength = 18;
-            double turretEndX = currentX + turretLength * Math.cos(turretRadians);
-            double turretEndY = currentY + turretLength * Math.sin(turretRadians);
-
-            fieldOverlay.setStroke(visionMode ? "#FFA500" : "#FFFF00");
-            fieldOverlay.setStrokeWidth(3);
-            fieldOverlay.strokeLine(currentX, currentY, turretEndX, turretEndY);
-        }
-
-        FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 
     private void updateOdometry() {
@@ -497,6 +439,7 @@ public class BlueTeleop extends NextFTCOpMode {
         lastFtcX = rawToFtcX(lastRawX, lastRawY);
         lastFtcY = rawToFtcY(lastRawX, lastRawY);
         lastRawHeading = currentPose.getHeading(AngleUnit.DEGREES);
+        lastTraditionalHeading = AutoPoseMemory.pedroToTraditionalHeading(lastRawHeading);
     }
 
     /**
@@ -529,8 +472,8 @@ public class BlueTeleop extends NextFTCOpMode {
 
         telemetry.addData("Ball Count", ballCount);
         telemetry.addData("Range (mm)", distanceMm);
-        telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastFtcX, lastFtcY, lastRawHeading);
-        telemetry.addData("Pose Decode (x,y,hdg)", "(%.1f, %.1f, %.1f°)", -lastFtcX, -lastFtcY, lastRawHeading);
+        telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastFtcX, lastFtcY, lastTraditionalHeading);
+        telemetry.addData("Pose Decode (x,y,hdg)", "(%.1f, %.1f, %.1f°)", -lastFtcX, -lastFtcY, lastTraditionalHeading);
         telemetry.addLine();
 
         // Shooter info
@@ -542,7 +485,7 @@ public class BlueTeleop extends NextFTCOpMode {
         telemetry.addLine();
 
         // Turret tracking
-        if (AUTO_TRACK_ENABLED && trackingEnabled) {
+        if (trackingEnabled) {
             telemetry.addData("Tracking Mode", visionMode ? "🎯 VISION" : "🧭 ODOMETRY");
             telemetry.addData("Goal", "BLUE");
         } else {
@@ -570,24 +513,21 @@ public class BlueTeleop extends NextFTCOpMode {
         return degrees;
     }
 
-    // Pinpoint axes are rotated relative to our FTC dashboard frame.
-    // Raw -> FTC mapping:
-    // ftcX = rawY
-    // ftcY = rawX
+    // Pinpoint/Pedro frame <-> Traditional FTC frame (rotated mapping).
     private double rawToFtcX(double rawX, double rawY) {
-        return rawY;
+        return AutoPoseMemory.pedroToTraditionalX(rawX, rawY);
     }
 
     private double rawToFtcY(double rawX, double rawY) {
-        return rawX;
+        return AutoPoseMemory.pedroToTraditionalY(rawX, rawY);
     }
 
     private double ftcToRawX(double ftcX, double ftcY) {
-        return ftcY;
+        return AutoPoseMemory.traditionalToPedroX(ftcX, ftcY);
     }
 
     private double ftcToRawY(double ftcX, double ftcY) {
-        return ftcX;
+        return AutoPoseMemory.traditionalToPedroY(ftcX, ftcY);
     }
 
     @Override

@@ -25,7 +25,7 @@ public final class AutoPoseMemory {
         updatedAtMs = 0L;
     }
 
-    // Traditional FTC centered frame -> Pedro frame (0..144 with rotated axes).
+    // Traditional FTC centered frame -> Pedro frame (0..144, rotated).
     public static double traditionalToPedroX(double traditionalX, double traditionalY) {
         return traditionalY + 72.0;
     }
@@ -34,12 +34,29 @@ public final class AutoPoseMemory {
         return 72.0 - traditionalX;
     }
 
-    // Pedro frame -> Traditional FTC centered frame.
+    // Pedro frame -> Traditional FTC centered frame (inverse rotated mapping).
     public static double pedroToTraditionalX(double pedroX, double pedroY) {
         return 72.0 - pedroY;
     }
 
     public static double pedroToTraditionalY(double pedroX, double pedroY) {
         return pedroX - 72.0;
+    }
+
+    // Heading mapping:
+    // traditional -> pedro: 0->270, 90->0, 180->90, 270->180
+    // pedro -> traditional: inverse of above
+    public static double traditionalToPedroHeading(double traditionalHeadingDeg) {
+        return normalizeAngle(traditionalHeadingDeg - 90.0);
+    }
+
+    public static double pedroToTraditionalHeading(double pedroHeadingDeg) {
+        return normalizeAngle(pedroHeadingDeg + 90.0);
+    }
+
+    public static double normalizeAngle(double degrees) {
+        degrees = degrees % 360.0;
+        if (degrees < 0) degrees += 360.0;
+        return degrees;
     }
 }
