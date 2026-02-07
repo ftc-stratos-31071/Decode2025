@@ -122,6 +122,25 @@ public class Shooter implements Subsystem {
         }.requires(this);
     }
 
+    public Command runRPMAuto(double rpm) {
+        return new Command() {
+            @Override
+            public void start() {
+                setTargetRPM(rpm);
+            }
+
+            @Override
+            public boolean isDone() {
+                return true;
+            }
+
+            @Override
+            public void stop(boolean interrupted) {
+                // Keep shooter running when command ends
+            }
+        }.requires(this);
+    }
+
     public Command openLoop(double power) {
         return new Command() {
             @Override

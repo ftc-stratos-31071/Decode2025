@@ -75,7 +75,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                         new BezierCurve(
                                 new Pose(55.000, 84.500),
                                 new Pose(56.500, 63.000),
-                                new Pose(40.000, 61.500)
+                                new Pose(45.000, 61.500)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(142.5), Math.toRadians(180))
 
@@ -84,7 +84,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
         path3 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(40.000, 61.500),
+                                new Pose(45.000, 61.500),
                                 new Pose(10.000, 61.500)
                         )
                 ).setTangentHeadingInterpolation()
@@ -105,7 +105,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                         new BezierCurve(
                                 new Pose(55.000, 84.500),
                                 new Pose(33.000, 63.000),
-                                new Pose(15.500, 67.000)
+                                new Pose(17.000, 67.000)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(210), Math.toRadians(180))
 
@@ -113,11 +113,11 @@ public class CloseBlueAuto extends NextFTCOpMode {
 
         path6 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(15.500, 67.000),
+                                new Pose(17.000, 67.000),
                                 new Pose(13.000, 59.000),
                                 new Pose(9.500, 57.000)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(110))
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(145))
                 .build();
 
         path7 = follower.pathBuilder()
@@ -126,7 +126,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                         new Pose(55.000, 84.500)
                 ))
                 .setLinearHeadingInterpolation(
-                        Math.toRadians(110),
+                        Math.toRadians(145),
                         Math.toRadians(210)
                 )
                 .build();
@@ -158,28 +158,6 @@ public class CloseBlueAuto extends NextFTCOpMode {
                         Math.toRadians(210)
                 )
                 .build();
-
-//        path11 = follower.pathBuilder()
-//                .addPath(new BezierLine(
-//                        new Pose(15.000, 85.500),
-//                        new Pose(40.000, 85.500)
-//                ))
-//                .setLinearHeadingInterpolation(
-//                        Math.toRadians(180),
-//                        Math.toRadians(210)
-//                )
-//                .build();
-//
-//        path12 = follower.pathBuilder()
-//                .addPath(new BezierLine(
-//                        new Pose(7.500, 57.000),
-//                        new Pose(55.000, 109.000)
-//                ))
-//                .setLinearHeadingInterpolation(
-//                        Math.toRadians(110),
-//                        Math.toRadians(210)
-//                )
-//                .build();
     }
 
     @Override
@@ -208,7 +186,7 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 Intake.INSTANCE.moveTransfer(0.0),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.2),
-                RapidFireTimeoutCmd.create(1100),
+                RapidFireTimeoutCmd.create(1200),
                 Intake.INSTANCE.moveServoPos(),
                 new FollowPath(path2),
                 IntakeSeqCmd.create(),
@@ -219,40 +197,30 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 new FollowPath(path4),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.2),
-                RapidFireTimeoutCmd.create(900),
+                RapidFireTimeoutCmd.create(1200),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 new FollowPath(path5),
                 new FollowPath(path6),
-                WaitCmd.create(0.3),
+                WaitCmd.create(0.75),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
                 new FollowPath(path7),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.2),
-                RapidFireTimeoutCmd.create(900),
+                RapidFireTimeoutCmd.create(1200),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 new FollowPath(path5),
+//                WaitCmd.create(0.25),
                 new FollowPath(path6),
-                WaitCmd.create(0.3),
+                WaitCmd.create(0.75),
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
                 new FollowPath(path7),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.2),
-                RapidFireTimeoutCmd.create(900),
-                Intake.INSTANCE.moveServoPos(),
-                IntakeSeqCmd.create(),
-                new FollowPath(path5),
-                new FollowPath(path6),
-                WaitCmd.create(0.3),
-                Intake.INSTANCE.moveIntake(0.0),
-                Intake.INSTANCE.moveTransfer(0.0),
-                new FollowPath(path7),
-                Intake.INSTANCE.defaultPos(),
-                WaitCmd.create(0.2),
-                RapidFireTimeoutCmd.create(900),
+                RapidFireTimeoutCmd.create(1500),
                 Intake.INSTANCE.moveServoPos(),
                 new FollowPath(path8),
                 IntakeSeqCmd.create(),
@@ -260,11 +228,12 @@ public class CloseBlueAuto extends NextFTCOpMode {
                 Intake.INSTANCE.moveIntake(0.0),
                 Intake.INSTANCE.moveTransfer(0.0),
                 Turret2.INSTANCE.goToAngle(70.0),
-                Shooter.INSTANCE.setHood(ShooterConstants.servoPos + 0.6),
+                Shooter.INSTANCE.runRPMAuto(3500),
+                Shooter.INSTANCE.setHood(ShooterConstants.servoPos+0.3),
                 new FollowPath(path10),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.2),
-                RapidFireTimeoutCmd.create(900),
+                RapidFireTimeoutCmd.create(1500),
                 Intake.INSTANCE.moveServoPos()
         ).invoke();
     }
