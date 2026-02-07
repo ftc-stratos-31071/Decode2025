@@ -54,6 +54,19 @@ public final class AutoPoseMemory {
         return normalizeAngle(pedroHeadingDeg + 90.0);
     }
 
+    // Mirror a blue-side Pedro pose to the red side across the field centerline x=72.
+    public static double blueToRedPedroX(double bluePedroX) {
+        return 144.0 - bluePedroX;
+    }
+
+    public static double blueToRedPedroY(double bluePedroY) {
+        return bluePedroY;
+    }
+
+    public static double blueToRedPedroHeading(double bluePedroHeadingDeg) {
+        return normalizeAngle(180.0 - bluePedroHeadingDeg);
+    }
+
     public static double normalizeAngle(double degrees) {
         degrees = degrees % 360.0;
         if (degrees < 0) degrees += 360.0;

@@ -66,9 +66,11 @@ public class BlueTeleop extends NextFTCOpMode {
 
     // Vision tracking settings
     public static double VISION_TRACKING_GAIN = 0.3;
-    public static double VISION_TIMEOUT_SEC = 0.5;
-    public static double VISION_DEADBAND_DEG = 5.0;
-    public static double VISION_SMOOTHING = 0.5;
+    public static double VISION_TIMEOUT_SEC = 1.0;
+    public static double VISION_DEADBAND_DEG = 15.0;
+    public static double VISION_SMOOTHING = 0.6;
+    public static double TAG_SEARCH_TRIGGER_THRESHOLD = 0.6;
+    public static double TRIGGER_SEARCH_START_ANGLE_DEG = 60.0;
 
     private final MotorEx frontLeftMotor  = new MotorEx("frontLeftMotor").brakeMode().reversed();
     private final MotorEx frontRightMotor = new MotorEx("frontRightMotor").brakeMode().reversed();
@@ -99,6 +101,7 @@ public class BlueTeleop extends NextFTCOpMode {
     private boolean ballCountingEnabled = true;
     // Turret tracking (from CompTurretSystem)
     private boolean trackingEnabled = true;
+    private boolean visionOnlyMode = false;
     private boolean visionMode = false;
     private long lastTagSeenTime = 0;
     private double targetGlobalHeading = 0.0;
@@ -119,6 +122,11 @@ public class BlueTeleop extends NextFTCOpMode {
     private double initPoseHeading = 0.0;
     private boolean waitingForLateAutoPose = false;
     private boolean lateAutoPoseApplied = false;
+    private long trackingResumeAtMs = 0L;
+    private boolean prevLeftTriggerPressed = false;
+    private boolean prevRightTriggerPressed = false;
+    private int triggerSearchDirection = 0;
+    private double triggerSearchBaseAngle = 0.0;
 
 
 
@@ -250,7 +258,7 @@ public class BlueTeleop extends NextFTCOpMode {
             Shooter.INSTANCE.setHood(hoodPos).schedule();
         });
 
-        Gamepads.gamepad1().y().whenBecomesTrue(() -> {
+        Gamepads.gamepad1().rightStickButton().whenBecomesTrue(() -> {
             farOn = !farOn;
 
             if (farOn) {
@@ -265,6 +273,18 @@ public class BlueTeleop extends NextFTCOpMode {
                 hoodPos = ShooterConstants.servoPos;
                 Shooter.INSTANCE.setHood(hoodPos).schedule();
             }
+        });
+
+        Gamepads.gamepad1().y().whenBecomesTrue(() -> {
+            trackingEnabled = true;
+            visionMode = false;
+            targetTurretAngle = 0.0;
+            lastVisionAngle = 0.0;
+            smoothedTurretAngle = 0.0;
+            triggerSearchDirection = 0;
+            triggerSearchBaseAngle = 0.0;
+            trackingResumeAtMs = System.currentTimeMillis() + (long) (VISION_TIMEOUT_SEC * 1000.0);
+            Turret2.INSTANCE.setAngle(0.0);
         });
 
         Gamepads.gamepad1().dpadRight().whenBecomesTrue(() -> {
@@ -283,6 +303,19 @@ public class BlueTeleop extends NextFTCOpMode {
 
         // X button: Calibrate pose using AprilTag
         Gamepads.gamepad1().x().whenBecomesTrue(this::calibratePoseFromAprilTag);
+
+        // Gamepad2 Y: center turret and switch to vision-only tracking (no odometry fallback).
+        Gamepads.gamepad2().y().whenBecomesTrue(() -> {
+            trackingEnabled = true;
+            visionOnlyMode = true;
+            visionMode = false;
+            targetTurretAngle = 0.0;
+            lastVisionAngle = 0.0;
+            smoothedTurretAngle = 0.0;
+            triggerSearchDirection = 0;
+            triggerSearchBaseAngle = 0.0;
+            Turret2.INSTANCE.setAngle(0.0);
+        });
     }
 
     @Override
@@ -347,6 +380,70 @@ public class BlueTeleop extends NextFTCOpMode {
 
         // Calculate time since last tag detection
         double timeSinceLastTag = (System.currentTimeMillis() - lastTagSeenTime) / 1000.0;
+        var gamepad1 = Gamepads.gamepad1().getGamepad().invoke();
+        boolean leftTriggerPressed = gamepad1.left_trigger > TAG_SEARCH_TRIGGER_THRESHOLD;
+        boolean rightTriggerPressed = gamepad1.right_trigger > TAG_SEARCH_TRIGGER_THRESHOLD;
+
+        if (leftTriggerPressed && !prevLeftTriggerPressed) {
+            triggerSearchDirection = -1;
+            triggerSearchBaseAngle = -Math.abs(TRIGGER_SEARCH_START_ANGLE_DEG);
+            smoothedTurretAngle = triggerSearchBaseAngle;
+            lastVisionAngle = triggerSearchBaseAngle;
+            trackingResumeAtMs = System.currentTimeMillis() + (long) (VISION_TIMEOUT_SEC * 1000.0);
+        }
+        if (rightTriggerPressed && !prevRightTriggerPressed) {
+            triggerSearchDirection = 1;
+            triggerSearchBaseAngle = Math.abs(TRIGGER_SEARCH_START_ANGLE_DEG);
+            smoothedTurretAngle = triggerSearchBaseAngle;
+            lastVisionAngle = triggerSearchBaseAngle;
+            trackingResumeAtMs = System.currentTimeMillis() + (long) (VISION_TIMEOUT_SEC * 1000.0);
+        }
+        prevLeftTriggerPressed = leftTriggerPressed;
+        prevRightTriggerPressed = rightTriggerPressed;
+
+        if (System.currentTimeMillis() < trackingResumeAtMs) {
+            visionMode = false;
+            if (triggerSearchDirection != 0) {
+                targetTurretAngle = triggerSearchBaseAngle;
+                Turret2.INSTANCE.setAngle(targetTurretAngle);
+            } else {
+                targetTurretAngle = 0.0;
+                Turret2.INSTANCE.setAngle(0.0);
+            }
+            return;
+        }
+
+        if (triggerSearchDirection != 0) {
+            if (tagDetectedThisFrame) {
+                visionMode = true;
+
+                if (Math.abs(tagBearing) > VISION_DEADBAND_DEG) {
+                    double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
+                    double correction = -tagBearing * VISION_TRACKING_GAIN;
+                    double desiredAngle = currentTurretAngle + correction;
+
+                    if (smoothedTurretAngle == 0.0) {
+                        smoothedTurretAngle = currentTurretAngle;
+                    }
+
+                    targetTurretAngle = smoothedTurretAngle * VISION_SMOOTHING + desiredAngle * (1.0 - VISION_SMOOTHING);
+                    targetTurretAngle = Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
+                    lastVisionAngle = targetTurretAngle;
+                    smoothedTurretAngle = targetTurretAngle;
+                } else {
+                    targetTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
+                    lastVisionAngle = targetTurretAngle;
+                    smoothedTurretAngle = targetTurretAngle;
+                }
+            } else {
+                visionMode = false;
+                targetTurretAngle = triggerSearchBaseAngle;
+            }
+
+            targetTurretAngle = Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
+            Turret2.INSTANCE.setAngle(targetTurretAngle);
+            return;
+        }
 
         // PRIORITY SYSTEM: Vision when tag visible, odometry otherwise
         if (tagDetectedThisFrame) {
@@ -381,10 +478,15 @@ public class BlueTeleop extends NextFTCOpMode {
             visionMode = true;
             targetTurretAngle = lastVisionAngle;
         } else {
-            // ODOMETRY MODE: Tag lost, use odometry
+            // Tag lost: vision-only and far mode do not use odometry fallback.
             visionMode = false;
-            targetTurretAngle = calculateTurretAngle(lastTraditionalHeading, targetGlobalHeading);
+            if (visionOnlyMode || farOn) {
+                targetTurretAngle = lastVisionAngle;
+            } else {
+                targetTurretAngle = calculateTurretAngle(lastTraditionalHeading, targetGlobalHeading);
+            }
         }
+        targetTurretAngle = Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
 
         // Command turret to target angle
         Turret2.INSTANCE.setAngle(targetTurretAngle);
@@ -502,6 +604,7 @@ public class BlueTeleop extends NextFTCOpMode {
         telemetry.addData("Shooter", shooterOn ? "ON" : "OFF");
 
         telemetry.addData("Tracking Enabled", trackingEnabled ? "YES" : "NO");
+        telemetry.addData("Vision Only Mode", visionOnlyMode ? "YES" : "NO");
         telemetry.addData("Tracking Mode", visionMode ? "VISION" : "ODOMETRY");
         telemetry.addData("Turret Angle", "%.1f", Turret2.INSTANCE.getCurrentLogicalDeg());
         telemetry.addData("Target Turret", "%.1f", targetTurretAngle);

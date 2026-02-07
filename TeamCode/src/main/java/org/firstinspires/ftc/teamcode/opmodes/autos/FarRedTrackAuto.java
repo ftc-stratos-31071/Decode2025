@@ -174,7 +174,7 @@ public class FarRedTrackAuto extends NextFTCOpMode {
     public void onStartButtonPressed() {
         Shooter.INSTANCE.runRPM(4650).schedule();
         new SequentialGroup(
-                Turret2.INSTANCE.goToAngle(75.0),
+                Turret2.INSTANCE.goToAngle(redTurretAngle(75.0)),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.5),
                 RapidFireTimeoutCmdFar.create(2000),
@@ -265,15 +265,26 @@ public class FarRedTrackAuto extends NextFTCOpMode {
     }
 
     private Pose p(double x, double y) {
-        return new Pose(-x, y);
+        return new Pose(
+                AutoPoseMemory.blueToRedPedroX(x),
+                AutoPoseMemory.blueToRedPedroY(y)
+        );
     }
 
     private Pose ph(double x, double y, double headingDeg) {
-        return new Pose(-x, y, h(headingDeg));
+        return new Pose(
+                AutoPoseMemory.blueToRedPedroX(x),
+                AutoPoseMemory.blueToRedPedroY(y),
+                h(headingDeg)
+        );
     }
 
     private double h(double headingDeg) {
-        return Math.toRadians(AutoPoseMemory.normalizeAngle(headingDeg + 180.0));
+        return Math.toRadians(AutoPoseMemory.blueToRedPedroHeading(headingDeg));
+    }
+
+    private double redTurretAngle(double blueTurretAngle) {
+        return -blueTurretAngle;
     }
 
     @Override
