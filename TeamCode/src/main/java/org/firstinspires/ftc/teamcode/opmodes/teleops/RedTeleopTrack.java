@@ -51,7 +51,7 @@ public class RedTeleopTrack extends NextFTCOpMode {
     // Vision tracking settings
     public static double VISION_TRACKING_GAIN = 0.3; //0.1
     public static double VISION_TIMEOUT_SEC = 1.0; //0.0.5
-    public static double VISION_DEADBAND_DEG = 15.0; //10.0
+    public static double VISION_DEADBAND_DEG = 7.5; //10.0
     public static double VISION_SMOOTHING = 0.6; //0.3
     public static double TAG_SEARCH_TRIGGER_THRESHOLD = 0.6;
     public static double TRIGGER_SEARCH_START_ANGLE_DEG = 80.0;
@@ -83,6 +83,7 @@ public class RedTeleopTrack extends NextFTCOpMode {
     private boolean ballCountingEnabled = true;
     // Turret tracking (from CompTurretSystem)
     private boolean trackingEnabled = true;
+    private boolean trackingDisabledByG2A = false;
     private boolean visionMode = false;
     private long lastTagSeenTime = 0;
     private double targetTurretAngle = 0.0;
@@ -256,6 +257,7 @@ public class RedTeleopTrack extends NextFTCOpMode {
         // Gamepad2 Y: center turret and reset vision tracking state.
         Gamepads.gamepad2().y().whenBecomesTrue(() -> {
             trackingEnabled = true;
+            trackingDisabledByG2A = false;
             visionMode = false;
             targetTurretAngle = 0.0;
             lastVisionAngle = 0.0;
@@ -264,6 +266,25 @@ public class RedTeleopTrack extends NextFTCOpMode {
             triggerSearchBaseAngle = 0.0;
             trackingResumeAtMs = System.currentTimeMillis() + (long) (VISION_TIMEOUT_SEC * 1000.0);
             Turret2.INSTANCE.setAngle(0.0);
+        });
+
+        // Gamepad2 A: toggle tracking off/on. Off -> center turret and hold.
+        Gamepads.gamepad2().a().whenBecomesTrue(() -> {
+            trackingDisabledByG2A = !trackingDisabledByG2A;
+            trackingEnabled = !trackingDisabledByG2A;
+
+            visionMode = false;
+            targetTurretAngle = 0.0;
+            lastVisionAngle = 0.0;
+            smoothedTurretAngle = 0.0;
+            triggerSearchDirection = 0;
+            triggerSearchBaseAngle = 0.0;
+
+            if (trackingDisabledByG2A) {
+                Turret2.INSTANCE.setAngle(0.0);
+            } else {
+                trackingResumeAtMs = System.currentTimeMillis() + (long) (VISION_TIMEOUT_SEC * 1000.0);
+            }
         });
     }
 
