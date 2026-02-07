@@ -67,7 +67,7 @@ public class RedTeleop extends NextFTCOpMode {
     // Vision tracking settings
     public static double VISION_TRACKING_GAIN = 0.3; //0.1
     public static double VISION_TIMEOUT_SEC = 0.5;
-    public static double VISION_DEADBAND_DEG = 5.0; //10.0
+    public static double VISION_DEADBAND_DEG = 10.0; //10.0
     public static double VISION_SMOOTHING = 0.3;
 
     // ═══════════════════════════════════════════════════════════════════

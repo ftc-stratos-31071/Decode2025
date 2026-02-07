@@ -71,7 +71,7 @@ public class BlueTeleop extends NextFTCOpMode {
     // Vision tracking settings
     public static double VISION_TRACKING_GAIN = 0.3;
     public static double VISION_TIMEOUT_SEC = 0.5;
-    public static double VISION_DEADBAND_DEG = 5.0;
+    public static double VISION_DEADBAND_DEG = 10.0;
     public static double VISION_SMOOTHING = 0.3;
 
     private final MotorEx frontLeftMotor  = new MotorEx("frontLeftMotor").brakeMode().reversed();
@@ -111,6 +111,8 @@ public class BlueTeleop extends NextFTCOpMode {
     private boolean poseCalibrated = false;
     private double lastRawX = 0.0;
     private double lastRawY = 0.0;
+    private double lastFtcX = 0.0;
+    private double lastFtcY = 0.0;
     private double lastRawHeading = 0.0;
 
 
@@ -122,10 +124,12 @@ public class BlueTeleop extends NextFTCOpMode {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.resetPosAndIMU();
         boolean useSharedAutoPose = AutoPoseMemory.hasPose;
-        double initX = useSharedAutoPose ? AutoPoseMemory.ftcX : (USE_AUTO_START_POSE ? AUTO_START_X : START_X);
-        double initY = useSharedAutoPose ? AutoPoseMemory.ftcY : (USE_AUTO_START_POSE ? AUTO_START_Y : START_Y);
+        double initFtcX = useSharedAutoPose ? AutoPoseMemory.ftcX : (USE_AUTO_START_POSE ? AUTO_START_X : START_X);
+        double initFtcY = useSharedAutoPose ? AutoPoseMemory.ftcY : (USE_AUTO_START_POSE ? AUTO_START_Y : START_Y);
         double initHeading = useSharedAutoPose ? AutoPoseMemory.headingDeg : (USE_AUTO_START_POSE ? AUTO_START_HEADING : START_HEADING);
-        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, initX, initY, AngleUnit.DEGREES, initHeading));
+        double initRawX = ftcToRawX(initFtcX, initFtcY);
+        double initRawY = ftcToRawY(initFtcX, initFtcY);
+        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, initRawX, initRawY, AngleUnit.DEGREES, initHeading));
 
         Shooter.INSTANCE.setHood(hoodPos).schedule();
         Shooter.INSTANCE.setTargetRPM(0.0);
@@ -313,9 +317,9 @@ public class BlueTeleop extends NextFTCOpMode {
      * Update turret tracking using hybrid odometry + vision system
      */
     private void updateTurretTracking() {
-        // Invert X and Y to match DECODE field coordinate system
-        double currentX = -lastRawX;
-        double currentY = -lastRawY;
+        // Convert FTC-centered pose to Decode coordinates.
+        double currentX = -lastFtcX;
+        double currentY = -lastFtcY;
         double currentRobotHeading = lastRawHeading;
 
         // Get current goal position
@@ -326,8 +330,8 @@ public class BlueTeleop extends NextFTCOpMode {
         targetGlobalHeading = calculateAngleToGoal(currentX, currentY, goalX, goalY);
 
         // Draw field visualization
-        double dashboardRobotX = lastRawX;
-        double dashboardRobotY = lastRawY;
+        double dashboardRobotX = lastFtcX;
+        double dashboardRobotY = lastFtcY;
         double dashboardGoalX = goalX;
         double dashboardGoalY = goalY;
         drawFieldVisualization(dashboardRobotX, dashboardRobotY, currentRobotHeading, dashboardGoalX, dashboardGoalY);
@@ -417,8 +421,13 @@ public class BlueTeleop extends NextFTCOpMode {
                 double robotX = tagFieldX - dx;
                 double robotY = tagFieldY - dy;
 
+                double robotFtcX = -robotX;
+                double robotFtcY = -robotY;
+                double robotRawX = ftcToRawX(robotFtcX, robotFtcY);
+                double robotRawY = ftcToRawY(robotFtcX, robotFtcY);
+
                 double currentHeadingDeg = pinpoint.getHeading(AngleUnit.DEGREES);
-                pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, robotX, robotY, AngleUnit.DEGREES, currentHeadingDeg));
+                pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, robotRawX, robotRawY, AngleUnit.DEGREES, currentHeadingDeg));
 
                 poseCalibrated = true;
                 Gamepads.gamepad1().getGamepad().invoke().rumble(200);
@@ -483,6 +492,8 @@ public class BlueTeleop extends NextFTCOpMode {
         Pose2D currentPose = pinpoint.getPosition();
         lastRawX = currentPose.getX(DistanceUnit.INCH);
         lastRawY = currentPose.getY(DistanceUnit.INCH);
+        lastFtcX = rawToFtcX(lastRawX, lastRawY);
+        lastFtcY = rawToFtcY(lastRawX, lastRawY);
         lastRawHeading = currentPose.getHeading(AngleUnit.DEGREES);
     }
 
@@ -516,8 +527,8 @@ public class BlueTeleop extends NextFTCOpMode {
 
         telemetry.addData("Ball Count", ballCount);
         telemetry.addData("Range (mm)", distanceMm);
-        telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastRawX, lastRawY, lastRawHeading);
-        telemetry.addData("Pose Decode (x,y,hdg)", "(%.1f, %.1f, %.1f°)", -lastRawX, -lastRawY, lastRawHeading);
+        telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastFtcX, lastFtcY, lastRawHeading);
+        telemetry.addData("Pose Decode (x,y,hdg)", "(%.1f, %.1f, %.1f°)", -lastFtcX, -lastFtcY, lastRawHeading);
         telemetry.addLine();
 
         // Shooter info
@@ -552,6 +563,26 @@ public class BlueTeleop extends NextFTCOpMode {
         if (degrees > 180.0) degrees -= 360.0;
         else if (degrees < -180.0) degrees += 360.0;
         return degrees;
+    }
+
+    // Pinpoint axes are rotated relative to our FTC dashboard frame.
+    // Raw -> FTC mapping:
+    // ftcX = rawY
+    // ftcY = rawX
+    private double rawToFtcX(double rawX, double rawY) {
+        return rawY;
+    }
+
+    private double rawToFtcY(double rawX, double rawY) {
+        return rawX;
+    }
+
+    private double ftcToRawX(double ftcX, double ftcY) {
+        return ftcY;
+    }
+
+    private double ftcToRawY(double ftcX, double ftcY) {
+        return ftcX;
     }
 
     @Override
