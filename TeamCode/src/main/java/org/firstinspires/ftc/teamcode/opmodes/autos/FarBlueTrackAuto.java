@@ -246,12 +246,9 @@ public class FarBlueTrackAuto extends NextFTCOpMode {
         double rightRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.rightMotor.getVelocity()));
         double leftRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.leftMotor.getVelocity()));
         double currentRPM = (rightRPM + leftRPM) / 2.0;
-        telemetry.addData("Current RPM", currentRPM);
-        telemetry.addData("Pose Pedro (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastPedroX, lastPedroY, lastPedroHeadingDeg);
-        telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastFtcX, lastFtcY, lastTraditionalHeadingDeg);
-        telemetry.addData("AutoPoseMemory", "has=%s (%.1f, %.1f, %.1f°)",
-                AutoPoseMemory.hasPose, AutoPoseMemory.ftcX, AutoPoseMemory.ftcY, AutoPoseMemory.headingDeg);
-        telemetry.update();
+
+
+
     }
 
     private void updatePose() {

@@ -241,11 +241,8 @@ public class CloseBlueTrackAuto extends NextFTCOpMode {
     public void onUpdate() {
         updatePose();
 
-        telemetry.addData("Pose Pedro (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastPedroX, lastPedroY, lastPedroHeadingDeg);
-        telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastFtcX, lastFtcY, lastTraditionalHeadingDeg);
-        telemetry.addData("AutoPoseMemory", "has=%s (%.1f, %.1f, %.1f°)",
-                AutoPoseMemory.hasPose, AutoPoseMemory.ftcX, AutoPoseMemory.ftcY, AutoPoseMemory.headingDeg);
-        telemetry.update();
+
+
     }
 
     private void updatePose() {

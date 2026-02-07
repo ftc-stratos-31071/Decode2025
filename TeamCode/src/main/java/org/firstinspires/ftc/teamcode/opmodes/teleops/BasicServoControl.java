@@ -27,16 +27,13 @@ public class BasicServoControl extends LinearOpMode {
             // Move servo to 0.0 when pressing 'a'
             if (gamepad1.a) {
                 myServo.setPosition(0.0);
-                telemetry.addData("Servo Position", "0.0");
             }
 
             // Move servo to 1.0 when pressing 'b'
             if (gamepad1.b) {
                 myServo.setPosition(1.0);
-                telemetry.addData("Servo Position", "1.0");
             }
 
-            telemetry.update();
         }
     }
 }

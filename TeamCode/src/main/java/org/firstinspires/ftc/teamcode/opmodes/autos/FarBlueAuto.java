@@ -235,7 +235,5 @@ public class FarBlueAuto extends NextFTCOpMode {
         double rightRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.rightMotor.getVelocity()));
         double leftRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.leftMotor.getVelocity()));
         double currentRPM = (rightRPM + leftRPM) / 2.0;
-        telemetry.addData("Current RPM", currentRPM);
-        telemetry.update();
     }
 }

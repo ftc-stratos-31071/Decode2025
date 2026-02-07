@@ -200,58 +200,41 @@ public class Turret2Tuner extends NextFTCOpMode {
         boolean atMinLimit = currentLogical <= -Turret2.MAX_ROTATION + 0.1;
         boolean atMaxLimit = currentLogical >= Turret2.MAX_ROTATION - 0.1;
 
-        telemetry.addLine("══════════════════════════════════");
-        telemetry.addLine("        TURRET2 TUNER");
-        telemetry.addLine("══════════════════════════════════");
-        telemetry.addLine();
 
-        telemetry.addLine("─── CURRENT STATE ───");
-        telemetry.addData("Servo Mode", servoModeNames[servoMode]);
-        telemetry.addData("Logical Angle", "%.1f°", currentLogical);
-        telemetry.addData("Raw Angle", "%.1f°", currentRaw);
-        telemetry.addData("Left Servo Position", "%.3f", servoPosLeft);
-        telemetry.addData("Right Servo Position", "%.3f", servoPosRight);
-        telemetry.addLine();
+
+
+
+
+
+
+
 
         // Show limit status
         if (atMinLimit) {
-            telemetry.addLine("⚠️ AT LEFT LIMIT (LB disabled)");
         } else if (atMaxLimit) {
-            telemetry.addLine("⚠️ AT RIGHT LIMIT (RB disabled)");
         } else {
-            telemetry.addLine("✓ Within range");
         }
-        telemetry.addLine();
 
-        telemetry.addLine("─── CONFIGURATION ───");
-        telemetry.addData("PHYSICAL_CENTER_RAW", "%.1f°", Turret2.PHYSICAL_CENTER_RAW);
-        telemetry.addData("MAX_ROTATION", "±%.1f°", Turret2.MAX_ROTATION);
-        telemetry.addData("Step Size", "%.1f°", STEP_SIZE);
-        telemetry.addData("Configurable Angle (A)", "%.1f°", CONFIGURABLE_ANGLE);
-        telemetry.addLine();
 
-        telemetry.addData("Last Action", lastAction);
+
+
+
         if (!limitWarning.isEmpty()) {
-            telemetry.addLine(limitWarning);
         }
-        telemetry.addLine();
 
-        telemetry.addLine("─── CONTROLS ───");
-        telemetry.addLine("Y = Center (0°)");
-        telemetry.addLine("X = Left (-45°)");
-        telemetry.addLine("B = Right (+45°)");
-        telemetry.addLine("A = Configurable (" + CONFIGURABLE_ANGLE + "°)");
-        telemetry.addLine("LB/RB = Adjust angle ±" + STEP_SIZE + "°");
-        telemetry.addLine("DPAD LEFT/UP/RIGHT = Set Servo Position (0.0/0.5/1.0)");
-        telemetry.addLine("DPAD DOWN = Toggle Servo Mode (" + servoModeNames[servoMode] + ")");
-        telemetry.addLine();
 
-        telemetry.addLine("─── TURRET CONVENTION ───");
-        telemetry.addLine("0° = Forward");
-        telemetry.addLine("POSITIVE = RIGHT");
-        telemetry.addLine("NEGATIVE = LEFT");
 
-        telemetry.update();
+
+
+
+
+
+
+
+
+
+
+
     }
 
     @Override

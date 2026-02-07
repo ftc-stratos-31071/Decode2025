@@ -83,7 +83,6 @@ public class Teleop extends NextFTCOpMode {
         Intake.INSTANCE.moveServoPos().schedule();
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
-        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         motorTargetX = 180.0;
         smoothedTx = 0.0;
@@ -103,16 +102,12 @@ public class Teleop extends NextFTCOpMode {
 
             dashboard.startCameraStream(limelight, 0);
 
-            telemetry.addData("Limelight", "✓ Connected");
-            telemetry.addData("Camera", "✓ Streaming to dashboard");
+
         } catch (Exception e) {
-            telemetry.addData("Limelight", "✗ ERROR: " + e.getMessage());
         }
 
-        telemetry.addData("Status", "Initialized - Press START to begin");
-        telemetry.addData("Mode", "Driver Control + Auto Turret");
-        telemetry.addData("Turret", "Will center on START");
-        telemetry.update();
+
+
     }
 
     @Override
@@ -251,7 +246,6 @@ public class Teleop extends NextFTCOpMode {
                 result = limelight.getLatestResult();
             } catch (Exception e) {
                 if (SHOW_LIMELIGHT_TELEMETRY) {
-                    telemetry.addData("Limelight Error", e.getMessage());
                 }
             }
         }
@@ -312,21 +306,19 @@ public class Teleop extends NextFTCOpMode {
 
 
                     if (SHOW_LIMELIGHT_TELEMETRY) {
-                        telemetry.addData("═══ TURRET TRACKING ═══", "");
-                        telemetry.addData("Status", "✓ TRACKING");
-                        telemetry.addData("Tag ID", closestTag.getFiducialId());
-                        telemetry.addData("TX Offset (raw)", String.format("%.2f°", tx));
-                        telemetry.addData("TX Offset (smooth)", String.format("%.2f°", smoothedTx));
-                        telemetry.addData("Turret Angle", String.format("%.2f°", motorTargetX));
-                        telemetry.addData("Target Area", String.format("%.2f%%", result.getTa()));
-                        telemetry.addData("Tags Visible", fiducials.size());
-                        telemetry.addData("Aligned", Math.abs(smoothedTx) <= DEADBAND ? "✓ YES" : "✗ NO");
+
+
+
+
+
+
+
+
                     }
                 }
             } else {
                 if (SHOW_LIMELIGHT_TELEMETRY) {
-                    telemetry.addData("═══ TURRET TRACKING ═══", "");
-                    telemetry.addData("Status", "✗ No AprilTags detected");
+
                 }
                 // Keep last known position if we've seen a target before
                 if (!hasSeenTarget) {
@@ -336,16 +328,14 @@ public class Teleop extends NextFTCOpMode {
             }
         } else if (!AUTO_TRACK_ENABLED) {
             if (SHOW_LIMELIGHT_TELEMETRY) {
-                telemetry.addData("═══ TURRET TRACKING ═══", "");
-                telemetry.addData("Status", "⚠ DISABLED (Press X to enable)");
-                telemetry.addData("Turret Angle", String.format("%.2f°", motorTargetX));
+
+
             }
             smoothedTx = 0.0;  // Reset smoothing when disabled
         } else {
             if (SHOW_LIMELIGHT_TELEMETRY) {
-                telemetry.addData("═══ TURRET TRACKING ═══", "");
-                telemetry.addData("Status", "✗ No valid target");
-                telemetry.addData("Turret Angle", String.format("%.2f°", motorTargetX));
+
+
             }
             // Keep last position or return to center if never tracked
             if (!hasSeenTarget) {
@@ -364,20 +354,17 @@ public class Teleop extends NextFTCOpMode {
 
         Turret.INSTANCE.goToAngle(motorTargetX).schedule();
 
-        telemetry.addData("Range (mm)", distance);
-        telemetry.addData("Range Status", rangefinder.getStatus());
-        telemetry.addData("Ball Count", ballCount);
-        telemetry.addData("Intake Active", intakeActive);
-        telemetry.addData("Target RPM", targetRpm);
+
+
+
+
 
         double rightRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.rightMotor.getVelocity()));
         double leftRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.leftMotor.getVelocity()));
         double currentRPM = (rightRPM + leftRPM) / 2.0;
-        telemetry.addData("Current RPM", currentRPM);
-        telemetry.addData("Hood Position", hoodPos);
-        telemetry.addData("Turret Target", motorTargetX);
-        telemetry.addData("Current Turret Deg", Turret.INSTANCE.getTargetTurretDeg());
 
-        telemetry.update();
+
+
+
     }
 }

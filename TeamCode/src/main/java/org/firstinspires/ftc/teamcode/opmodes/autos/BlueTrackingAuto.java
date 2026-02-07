@@ -121,16 +121,13 @@ public class BlueTrackingAuto extends NextFTCOpMode {
             updateTurretTracking();
         }
 
-        telemetry.addData("Mode", "TRACK ONLY (no drive commands)");
-        telemetry.addData("Pose Pedro (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastPedroX, lastPedroY, lastPedroHeadingDeg);
-        telemetry.addData("Pose FTC (x,y,hdg)", "(%.1f, %.1f, %.1f°)", lastFtcX, lastFtcY, lastTraditionalHeadingDeg);
-        telemetry.addData("Turret Track", trackingEnabled ? (visionMode ? "VISION" : "ODOMETRY") : "OFF");
-        telemetry.addData("Goal Decode (x,y)", "(%.1f, %.1f)", BLUE_GOAL_X, BLUE_GOAL_Y);
-        telemetry.addData("Target Global Hdg", "%.1f°", targetGlobalHeading);
-        telemetry.addData("Target Turret", "%.1f°", targetTurretAngle);
-        telemetry.addData("AutoPoseMemory", "has=%s (%.1f, %.1f, %.1f°)",
-                AutoPoseMemory.hasPose, AutoPoseMemory.ftcX, AutoPoseMemory.ftcY, AutoPoseMemory.headingDeg);
-        telemetry.update();
+
+
+
+
+
+
+
     }
 
     private void updatePose() {

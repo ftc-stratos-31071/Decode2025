@@ -588,37 +588,30 @@ public class BlueTeleop extends NextFTCOpMode {
     }
 
     private void displayTelemetry(double distanceMm) {
-        telemetry.addLine("BLUE TELEOP");
-        telemetry.addData("Ball Count", ballCount);
-        telemetry.addData("Range mm", distanceMm);
-        telemetry.addData("Pose FTC", "(%.1f, %.1f, %.1f)", lastFtcX, lastFtcY, lastTraditionalHeading);
-        telemetry.addData("Pose Decode", "(%.1f, %.1f, %.1f)", -lastFtcX, -lastFtcY, lastTraditionalHeading);
+
+
+
 
         double rightRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.rightMotor.getVelocity()));
         double leftRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.leftMotor.getVelocity()));
         double currentRPM = (rightRPM + leftRPM) / 2.0;
-        telemetry.addData("Current RPM", currentRPM);
-        telemetry.addData("Target RPM", targetRpm);
-        telemetry.addData("Hood", hoodPos);
-        telemetry.addData("Far Mode", farOn ? "ON" : "OFF");
-        telemetry.addData("Shooter", shooterOn ? "ON" : "OFF");
 
-        telemetry.addData("Tracking Enabled", trackingEnabled ? "YES" : "NO");
-        telemetry.addData("Vision Only Mode", visionOnlyMode ? "YES" : "NO");
-        telemetry.addData("Tracking Mode", visionMode ? "VISION" : "ODOMETRY");
-        telemetry.addData("Turret Angle", "%.1f", Turret2.INSTANCE.getCurrentLogicalDeg());
-        telemetry.addData("Target Turret", "%.1f", targetTurretAngle);
-        telemetry.addData("Goal Decode", "(%.1f, %.1f)", BLUE_GOAL_X, BLUE_GOAL_Y);
-        telemetry.addData("Target Global Hdg", "%.1f", targetGlobalHeading);
-        telemetry.addData("Pose Calibrated", poseCalibrated ? "YES" : "NO");
 
-        telemetry.addData("AutoPose Used", startedFromAutoPose ? "YES" : "NO");
-        telemetry.addData("Init Pose Source", initPoseSource);
-        telemetry.addData("Init Pose FTC", "(%.1f, %.1f, %.1f)", initPoseFtcX, initPoseFtcY, initPoseHeading);
-        telemetry.addData("Late AutoPose Applied", lateAutoPoseApplied ? "YES" : "NO");
-        telemetry.addData("AutoPose Memory", "has=%s (%.1f, %.1f, %.1f)",
-                AutoPoseMemory.hasPose, AutoPoseMemory.ftcX, AutoPoseMemory.ftcY, AutoPoseMemory.headingDeg);
-        telemetry.update();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 
     private double normalizeAngle(double degrees) {

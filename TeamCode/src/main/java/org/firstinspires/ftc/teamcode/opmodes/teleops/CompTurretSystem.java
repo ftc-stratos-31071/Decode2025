@@ -157,7 +157,6 @@ public class CompTurretSystem extends NextFTCOpMode {
 
         // Set up FTC Dashboard
         FtcDashboard dashboard = FtcDashboard.getInstance();
-        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         // Configure AprilTag processor
         aprilTag = new AprilTagProcessor.Builder()
@@ -180,20 +179,14 @@ public class CompTurretSystem extends NextFTCOpMode {
 
         lastTagSeenTime = System.currentTimeMillis();
 
-        telemetry.addData("Status", "✓ Initialized");
-        telemetry.addLine();
-        telemetry.addData("Mode", "Hybrid Vision + Odometry Tracking");
-        telemetry.addData("Target Tag ID", TARGET_TAG_ID);
-        telemetry.addData("Goal", USE_RED_GOAL ? "RED" : "BLUE");
-        telemetry.addLine();
-        telemetry.addLine("🎮 CONTROLS:");
-        telemetry.addData("Left Stick", "Drive + Strafe");
-        telemetry.addData("Right Stick X", "Rotate");
-        telemetry.addData("A Button", "Toggle Tracking");
-        telemetry.addData("Y Button", "Reset to Center");
-        telemetry.addData("X Button", "Calibrate Pose (AprilTag)");
-        telemetry.addData("DPad Up/Down", "Switch Red/Blue Goal");
-        telemetry.update();
+
+
+
+
+
+
+
+
     }
 
     @Override
@@ -263,7 +256,6 @@ public class CompTurretSystem extends NextFTCOpMode {
         targetGlobalHeading = calculateAngleToGoal(currentX, currentY, goalX, goalY);
 
         // Draw visualization on FTC Dashboard
-        drawFieldVisualization(currentX, currentY, currentRobotHeading, goalX, goalY);
 
         if (!trackingEnabled || !TRACKING_ENABLED) {
             displayManualMode(currentRobotHeading);
@@ -422,63 +414,9 @@ public class CompTurretSystem extends NextFTCOpMode {
         }
     }
 
-    /**
-     * Draw field visualization on FTC Dashboard
-     */
     private void drawFieldVisualization(double currentX, double currentY, double currentRobotHeading,
                                         double goalX, double goalY) {
-        TelemetryPacket packet = new TelemetryPacket();
-        Canvas fieldOverlay = packet.fieldOverlay();
-
-        // Draw goal position (red X marker for red goal, blue for blue goal)
-        String goalColor = USE_RED_GOAL ? "#FF0000" : "#0000FF";
-        fieldOverlay.setStroke(goalColor);
-        fieldOverlay.setStrokeWidth(2);
-        double goalSize = 4;
-        fieldOverlay.strokeLine(goalX - goalSize, goalY - goalSize, goalX + goalSize, goalY + goalSize);
-        fieldOverlay.strokeLine(goalX - goalSize, goalY + goalSize, goalX + goalSize, goalY - goalSize);
-        fieldOverlay.strokeCircle(goalX, goalY, 6);
-
-        // Draw robot position (blue circle with heading indicator)
-        fieldOverlay.setStroke("#0000FF");
-        fieldOverlay.setFill("#0000FF");
-        fieldOverlay.fillCircle(currentX, currentY, 6);
-
-        // Draw robot heading arrow (blue)
-        double headingRadians = Math.toRadians(currentRobotHeading);
-        double arrowLength = 12;
-        double arrowEndX = currentX + arrowLength * Math.cos(headingRadians);
-        double arrowEndY = currentY + arrowLength * Math.sin(headingRadians);
-        fieldOverlay.strokeLine(currentX, currentY, arrowEndX, arrowEndY);
-
-        // Draw line from robot to goal (green line)
-        fieldOverlay.setStroke("#00FF00");
-        fieldOverlay.setStrokeWidth(1);
-        fieldOverlay.strokeLine(currentX, currentY, goalX, goalY);
-
-        // Draw turret direction (yellow line)
-        if (trackingEnabled) {
-            // Turret (ACTUAL TESTED): NEGATIVE = LEFT, POSITIVE = RIGHT
-            // To get global heading from turret angle:
-            // - Negative turret (left) = CCW from robot heading = ADD to heading (but turret is negative, so subtract)
-            // - Positive turret (right) = CW from robot heading = SUBTRACT from heading (but turret is positive, so subtract)
-            // So: globalTurretHeading = robotHeading - turretAngle
-
-            double turretLogical = Turret2.INSTANCE.getTargetLogicalDeg();
-            double turretGlobalHeading = currentRobotHeading - turretLogical;
-            double turretRadians = Math.toRadians(turretGlobalHeading);
-            double turretLength = 18;
-            double turretEndX = currentX + turretLength * Math.cos(turretRadians);
-            double turretEndY = currentY + turretLength * Math.sin(turretRadians);
-
-            // Yellow for odometry mode, Orange for vision mode
-            fieldOverlay.setStroke(visionMode ? "#FFA500" : "#FFFF00");
-            fieldOverlay.setStrokeWidth(3);
-            fieldOverlay.strokeLine(currentX, currentY, turretEndX, turretEndY);
-        }
-
-        // Send packet to dashboard
-        FtcDashboard.getInstance().sendTelemetryPacket(packet);
+        // Telemetry/dashboard visualization disabled.
     }
 
     /**
@@ -529,94 +467,63 @@ public class CompTurretSystem extends NextFTCOpMode {
     private void displayTrackingTelemetry(double robotX, double robotY, double robotHeading,
                                           double goalX, double goalY,
                                           boolean tagDetected, double tagBearing, double targetAngle, double timeSinceLastTag) {
-        telemetry.addLine("═══ COMP TURRET SYSTEM ═══");
-        telemetry.addLine();
+
 
         // Show priority system status with timeout
-        telemetry.addLine("📋 PRIORITY TRACKING SYSTEM:");
         if (visionMode) {
-            telemetry.addData("  🎯 Vision Priority", "ACTIVE (Controls Turret)");
-            telemetry.addData("  🧭 Odometry", "Standby (Running in background)");
+
             if (!tagDetected) {
                 double timeUntilOdom = VISION_TIMEOUT_SEC - timeSinceLastTag;
-                telemetry.addData("  ⏱️ Odometry takeover in", "%.1f sec", timeUntilOdom);
             }
         } else {
-            telemetry.addData("  🧭 Odometry Priority", "ACTIVE (Controls Turret)");
-            telemetry.addData("  🎯 Vision", "Scanning (Tag lost %.1fs ago)", timeSinceLastTag);
+
         }
-        telemetry.addLine();
 
         // Mode indicator
         if (visionMode) {
-            telemetry.addLine("🎯 MODE: VISION LOCK");
-            telemetry.addData("  Tag ID", TARGET_TAG_ID);
-            telemetry.addData("  Tag Detected", tagDetected ? "✓ YES" : "✗ NO (holding)");
+
             if (tagDetected) {
-                telemetry.addData("  Tag Bearing", "%.2f°", tagBearing);
-                telemetry.addData("  Status", Math.abs(tagBearing) < VISION_DEADBAND_DEG ? "✓ CENTERED" : "⟳ CENTERING");
+
             }
         } else {
-            telemetry.addLine("🧭 MODE: ODOMETRY ACQUISITION");
-            telemetry.addData("  Goal", USE_RED_GOAL ? "RED" : "BLUE");
-            telemetry.addData("  Goal Position", "(%.1f, %.1f)", goalX, goalY);
-            telemetry.addData("  Bearing to Goal", "%.1f°", targetGlobalHeading);
-            telemetry.addData("  Status", "Searching for tag...");
+
+
+
         }
-        telemetry.addLine();
 
         // Robot state
-        telemetry.addLine("🤖 ROBOT");
-        telemetry.addData("  Position", "(%.1f, %.1f)", robotX, robotY);
-        telemetry.addData("  Heading", "%.1f°", robotHeading);
-        telemetry.addData("  Pose Calibrated", poseCalibrated ? "✓ YES" : "✗ NO");
-        telemetry.addLine();
+
+
 
         // Turret state
-        telemetry.addLine("🔄 TURRET");
-        telemetry.addData("  Logical Angle", "%.1f°", Turret2.INSTANCE.getTargetLogicalDeg());
-        telemetry.addData("  Raw Angle", "%.1f°", Turret2.INSTANCE.getCurrentRawDeg());
-        telemetry.addData("  Servo Position", "%.3f", Turret2.INSTANCE.getServoPosition());
-        telemetry.addData("  Range", "±%.0f°", Turret2.MAX_ROTATION);
-        telemetry.addLine();
+
+
+
 
         // Check if at limits
         boolean atMinLimit = Math.abs(Turret2.INSTANCE.getTargetLogicalDeg() + Turret2.MAX_ROTATION) < 1.0;
         boolean atMaxLimit = Math.abs(Turret2.INSTANCE.getTargetLogicalDeg() - Turret2.MAX_ROTATION) < 1.0;
 
         if (atMinLimit || atMaxLimit) {
-            telemetry.addLine("⚠️ WARNING: TURRET AT LIMIT");
-            telemetry.addLine();
+
         }
 
         // Controls
-        telemetry.addLine("🎮 CONTROLS:");
-        telemetry.addData("  A", trackingEnabled ? "Disable Tracking" : "Enable Tracking");
-        telemetry.addData("  Y", "Reset to Center");
-        telemetry.addData("  X", "Calibrate Pose");
-        telemetry.addData("  DPad ↑↓", "Switch Goal");
-        telemetry.addLine();
+
+
+
 
         // Dashboard tuning reminder
-        telemetry.addLine("💡 DASHBOARD SETTINGS:");
-        telemetry.addData("  VISION_TIMEOUT_SEC", "%.1f sec", VISION_TIMEOUT_SEC);
-        telemetry.addData("  VISION_TRACKING_GAIN", "%.2f", VISION_TRACKING_GAIN);
-        telemetry.addData("  VISION_DEADBAND_DEG", "%.1f°", VISION_DEADBAND_DEG);
 
-        telemetry.update();
+
+
     }
 
     private void displayManualMode(double robotHeading) {
-        telemetry.addLine("═══ MANUAL MODE ═══");
-        telemetry.addLine();
-        telemetry.addData("Tracking", "❌ DISABLED");
-        telemetry.addLine();
-        telemetry.addData("Turret Logical", "%.1f°", Turret2.INSTANCE.getTargetLogicalDeg());
-        telemetry.addData("Turret Raw", "%.1f°", Turret2.INSTANCE.getCurrentRawDeg());
-        telemetry.addData("Robot Heading", "%.1f°", robotHeading);
-        telemetry.addLine();
-        telemetry.addData("Press A", "to enable tracking");
-        telemetry.update();
+
+
+
+
     }
 
     private double normalizeAngle(double degrees) {
@@ -643,4 +550,3 @@ public class CompTurretSystem extends NextFTCOpMode {
         }
     }
 }
-

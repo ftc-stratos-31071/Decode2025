@@ -150,7 +150,6 @@ public class RedTeleop extends NextFTCOpMode {
 
         // Set up FTC Dashboard
         FtcDashboard dashboard = FtcDashboard.getInstance();
-        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         // Configure AprilTag processor (from CompTurretSystem)
         aprilTag = new AprilTagProcessor.Builder()
@@ -173,9 +172,7 @@ public class RedTeleop extends NextFTCOpMode {
 
         lastTagSeenTime = System.currentTimeMillis();
 
-        telemetry.addData("Status", "✓ Initialized - RedTeleop");
-        telemetry.addData("Turret Tracking", AUTO_TRACK_ENABLED ? "ENABLED" : "DISABLED");
-        telemetry.update();
+
     }
 
     @Override
@@ -374,7 +371,6 @@ public class RedTeleop extends NextFTCOpMode {
         targetGlobalHeading = calculateAngleToGoal(currentX, currentY, goalX, goalY);
 
         // Draw field visualization
-        drawFieldVisualization(currentX, currentY, currentRobotHeading, goalX, goalY);
 
         // Check for AprilTag detections
         List<AprilTagDetection> detections = aprilTag.getDetections();
@@ -566,55 +562,9 @@ public class RedTeleop extends NextFTCOpMode {
         setPinpointFromTraditional(initPoseFtcX, initPoseFtcY, initPoseHeading);
     }
 
-    /**
-     * Draw field visualization on FTC Dashboard
-     */
     private void drawFieldVisualization(double currentX, double currentY, double currentRobotHeading,
                                         double goalX, double goalY) {
-        TelemetryPacket packet = new TelemetryPacket();
-        Canvas fieldOverlay = packet.fieldOverlay();
-
-        // Draw goal
-        String goalColor = "#FF0000";
-        fieldOverlay.setStroke(goalColor);
-        fieldOverlay.setStrokeWidth(2);
-        double goalSize = 4;
-        fieldOverlay.strokeLine(goalX - goalSize, goalY - goalSize, goalX + goalSize, goalY + goalSize);
-        fieldOverlay.strokeLine(goalX - goalSize, goalY + goalSize, goalX + goalSize, goalY - goalSize);
-        fieldOverlay.strokeCircle(goalX, goalY, 6);
-
-        // Draw robot
-        fieldOverlay.setStroke("#0000FF");
-        fieldOverlay.setFill("#0000FF");
-        fieldOverlay.fillCircle(currentX, currentY, 6);
-
-        // Draw robot heading
-        double headingRadians = Math.toRadians(currentRobotHeading);
-        double arrowLength = 12;
-        double arrowEndX = currentX + arrowLength * Math.cos(headingRadians);
-        double arrowEndY = currentY + arrowLength * Math.sin(headingRadians);
-        fieldOverlay.strokeLine(currentX, currentY, arrowEndX, arrowEndY);
-
-        // Draw line to goal
-        fieldOverlay.setStroke("#00FF00");
-        fieldOverlay.setStrokeWidth(1);
-        fieldOverlay.strokeLine(currentX, currentY, goalX, goalY);
-
-        // Draw turret direction
-        if (trackingEnabled) {
-            double turretLogical = Turret2.INSTANCE.getTargetLogicalDeg();
-            double turretGlobalHeading = currentRobotHeading - turretLogical;
-            double turretRadians = Math.toRadians(turretGlobalHeading);
-            double turretLength = 18;
-            double turretEndX = currentX + turretLength * Math.cos(turretRadians);
-            double turretEndY = currentY + turretLength * Math.sin(turretRadians);
-
-            fieldOverlay.setStroke(visionMode ? "#FFA500" : "#FFFF00");
-            fieldOverlay.setStrokeWidth(3);
-            fieldOverlay.strokeLine(currentX, currentY, turretEndX, turretEndY);
-        }
-
-        FtcDashboard.getInstance().sendTelemetryPacket(packet);
+        // Telemetry/dashboard visualization disabled.
     }
 
     /**
@@ -642,35 +592,27 @@ public class RedTeleop extends NextFTCOpMode {
      * Display telemetry
      */
     private void displayTelemetry() {
-        telemetry.addLine("═══ RED TELEOP ═══");
-        telemetry.addLine();
+
 
         // Shooter info
         double rightRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.rightMotor.getVelocity()));
         double leftRPM = Shooter.INSTANCE.ticksPerSecondToRPM(Math.abs(Shooter.INSTANCE.leftMotor.getVelocity()));
         double currentRPM = (rightRPM + leftRPM) / 2.0;
-        telemetry.addData("Current RPM", currentRPM);
-        telemetry.addData("Hood Position", hoodPos);
-        telemetry.addLine();
+
 
         // Turret tracking
         if (AUTO_TRACK_ENABLED && trackingEnabled) {
-            telemetry.addData("Tracking Mode", visionMode ? "🎯 VISION" : "🧭 ODOMETRY");
-            telemetry.addData("Goal", "RED");
-        } else {
-            telemetry.addData("Tracking", "DISABLED");
-        }
-        telemetry.addData("Vision Only Mode", visionOnlyMode ? "YES" : "NO");
-        telemetry.addData("Turret Angle", "%.1f°", Turret2.INSTANCE.getCurrentLogicalDeg());
-        telemetry.addData("Pose Calibrated", poseCalibrated ? "✓" : "✗");
-        telemetry.addData("AutoPose Used", startedFromAutoPose ? "YES" : "NO");
-        telemetry.addData("Init Pose Source", initPoseSource);
-        telemetry.addData("Init Pose FTC", "(%.1f, %.1f, %.1f°)", initPoseFtcX, initPoseFtcY, initPoseHeading);
-        telemetry.addData("Late AutoPose Applied", lateAutoPoseApplied ? "YES" : "NO");
-        telemetry.addData("AutoPose Memory", "has=%s (%.1f, %.1f, %.1f°)",
-                AutoPoseMemory.hasPose, AutoPoseMemory.ftcX, AutoPoseMemory.ftcY, AutoPoseMemory.headingDeg);
 
-        telemetry.update();
+        } else {
+        }
+
+
+
+
+
+
+
+
     }
 
     private double normalizeAngle(double degrees) {

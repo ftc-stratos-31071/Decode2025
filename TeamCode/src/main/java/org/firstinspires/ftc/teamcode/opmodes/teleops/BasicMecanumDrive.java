@@ -68,11 +68,9 @@ public class BasicMecanumDrive extends LinearOpMode {
             backRight.setPower(backRightPower);
 
             // Telemetry for debugging
-            telemetry.addData("FL", frontLeftPower);
-            telemetry.addData("FR", frontRightPower);
-            telemetry.addData("BL", backLeftPower);
-            telemetry.addData("BR", backRightPower);
-            telemetry.update();
+
+
+
         }
     }
 }

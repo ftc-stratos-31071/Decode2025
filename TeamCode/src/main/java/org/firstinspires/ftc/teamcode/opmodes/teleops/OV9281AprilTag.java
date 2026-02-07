@@ -47,8 +47,6 @@ public class OV9281AprilTag extends LinearOpMode {
         FtcDashboard dashboard = FtcDashboard.getInstance();
         dashboard.startCameraStream(visionPortal, 30);
 
-        telemetry.addLine("OV9281 AprilTag ready");
-        telemetry.update();
 
         waitForStart();
 
@@ -57,20 +55,15 @@ public class OV9281AprilTag extends LinearOpMode {
             List<AprilTagDetection> detections = aprilTag.getDetections();
 
             if (detections.isEmpty()) {
-                telemetry.addLine("No tags");
             } else {
                 for (AprilTagDetection tag : detections) {
-                    telemetry.addData("ID", tag.id);
-                    telemetry.addData("X (in)", tag.ftcPose.x);
-                    telemetry.addData("Y (in)", tag.ftcPose.y);
-                    telemetry.addData("Z (in)", tag.ftcPose.z);
-                    telemetry.addData("Yaw (deg)", tag.ftcPose.yaw);
-                    telemetry.addLine();
+
+
+
+
                 }
             }
 
-            telemetry.addData("FPS", visionPortal.getFps());
-            telemetry.update();
         }
 
         visionPortal.close();
