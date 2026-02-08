@@ -53,7 +53,13 @@ public class BlueTeleopTrack extends NextFTCOpMode {
     public static double VISION_TIMEOUT_SEC = 1.0; //0.5
     public static double VISION_DEADBAND_DEG = 7.5; //10.0
     public static double VISION_SMOOTHING = 0.6; //0.3
+    // Far mode vision tuning (used when farOn is true)
+    public static double FAR_VISION_TRACKING_GAIN = 0.3;
+    public static double FAR_VISION_TIMEOUT_SEC = 1.0;
+    public static double FAR_VISION_DEADBAND_DEG = 7.5;
+    public static double FAR_VISION_SMOOTHING = 0.6;
     public static double TAG_SEARCH_TRIGGER_THRESHOLD = 0.6;
+    
     public static double TRIGGER_SEARCH_START_ANGLE_DEG = 70.0;
 
     private final MotorEx frontLeftMotor  = new MotorEx("frontLeftMotor").brakeMode().reversed();
@@ -236,7 +242,7 @@ public class BlueTeleopTrack extends NextFTCOpMode {
             smoothedTurretAngle = 0.0;
             triggerSearchDirection = 0;
             triggerSearchBaseAngle = 0.0;
-            trackingResumeAtMs = System.currentTimeMillis() + (long) (VISION_TIMEOUT_SEC * 1000.0);
+            trackingResumeAtMs = System.currentTimeMillis() + (long) (getActiveVisionTimeoutSec() * 1000.0);
             Turret2.INSTANCE.setAngle(0.0);
         });
 
@@ -264,7 +270,7 @@ public class BlueTeleopTrack extends NextFTCOpMode {
             smoothedTurretAngle = 0.0;
             triggerSearchDirection = 0;
             triggerSearchBaseAngle = 0.0;
-            trackingResumeAtMs = System.currentTimeMillis() + (long) (VISION_TIMEOUT_SEC * 1000.0);
+            trackingResumeAtMs = System.currentTimeMillis() + (long) (getActiveVisionTimeoutSec() * 1000.0);
             Turret2.INSTANCE.setAngle(0.0);
         });
 
@@ -283,7 +289,7 @@ public class BlueTeleopTrack extends NextFTCOpMode {
             if (trackingDisabledByG2A) {
                 Turret2.INSTANCE.setAngle(0.0);
             } else {
-                trackingResumeAtMs = System.currentTimeMillis() + (long) (VISION_TIMEOUT_SEC * 1000.0);
+                trackingResumeAtMs = System.currentTimeMillis() + (long) (getActiveVisionTimeoutSec() * 1000.0);
             }
         });
     }
@@ -347,14 +353,14 @@ public class BlueTeleopTrack extends NextFTCOpMode {
             triggerSearchBaseAngle = -Math.abs(TRIGGER_SEARCH_START_ANGLE_DEG);
             smoothedTurretAngle = triggerSearchBaseAngle;
             lastVisionAngle = triggerSearchBaseAngle;
-            trackingResumeAtMs = System.currentTimeMillis() + (long) (VISION_TIMEOUT_SEC * 1000.0);
+            trackingResumeAtMs = System.currentTimeMillis() + (long) (getActiveVisionTimeoutSec() * 1000.0);
         }
         if (rightTriggerPressed && !prevRightTriggerPressed) {
             triggerSearchDirection = 1;
             triggerSearchBaseAngle = Math.abs(TRIGGER_SEARCH_START_ANGLE_DEG);
             smoothedTurretAngle = triggerSearchBaseAngle;
             lastVisionAngle = triggerSearchBaseAngle;
-            trackingResumeAtMs = System.currentTimeMillis() + (long) (VISION_TIMEOUT_SEC * 1000.0);
+            trackingResumeAtMs = System.currentTimeMillis() + (long) (getActiveVisionTimeoutSec() * 1000.0);
         }
         prevLeftTriggerPressed = leftTriggerPressed;
         prevRightTriggerPressed = rightTriggerPressed;
@@ -375,16 +381,17 @@ public class BlueTeleopTrack extends NextFTCOpMode {
             if (tagDetectedThisFrame) {
                 visionMode = true;
 
-                if (Math.abs(tagBearing) > VISION_DEADBAND_DEG) {
+                if (Math.abs(tagBearing) > getActiveVisionDeadbandDeg()) {
                     double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
-                    double correction = -tagBearing * VISION_TRACKING_GAIN;
+                    double correction = -tagBearing * getActiveVisionTrackingGain();
                     double desiredAngle = currentTurretAngle + correction;
 
                     if (smoothedTurretAngle == 0.0) {
                         smoothedTurretAngle = currentTurretAngle;
                     }
 
-                    targetTurretAngle = smoothedTurretAngle * VISION_SMOOTHING + desiredAngle * (1.0 - VISION_SMOOTHING);
+                    double smoothing = getActiveVisionSmoothing();
+                    targetTurretAngle = smoothedTurretAngle * smoothing + desiredAngle * (1.0 - smoothing);
                     targetTurretAngle = Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
                     lastVisionAngle = targetTurretAngle;
                     smoothedTurretAngle = targetTurretAngle;
@@ -406,16 +413,17 @@ public class BlueTeleopTrack extends NextFTCOpMode {
         if (tagDetectedThisFrame) {
             visionMode = true;
 
-            if (Math.abs(tagBearing) > VISION_DEADBAND_DEG) {
+            if (Math.abs(tagBearing) > getActiveVisionDeadbandDeg()) {
                 double currentTurretAngle = Turret2.INSTANCE.getTargetLogicalDeg();
-                double correction = -tagBearing * VISION_TRACKING_GAIN;
+                double correction = -tagBearing * getActiveVisionTrackingGain();
                 double desiredAngle = currentTurretAngle + correction;
 
                 if (smoothedTurretAngle == 0.0) {
                     smoothedTurretAngle = currentTurretAngle;
                 }
 
-                targetTurretAngle = smoothedTurretAngle * VISION_SMOOTHING + desiredAngle * (1.0 - VISION_SMOOTHING);
+                double smoothing = getActiveVisionSmoothing();
+                targetTurretAngle = smoothedTurretAngle * smoothing + desiredAngle * (1.0 - smoothing);
                 targetTurretAngle = Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
 
                 lastVisionAngle = targetTurretAngle;
@@ -425,7 +433,7 @@ public class BlueTeleopTrack extends NextFTCOpMode {
                 lastVisionAngle = targetTurretAngle;
                 smoothedTurretAngle = targetTurretAngle;
             }
-        } else if ((System.currentTimeMillis() - lastTagSeenTime) / 1000.0 < VISION_TIMEOUT_SEC) {
+        } else if ((System.currentTimeMillis() - lastTagSeenTime) / 1000.0 < getActiveVisionTimeoutSec()) {
             visionMode = true;
             targetTurretAngle = lastVisionAngle;
         } else {
@@ -435,6 +443,22 @@ public class BlueTeleopTrack extends NextFTCOpMode {
 
         targetTurretAngle = Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
         Turret2.INSTANCE.setAngle(targetTurretAngle);
+    }
+
+    private double getActiveVisionTrackingGain() {
+        return farOn ? FAR_VISION_TRACKING_GAIN : VISION_TRACKING_GAIN;
+    }
+
+    private double getActiveVisionTimeoutSec() {
+        return farOn ? FAR_VISION_TIMEOUT_SEC : VISION_TIMEOUT_SEC;
+    }
+
+    private double getActiveVisionDeadbandDeg() {
+        return farOn ? FAR_VISION_DEADBAND_DEG : VISION_DEADBAND_DEG;
+    }
+
+    private double getActiveVisionSmoothing() {
+        return farOn ? FAR_VISION_SMOOTHING : VISION_SMOOTHING;
     }
 
     private void displayTelemetry(double distanceMm) {

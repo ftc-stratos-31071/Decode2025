@@ -53,6 +53,7 @@ public class RedTeleopTrack extends NextFTCOpMode {
     public static double VISION_TIMEOUT_SEC = 1.0; //0.0.5
     public static double VISION_DEADBAND_DEG = 7.5; //10.0
     public static double VISION_SMOOTHING = 0.6; //0.3
+    public static double RED_TRACKING_OFFSET_DEG = 10.0;
     public static double TAG_SEARCH_TRIGGER_THRESHOLD = 0.6;
     public static double TRIGGER_SEARCH_START_ANGLE_DEG = 80.0;
 
@@ -363,10 +364,10 @@ public class RedTeleopTrack extends NextFTCOpMode {
             visionMode = false;
             if (triggerSearchDirection != 0) {
                 targetTurretAngle = triggerSearchBaseAngle;
-                Turret2.INSTANCE.setAngle(targetTurretAngle);
+                setTrackedTurretAngle(targetTurretAngle);
             } else {
                 targetTurretAngle = 0.0;
-                Turret2.INSTANCE.setAngle(0.0);
+                setTrackedTurretAngle(0.0);
             }
             return;
         }
@@ -399,7 +400,7 @@ public class RedTeleopTrack extends NextFTCOpMode {
             }
 
             targetTurretAngle = Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
-            Turret2.INSTANCE.setAngle(targetTurretAngle);
+            setTrackedTurretAngle(targetTurretAngle);
             return;
         }
 
@@ -434,7 +435,13 @@ public class RedTeleopTrack extends NextFTCOpMode {
         }
 
         targetTurretAngle = Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, targetTurretAngle));
-        Turret2.INSTANCE.setAngle(targetTurretAngle);
+        setTrackedTurretAngle(targetTurretAngle);
+    }
+
+    private void setTrackedTurretAngle(double trackedAngleDeg) {
+        double adjusted = trackedAngleDeg - RED_TRACKING_OFFSET_DEG;
+        adjusted = Math.max(-Turret2.MAX_ROTATION, Math.min(Turret2.MAX_ROTATION, adjusted));
+        Turret2.INSTANCE.setAngle(adjusted);
     }
 
     private void displayTelemetry(double distanceMm) {
