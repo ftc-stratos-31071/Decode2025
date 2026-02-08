@@ -174,10 +174,10 @@ public class FarBlueTrackAuto extends NextFTCOpMode {
     public void onStartButtonPressed() {
         Shooter.INSTANCE.runRPM(ShooterConstants.farTargetRPM).schedule();
         new SequentialGroup(
-                Turret2.INSTANCE.goToAngle(70.0),
+                Turret2.INSTANCE.goToAngle(67.5),
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.5),
-                RapidFireTimeoutCmdFar.create(2000),
+                RapidFireTimeoutCmdFar.create(3000),
                 Intake.INSTANCE.moveServoPos(),
                 IntakeSeqCmd.create(),
                 AutoDriveTimeoutCmd.create(new FollowPath(path1),2),
@@ -227,7 +227,7 @@ public class FarBlueTrackAuto extends NextFTCOpMode {
 //                // SHOOT
                 Intake.INSTANCE.defaultPos(),
                 WaitCmd.create(0.25),// OPEN door (0.7)
-                RapidFireTimeoutCmdFar.create(2000),  // 1000ms timeout
+                RapidFireTimeoutCmdFar.create(3000),  // 1000ms timeout
 //
 //                // Cycle 5: Drive and collect
                 Intake.INSTANCE.moveServoPos(),  // CLOSE door (0.0)
